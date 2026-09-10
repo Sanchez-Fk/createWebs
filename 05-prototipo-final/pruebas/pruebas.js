@@ -334,6 +334,17 @@ test('ninguna regla del portafolio alcanza a las demos por un nombre de clase co
   ok(!hits.length, 'reglas que se filtran a las demos: ' + hits.join(' | '));
 });
 
+test('ninguna foto se anima de forma continua (evita imágenes que tiemblan o saltan)', () => {
+  const offenders = [];
+  styles.forEach(css => css.split('}').forEach(chunk => {
+    const parts = chunk.split('{');
+    if (parts.length < 2) return;
+    const sel = parts[parts.length - 2], body = parts[parts.length - 1];
+    if (/\bimg\b|__img|figure/.test(sel) && /animation[^;]*infinite/.test(body)) offenders.push(sel.trim());
+  }));
+  ok(!offenders.length, 'animación infinita sobre fotos: ' + offenders.join(' | '));
+});
+
 test('contraste AA (4,5:1) en el portafolio y en las cuatro paletas', () => {
   const lum = hex => {
     const c = hex.replace('#', '');
