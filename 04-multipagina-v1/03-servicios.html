@@ -1,0 +1,333 @@
+<title>Portafolio JMS — Servicios</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
+
+<style>
+/* PHOSPHOR HAIRLINE v1.0 — mismo sistema que el resto del sitio */
+:root{
+  color-scheme: dark;
+  --bg:#0F0F0F; --s1:#161616; --s2:#1C1C1C; --line:#262626; --line-hi:#3A3A3A;
+  --fg:#EFEFEF; --fg-2:#8A8A8A;
+  --accent:#FFB000; --accent-ink:#0F0F0F;
+  --r:2px; --maxw:1280px; --gx:24px;
+  --f-sans:'IBM Plex Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --f-mono:'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --e-out:cubic-bezier(0.16, 1, 0.3, 1);
+  --e-both:cubic-bezier(0.65, 0, 0.35, 1);
+  --t-hero:clamp(2.25rem, 1.167rem + 4.815vw, 5.5rem);
+  --t-body:1.0625rem; --t-sm:0.9375rem; --t-meta:0.8125rem; --t-lbl:0.75rem;
+  --pad:96px; --hdr:64px;
+}
+@media (min-width:768px){ :root{ --gx:40px; --pad:128px; --hdr:68px; } }
+@media (min-width:1200px){ :root{ --gx:64px; --pad:160px; --hdr:72px; } }
+
+*,*::before,*::after{ box-sizing:border-box; }
+body{ margin:0; background:var(--bg); color:var(--fg); font-family:var(--f-sans); font-size:var(--t-body); line-height:1.6; -webkit-font-smoothing:antialiased; opacity:1; transition:opacity .22s var(--e-both); }
+body.leaving{ opacity:0; }
+::selection{ background:var(--accent); color:var(--accent-ink); }
+.wrap{ width:100%; max-width:var(--maxw); margin-inline:auto; }
+.sec{ padding:var(--pad) var(--gx); }
+.mono{ font-family:var(--f-mono); font-size:var(--t-lbl); font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:var(--fg-2); }
+.meta{ font-family:var(--f-mono); font-size:var(--t-meta); letter-spacing:.04em; color:var(--fg-2); font-variant-numeric:tabular-nums; }
+a{ color:inherit; text-decoration:none; }
+:where(a,button,input,textarea,[tabindex]):focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:var(--r); }
+
+.grain{ position:fixed; inset:0; z-index:900; pointer-events:none; opacity:.045; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+.hdr{ position:fixed; top:0; left:0; right:0; z-index:100; height:var(--hdr); display:flex; align-items:center; padding-inline:var(--gx);
+  background:transparent; border-bottom:1px solid transparent;
+  transition:background-color .28s var(--e-out), border-color .28s var(--e-out), backdrop-filter .28s var(--e-out); }
+.hdr.scrolled{ background:rgba(15,15,15,.78); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom-color:var(--line); }
+.hdr-in{ display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.mark{ font-weight:600; font-size:.9375rem; letter-spacing:-.02em; white-space:nowrap; }
+.hdr-r{ display:flex; align-items:center; gap:20px; }
+.nav{ display:none; gap:28px; }
+@media (min-width:768px){ .nav{ display:flex; } }
+.nav a{ font-family:var(--f-mono); font-size:var(--t-lbl); letter-spacing:.14em; text-transform:uppercase; color:var(--fg-2); transition:color .16s var(--e-out); }
+.nav a:hover,.nav a[aria-current="page"]{ color:var(--fg); }
+.lang{ display:flex; align-items:center; gap:7px; padding-left:20px; border-left:1px solid var(--line); }
+.lang button{ font-family:var(--f-mono); font-size:var(--t-lbl); letter-spacing:.14em; text-transform:uppercase; background:none; border:0; padding:2px; color:var(--fg-2); cursor:pointer; transition:color .16s var(--e-out); }
+.lang button[aria-pressed="true"]{ color:var(--fg); }
+.lang i{ color:var(--line-hi); font-style:normal; }
+.burger{ display:block; font-family:var(--f-mono); font-size:var(--t-lbl); letter-spacing:.12em; text-transform:uppercase; color:var(--fg); background:none; border:1px solid var(--line); border-radius:var(--r); padding:8px 11px; cursor:pointer; }
+@media (min-width:768px){ .burger{ display:none; } }
+.menu{ position:fixed; inset:0; z-index:200; background:var(--bg); padding:var(--gx); display:flex; flex-direction:column; }
+.menu[hidden]{ display:none !important; }
+.menu-top{ display:flex; align-items:center; justify-content:space-between; }
+.menu nav{ display:flex; flex-direction:column; margin-top:48px; }
+.menu nav a{ font-size:1.875rem; font-weight:600; letter-spacing:-.03em; padding-block:14px; border-bottom:1px solid var(--line); }
+
+.phead{ padding:calc(var(--hdr) + 72px) var(--gx) 0; }
+@media (min-width:768px){ .phead{ padding-top:calc(var(--hdr) + 120px); } }
+.phead h1{ margin:0; font-size:var(--t-hero); font-weight:700; line-height:.95; letter-spacing:-.045em; max-width:14ch; }
+.phead .lead{ margin:28px 0 0; max-width:52ch; font-size:1.0625rem; line-height:1.6; color:var(--fg-2); }
+@media (min-width:768px){ .phead .lead{ font-size:1.125rem; } }
+.phead .mono{ display:block; margin-bottom:22px; }
+
+/* ---- lista numerada de servicios ---- */
+.slist{ list-style:none; margin:0; padding:0; }
+.slist li:last-child .srow{ border-bottom:1px solid var(--line); }
+.srow{ position:relative; display:grid; align-items:start; grid-template-columns:40px minmax(0,1fr) 18px; column-gap:14px; row-gap:9px;
+  padding:26px 12px; margin-inline:-12px; border-top:1px solid var(--line);
+  transition:background-color 400ms var(--e-out); }
+@media (min-width:1200px){
+  .srow{ grid-template-columns:88px minmax(0,.9fr) minmax(0,1.1fr) 22px; align-items:baseline; column-gap:36px; padding:34px 22px; margin-inline:-22px; }
+}
+.srow:hover,.srow:focus-visible{ background-color:var(--s1); }
+.snum{ font-family:var(--f-mono); font-size:var(--t-meta); font-weight:500; letter-spacing:.12em; color:var(--fg-2); font-variant-numeric:tabular-nums; transition:color 400ms var(--e-out); padding-top:5px; }
+@media (min-width:1200px){ .snum{ padding-top:0; } }
+.srow:hover .snum,.srow:focus-visible .snum{ color:var(--accent); }
+.sname{ font-size:clamp(1.375rem, 1rem + 1.4vw, 2.25rem); font-weight:600; letter-spacing:-.03em; line-height:1.1; }
+.sdesc{ margin:0; font-size:var(--t-sm); line-height:1.6; color:var(--fg-2); grid-column:2; }
+@media (min-width:1200px){ .sdesc{ grid-column:3; font-size:1rem; } }
+.sarw{ justify-self:end; color:var(--accent); opacity:0; transform:translateX(-8px); transition:opacity 400ms var(--e-out), transform 400ms var(--e-out); }
+.srow:hover .sarw,.srow:focus-visible .sarw{ opacity:1; transform:translateX(0); }
+@media (max-width:1199px){ .sarw{ opacity:1; transform:none; color:var(--fg-2); grid-column:3; grid-row:1; padding-top:5px; } }
+
+/* ---- cómo trabajo ---- */
+.how{ border-top:1px solid var(--line); }
+.how h2{ margin:0 0 44px; font-size:clamp(1.75rem,1.4rem+1.5vw,2.75rem); font-weight:600; letter-spacing:-.03em; line-height:1.05; }
+.steps{ display:grid; grid-template-columns:minmax(0,1fr); gap:0; }
+@media (min-width:900px){ .steps{ grid-template-columns:repeat(4, minmax(0,1fr)); gap:32px; } }
+.step{ padding:24px 0; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:12px; }
+@media (min-width:900px){ .step{ padding:24px 0 0; } }
+.step h3{ margin:0; font-size:1.1875rem; font-weight:600; letter-spacing:-.02em; line-height:1.25; }
+.step p{ margin:0; font-size:var(--t-sm); line-height:1.6; color:var(--fg-2); }
+
+/* ---- CTA + footer ---- */
+.btn{ font-family:var(--f-mono); font-size:var(--t-lbl); font-weight:500; letter-spacing:.14em; text-transform:uppercase; border-radius:var(--r); border:1px solid transparent; padding:18px 20px; cursor:pointer; text-align:center; white-space:nowrap; transition:background-color .18s var(--e-out), border-color .18s var(--e-out); }
+@media (min-width:768px){ .btn{ padding:18px 34px; } }
+.btn-1{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.btn-1:hover{ background:#FFBE2E; border-color:#FFBE2E; }
+.acts{ display:flex; flex-direction:column; align-items:stretch; gap:18px; margin-top:40px; }
+@media (min-width:768px){ .acts{ flex-direction:row; align-items:center; gap:32px; } }
+.cta{ border-top:1px solid var(--line); }
+.cta h2{ margin:0; font-size:var(--t-hero); font-weight:700; line-height:.98; letter-spacing:-.045em; max-width:16ch; }
+.cta h2 span{ color:var(--fg-2); }
+footer{ border-top:1px solid var(--line); padding:40px var(--gx) 48px; }
+.frow{ display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+.frow + .frow{ margin-top:28px; }
+.social{ display:flex; gap:22px; flex-wrap:wrap; }
+.social a{ font-family:var(--f-mono); font-size:var(--t-lbl); letter-spacing:.14em; text-transform:uppercase; color:var(--fg-2); transition:color .16s var(--e-out); }
+.social a:hover{ color:var(--fg); }
+.copy{ font-family:var(--f-mono); font-size:var(--t-lbl); letter-spacing:.06em; color:var(--fg-2); }
+
+/* ---- movimiento ---- */
+.js .rv{ opacity:0; transform:translateY(24px); }
+.js .rv-fade{ transform:none; }
+.js .rv.in{ opacity:1; transform:none; transition:opacity .7s var(--e-out), transform .7s var(--e-out); }
+.line{ display:block; }
+.line > span{ display:block; }
+.js .line{ overflow:hidden; padding-bottom:.14em; margin-bottom:-.14em; }
+.js .line > span{ transform:translateY(100%); }
+.js .line.in > span{ transform:translateY(0); transition:transform .9s var(--e-out); }
+@media (prefers-reduced-motion:reduce){
+  *{ transition-duration:.01ms !important; animation-duration:.01ms !important; }
+  .js .rv,.js .line > span{ opacity:1 !important; transform:none !important; }
+}
+</style>
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="hdr" id="hdr">
+  <div class="hdr-in wrap">
+    <a class="mark" href="01-home.html">José M. Sánchez</a>
+    <div class="hdr-r">
+      <nav class="nav" aria-label="Principal">
+        <a href="02-proyectos.html" data-es="Trabajo" data-en="Work">Trabajo</a>
+        <a href="03-servicios.html" aria-current="page" data-es="Servicios" data-en="Services">Servicios</a>
+        <a href="04-contacto.html" data-es="Contacto" data-en="Contact">Contacto</a>
+      </nav>
+      <div class="lang" role="group" aria-label="Idioma">
+        <button type="button" data-lang="es" aria-pressed="true">ES</button>
+        <i aria-hidden="true">/</i>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <button class="burger" id="burger" type="button" aria-expanded="false" aria-controls="menu" data-es="Menú" data-en="Menu">Menú</button>
+    </div>
+  </div>
+</header>
+
+<div class="menu" id="menu" hidden>
+  <div class="menu-top">
+    <span class="mono">José M. Sánchez</span>
+    <button class="burger" id="mclose" type="button" data-es="Cerrar" data-en="Close">Cerrar</button>
+  </div>
+  <nav aria-label="Móvil">
+    <a href="01-home.html" data-es="Inicio" data-en="Home">Inicio</a>
+    <a href="02-proyectos.html" data-es="Trabajo" data-en="Work">Trabajo</a>
+    <a href="03-servicios.html" data-es="Servicios" data-en="Services">Servicios</a>
+    <a href="04-contacto.html" data-es="Contacto" data-en="Contact">Contacto</a>
+  </nav>
+</div>
+
+<main>
+  <section class="phead">
+    <div class="wrap">
+      <span class="mono rv rv-fade" data-es="Servicios / 02" data-en="Services / 02">Servicios / 02</span>
+      <h1>
+        <span class="line"><span data-es="Cuatro maneras" data-en="Four ways">Cuatro maneras</span></span>
+        <span class="line"><span data-es="de empezar." data-en="to start.">de empezar.</span></span>
+      </h1>
+      <p class="lead rv" data-es="Sin cuotas mensuales, sin maquetadores y sin jerga. Te explico en castellano llano qué hace falta antes de que pagues nada." data-en="No monthly fees, no page builders and no jargon. I explain in plain language what is needed before you pay for anything.">Sin cuotas mensuales, sin maquetadores y sin jerga. Te explico en castellano llano qu&eacute; hace falta antes de que pagues nada.</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <ol class="slist">
+        <li><a class="srow rv" href="04-contacto.html">
+          <span class="snum">01</span>
+          <span class="sname" data-es="Sitio para tu negocio" data-en="Business website">Sitio para tu negocio</span>
+          <p class="sdesc" data-es="Un lugar donde te encuentran en Google, te entienden en diez segundos y se van con tu teléfono apuntado." data-en="A place customers find on Google, understand in ten seconds, and leave with your phone number.">Un lugar donde te encuentran en Google, te entienden en diez segundos y se van con tu tel&eacute;fono apuntado.</p>
+          <span class="sarw" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="srow rv" href="04-contacto.html">
+          <span class="snum">02</span>
+          <span class="sname" data-es="Página de aterrizaje" data-en="Landing page">P&aacute;gina de aterrizaje</span>
+          <p class="sdesc" data-es="Una sola página con un solo trabajo: convertir en consultas a la gente que ya hizo clic en tu anuncio, en vez de perderla." data-en="One page with one job: turning the people already clicking your ad into enquiries instead of losing them.">Una sola p&aacute;gina con un solo trabajo: convertir en consultas a la gente que ya hizo clic en tu anuncio, en vez de perderla.</p>
+          <span class="sarw" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="srow rv" href="04-contacto.html">
+          <span class="snum">03</span>
+          <span class="sname" data-es="Reservas online" data-en="Online booking">Reservas online</span>
+          <p class="sdesc" data-es="Tus clientes reservan solos a las once de la noche, y dejas de perder a los que nunca van a dejar un mensaje en el buzón." data-en="Customers book themselves in at eleven at night, and you stop losing the ones who will never leave a voicemail.">Tus clientes reservan solos a las once de la noche, y dejas de perder a los que nunca van a dejar un mensaje en el buz&oacute;n.</p>
+          <span class="sarw" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="srow rv" href="04-contacto.html">
+          <span class="snum">04</span>
+          <span class="sname" data-es="Rediseño" data-en="Redesign">Redise&ntilde;o</span>
+          <p class="sdesc" data-es="Tu web conserva lo que ya funciona, suelta lo que confunde a la gente y deja de parecer más vieja de lo que es tu negocio." data-en="Your site keeps what already works, drops what confuses people, and stops looking older than your business is.">Tu web conserva lo que ya funciona, suelta lo que confunde a la gente y deja de parecer m&aacute;s vieja de lo que es tu negocio.</p>
+          <span class="sarw" aria-hidden="true">&rarr;</span>
+        </a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ========================= CÓMO TRABAJO ========================= -->
+  <section class="sec how">
+    <div class="wrap">
+      <span class="mono rv rv-fade" style="display:block;margin-bottom:22px" data-es="Cómo trabajo / 03" data-en="How I work / 03">C&oacute;mo trabajo / 03</span>
+      <h2 class="rv rv-fade" data-es="Cuatro pasos, y en dos de ellos solo tienes que mirar." data-en="Four steps, and in two of them you only have to look.">Cuatro pasos, y en dos de ellos solo tienes que mirar.</h2>
+      <div class="steps">
+        <div class="step rv">
+          <span class="mono">01</span>
+          <h3 data-es="Hablamos" data-en="We talk">Hablamos</h3>
+          <p data-es="Me cuentas qué hace tu negocio y a quién quieres que te llame. Media hora por WhatsApp, sin compromiso." data-en="You tell me what your business does and who you want calling you. Half an hour on WhatsApp, no commitment.">Me cuentas qu&eacute; hace tu negocio y a qui&eacute;n quieres que te llame. Media hora por WhatsApp, sin compromiso.</p>
+        </div>
+        <div class="step rv">
+          <span class="mono">02</span>
+          <h3 data-es="Te lo enseño" data-en="I show you">Te lo ense&ntilde;o</h3>
+          <p data-es="Antes de escribir una línea de código ves cómo va a quedar y qué va a decir cada sección. Ahí decides." data-en="Before a single line of code you see how it will look and what each section will say. That is where you decide.">Antes de escribir una l&iacute;nea de c&oacute;digo ves c&oacute;mo va a quedar y qu&eacute; va a decir cada secci&oacute;n. Ah&iacute; decides.</p>
+        </div>
+        <div class="step rv">
+          <span class="mono">03</span>
+          <h3 data-es="Lo construyo" data-en="I build it">Lo construyo</h3>
+          <p data-es="Una o dos semanas según el tamaño. Te mando avances por el camino, así que no hay sorpresas al final." data-en="One or two weeks depending on size. I send progress along the way, so there are no surprises at the end.">Una o dos semanas seg&uacute;n el tama&ntilde;o. Te mando avances por el camino, as&iacute; que no hay sorpresas al final.</p>
+        </div>
+        <div class="step rv">
+          <span class="mono">04</span>
+          <h3 data-es="Es tuyo" data-en="It is yours">Es tuyo</h3>
+          <p data-es="Dominio, código y contenido a tu nombre. Sin cuotas y sin tener que pedirme permiso para cambiar un precio." data-en="Domain, code and content in your name. No fees, and no asking me for permission to change a price.">Dominio, c&oacute;digo y contenido a tu nombre. Sin cuotas y sin tener que pedirme permiso para cambiar un precio.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec cta">
+    <div class="wrap">
+      <h2 class="rv rv-fade">
+        <span data-es="Cuéntame qué" data-en="Tell me what">Cu&eacute;ntame qu&eacute;</span><br>
+        <span data-es="hace tu negocio." data-en="your business does.">hace tu negocio.</span>
+      </h2>
+      <div class="acts rv rv-fade">
+        <a class="btn btn-1" href="04-contacto.html" data-es="Escríbeme por WhatsApp" data-en="Message me on WhatsApp">Escr&iacute;beme por WhatsApp</a>
+        <span class="meta" data-es="Respondo en menos de 4 horas" data-en="I reply in under 4 hours">Respondo en menos de 4 horas</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <a class="mark" href="01-home.html">José M. Sánchez</a>
+      <nav class="social" aria-label="Redes"><a href="#">GitHub</a><a href="#">LinkedIn</a><a href="#">Instagram</a><a href="#">Email</a></nav>
+    </div>
+    <div class="frow">
+      <span class="copy" data-es="© 2026 · Hecho a mano, sin maquetadores" data-en="© 2026 · Built by hand, no page builders">&copy; 2026 &middot; Hecho a mano, sin maquetadores</span>
+      <span class="meta">UTC&minus;5 &middot; ES / EN</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var d = document, root = d.documentElement;
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  root.classList.add('js');
+  root.lang = 'es';
+
+  var langBtns = d.querySelectorAll('.lang button');
+  function setLang(code){
+    Array.prototype.forEach.call(d.querySelectorAll('[data-' + code + ']'), function(n){ n.innerHTML = n.getAttribute('data-' + code); });
+    root.lang = code;
+    Array.prototype.forEach.call(langBtns, function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-lang') === code ? 'true' : 'false'); });
+    try { localStorage.setItem('jms-lang', code); } catch(e){}
+  }
+  Array.prototype.forEach.call(langBtns, function(b){ b.addEventListener('click', function(){ setLang(b.getAttribute('data-lang')); }); });
+  try { if (localStorage.getItem('jms-lang') === 'en') setLang('en'); } catch(e){}
+
+  var hdr = d.getElementById('hdr');
+  function onScroll(){ hdr.classList.toggle('scrolled', (window.scrollY || 0) > 8); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  var menu = d.getElementById('menu'), burger = d.getElementById('burger'), mclose = d.getElementById('mclose');
+  function setMenu(open){ menu.hidden = !open; burger.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+  burger.addEventListener('click', function(){ setMenu(menu.hidden); });
+  mclose.addEventListener('click', function(){ setMenu(false); });
+  d.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
+
+  if (reduced || !('IntersectionObserver' in window)){
+    Array.prototype.forEach.call(d.querySelectorAll('.rv, .line'), function(n){ n.classList.add('in'); });
+  } else {
+    var lines = d.querySelectorAll('.phead .line');
+    var headRv = d.querySelectorAll('.phead .rv');
+    var start = function(){
+      Array.prototype.forEach.call(lines, function(l, i){ setTimeout(function(){ l.classList.add('in'); }, i * 80); });
+      Array.prototype.forEach.call(headRv, function(n, i){ setTimeout(function(){ n.classList.add('in'); }, 240 + i * 60); });
+    };
+    if (d.fonts && d.fonts.ready) { d.fonts.ready.then(start); setTimeout(start, 1200); } else { start(); }
+
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (!en.isIntersecting) return;
+        var el = en.target;
+        var host = el.closest('li') || el;
+        var sibs = host.parentNode ? host.parentNode.children : [];
+        var idx = Array.prototype.indexOf.call(sibs, host);
+        setTimeout(function(){ el.classList.add('in'); }, idx > 0 ? idx * 100 : 0);
+        io.unobserve(el);
+      });
+    }, { threshold: 0.2 });
+    Array.prototype.forEach.call(d.querySelectorAll('.rv'), function(n){ if (!n.closest('.phead')) io.observe(n); });
+  }
+
+  if (window.Lenis && !reduced){
+    var lenis = new window.Lenis({ duration: 1.15, easing: function(t){ return Math.min(1, 1.001 - Math.pow(2, -10 * t)); }, smoothWheel: true });
+    function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+    requestAnimationFrame(raf);
+    lenis.on('scroll', onScroll);
+  }
+
+  d.addEventListener('click', function(e){
+    var a = e.target.closest ? e.target.closest('a[href$=".html"]') : null;
+    if (!a || a.target || e.metaKey || e.ctrlKey) return;
+    e.preventDefault();
+    d.body.classList.add('leaving');
+    setTimeout(function(){ window.location.href = a.getAttribute('href'); }, reduced ? 0 : 220);
+  });
+})();
+</script>

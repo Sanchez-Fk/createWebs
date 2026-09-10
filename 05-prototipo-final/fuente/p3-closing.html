@@ -1,0 +1,122 @@
+
+/* ===========================================================================
+   CTA FINAL
+   =========================================================================== */
+.closing{ border-top:1px solid var(--line); }
+.sec + .sec.closing{ padding-top:clamp(6rem, 4.514rem + 6.095cqi, 10rem); }   /* el reset entre secciones no aplica al cierre, que lleva filete superior */
+.h-closing{
+  margin:0; font-weight:700; letter-spacing:-.04em; line-height:.96; text-wrap:balance;
+  font-size:2.25rem; font-size:clamp(2.25rem, 1.229rem + 4.19cqi, 5rem);          /* 36 → 80 */
+}
+.h-closing span{ display:block; }
+.h-closing span + span{ color:var(--fg-2); }
+.closing .btn{ margin-top:40px; width:100%; }
+.closing .meta{ display:block; margin-top:18px; }
+
+/* ===========================================================================
+   CONTACTO — WhatsApp primero, formulario en segundo plano
+   =========================================================================== */
+.contact{ padding-top:calc(var(--hdr) + clamp(3.5rem, 2rem + 6cqi, 8rem)); }
+.contact-grid{ display:grid; grid-template-columns:minmax(0,1fr); }
+.c-right{ margin-top:56px; padding-top:48px; border-top:1px solid var(--line); }
+.contact .lede{ margin-top:26px; font-size:18px; }
+.contact .btn-lg{ margin-top:40px; width:100%; }
+.facts{ margin:44px 0 0; }
+.facts div{ display:grid; grid-template-columns:1fr auto; align-items:baseline; gap:20px; padding-block:14px; border-top:1px solid var(--line); }
+.facts div:last-child{ border-bottom:1px solid var(--line); }
+.facts dt{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--fg-2); }
+.facts dd{ margin:0; font-family:var(--mono); font-size:13px; letter-spacing:.04em; color:var(--fg); text-align:right; font-variant-numeric:tabular-nums; }
+.form{ display:flex; flex-direction:column; gap:30px; margin-top:30px; }
+.field{ display:flex; flex-direction:column; gap:8px; }
+.field label{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--fg-2); }
+.field input,.field textarea{
+  font-family:var(--sans); font-size:17px; color:var(--fg); background:transparent;
+  border:0; border-bottom:1px solid var(--line); border-radius:0; padding:10px 0; width:100%;
+  transition:border-color .2s var(--ease);
+}
+.field textarea{ min-height:96px; resize:vertical; line-height:1.6; }
+.field input::placeholder,.field textarea::placeholder{ color:var(--ph); }
+.field input:hover,.field textarea:hover{ border-bottom-color:var(--line-hi); }
+.field input:focus,.field textarea:focus{ outline:none; border-bottom-color:var(--accent); }
+.field input:focus-visible,.field textarea:focus-visible{ outline:2px solid var(--accent); outline-offset:4px; }
+.form .btn-secondary{ align-self:stretch; }
+.form-note{ font-family:var(--mono); font-size:12px; letter-spacing:.04em; color:var(--fg-2); }
+.form-note[hidden]{ display:none !important; }
+
+/* ===========================================================================
+   FOOTER — compacto y expandido
+   =========================================================================== */
+.ft{ border-top:1px solid var(--line); padding-block:40px; }
+.ft-row{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px 24px; }
+.ft-row + .ft-row{ margin-top:28px; }
+.social{ display:flex; flex-wrap:wrap; gap:22px; }
+.social a,.ft-col a{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--fg-2); text-decoration:none; transition:color .2s var(--ease); }
+.social a:hover,.ft-col a:hover{ color:var(--fg); }
+.ft-x{ display:grid; grid-template-columns:minmax(0,1fr); gap:40px; padding-bottom:48px; margin-bottom:28px; border-bottom:1px solid var(--line); }
+.ft-brand p{ margin-top:14px; font-size:15px; line-height:1.6; color:var(--fg-2); max-width:34ch; }
+.ft-col{ display:flex; flex-direction:column; gap:12px; }
+.ft-col .mono{ margin-bottom:6px; color:var(--fg); }
+
+/* ===========================================================================
+   DEMO — destino a un clic desde la home
+   =========================================================================== */
+.demo{ padding-top:calc(var(--hdr) + 32px); padding-bottom:64px; }
+.demo-bar{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 24px; margin-bottom:24px; }
+.demo .shot{ border-color:var(--line-hi); }
+.demo-note{ margin-top:18px; }
+
+/* ===========================================================================
+   MOVIMIENTO — solo con .m en el stage (sin reduced-motion y con el conmutador activo)
+   =========================================================================== */
+.m [data-rv]{ transition:opacity .8s var(--ease) var(--d,0s), transform .8s var(--ease) var(--d,0s); }
+.m [data-rv].is-pre{ opacity:0; transform:translateY(var(--y,24px)); }
+.m .mask > span{ transition:transform 1s var(--ease-slow) var(--d,0s); }
+.m .mask.is-pre > span{ transform:translateY(105%); }
+.stage:not(.m) .page{ transition:none; }
+.stage:not(.m) .scroll-line::after{ animation:none; transform:translateY(60%); }
+
+/* ===========================================================================
+   TABLET ≥768
+   =========================================================================== */
+@container (min-width:768px){
+  .nav{ display:flex; }
+  .hdr-div{ display:block; }
+  .menu-btn{ display:none; }
+  .hero{ padding-bottom:48px; }
+  .eyebrow{ font-size:12px; letter-spacing:.2em; margin-bottom:26px; }
+  .hero .lede{ font-size:18px; margin-top:28px; }
+  .hero-acts{ flex-direction:row; align-items:center; gap:32px; width:auto; margin-top:44px; }
+  .scroll-ind{ margin-top:48px; }
+  .scroll-line{ height:40px; }
+  .sec-head{ flex-direction:row; align-items:flex-start; justify-content:space-between; gap:48px; margin-bottom:56px; }
+  .work-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .card h3{ font-size:23px; }
+  .steps{ grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:32px; }
+  .closing .btn,.contact .btn-lg{ width:auto; }
+  .form .btn-secondary{ align-self:flex-start; }
+  .ft-x{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .ft-brand{ grid-column:1 / -1; }
+}
+
+/* ===========================================================================
+   DESKTOP ≥1100 (diseñado a 1440)
+   =========================================================================== */
+@container (min-width:1100px){
+  .row{ grid-template-columns:88px minmax(0,.9fr) minmax(0,1.1fr) 24px; column-gap:40px; align-items:baseline; padding:36px 24px; margin-inline:-24px; }
+  .row .num{ padding-top:0; }
+  .row .desc{ grid-column:3; grid-row:1; font-size:16px; }
+  .row .arw{ grid-column:4; padding-top:0; opacity:0; transform:translateX(-8px); color:var(--accent); }
+  .row:hover .arw,.row:focus-visible .arw{ opacity:1; transform:translateX(0); }
+  .steps{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .step{ padding-right:24px; }
+  .contact-grid{ grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); align-items:start; }
+  .c-left{ padding-right:88px; }
+  .c-right{ margin-top:0; padding-top:0; border-top:0; padding-left:88px; border-left:1px solid var(--line); }
+  .ft-x{ grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr)); }
+  .ft-brand{ grid-column:auto; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{ transition-duration:.01ms !important; animation-duration:.01ms !important; }
+}
+</style>

@@ -1,0 +1,527 @@
+<title>Let's Talk About Your Site</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+
+<style>
+/* ===========================================================================
+   TOKENS — Phosphor Hairline v1.0
+   (same system as the spec sheet, hero, projects grid and services list)
+   =========================================================================== */
+:root{
+  color-scheme: dark;
+
+  --bg:      #0F0F0F;
+  --s1:      #161616;
+  --s2:      #1C1C1C;
+  --line:    #262626;
+  --line-hi: #3A3A3A;
+
+  --fg:      #EFEFEF;
+  --fg-2:    #8A8A8A;
+
+  --accent:     #FFB000;
+  --accent-ink: #0F0F0F;
+
+  --r: 2px;
+  --maxw: 1280px;
+  --gx: 64px;
+  --trough: 88px;          /* half-gutter each side of the vertical hairline */
+
+  --f-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --f-body:    'IBM Plex Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --f-mono:    'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after{ box-sizing: border-box; }
+
+body{
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+body.is-framed{ background: var(--s1); padding: 40px 0 56px; }
+
+::selection{ background: var(--accent); color: var(--accent-ink); }
+
+/* ===========================================================================
+   STAGE — scroll + query container, so one stylesheet drives 1440 and 390
+   =========================================================================== */
+.stage{
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+.stage.is-framed{
+  width: 390px;
+  height: 844px;
+  overflow-y: auto;
+  margin-inline: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  scrollbar-width: none;
+}
+.stage.is-framed::-webkit-scrollbar{ display: none; }
+
+.grain{
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  pointer-events: none;
+  opacity: .045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.section{ padding: clamp(6rem, 3.1rem + 7.6cqi, 10rem) var(--gx) 0; }
+.inner{ width: 100%; max-width: var(--maxw); margin-inline: auto; }
+
+/* ===========================================================================
+   TWO COLUMNS — deliberately uneven.
+   WhatsApp is the conversion path, so the left column gets the wider track,
+   the display type and the only filled control. The form is complete and
+   usable but never competes: smaller type, muted labels, no fill anywhere.
+   The trough carries a vertical hairline — depth in this system is borders,
+   so a rule is the honest way to separate two columns.
+   =========================================================================== */
+.cols{
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: start;
+}
+.col-left{ padding-right: var(--trough); }
+.col-right{
+  padding-left: var(--trough);
+  border-left: 1px solid var(--line);
+}
+
+/* --- left ---------------------------------------------------------------- */
+.headline{
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: 4.25rem;                                     /* fallback if cqi is unsupported */
+  font-size: clamp(2.25rem, 0.55rem + 5.4cqi, 4.25rem);   /* 40px @390 → 68px @1440 */
+  line-height: .95;
+  letter-spacing: -.045em;
+}
+.headline .l{ display: block; }
+.headline .l:last-child{ color: var(--fg-2); }   /* the ask recedes behind the invitation */
+
+.support{
+  margin: 28px 0 0;
+  max-width: 46ch;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--fg-2);
+}
+
+.cta{
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 44px;
+  font-family: var(--f-mono);
+  font-size: .8125rem;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+  border-radius: var(--r);
+  padding: 24px 42px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color .16s ease, border-color .16s ease;
+}
+.cta:hover{
+  background: color-mix(in srgb, var(--accent) 82%, #FFFFFF);
+  border-color: color-mix(in srgb, var(--accent) 82%, #FFFFFF);
+}
+.cta .arw{ transition: transform .24s var(--ease); }
+.cta:hover .arw{ transform: translateX(5px); }
+
+/* --- metadata rows -------------------------------------------------------- */
+.facts{
+  margin: 48px 0 0;
+  max-width: 420px;
+}
+.facts div{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 24px;
+  padding-block: 14px;
+  border-top: 1px solid var(--line);
+}
+.facts div:last-child{ border-bottom: 1px solid var(--line); }
+.facts dt{
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+.facts dd{
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: .8125rem;
+  letter-spacing: .04em;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* --- right: the form ------------------------------------------------------ */
+.form-label{
+  display: block;
+  margin-bottom: 34px;
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+.form{ display: flex; flex-direction: column; gap: 34px; }
+.field{ display: flex; flex-direction: column; gap: 8px; }
+.field label{
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+.field input,
+.field textarea{
+  font-family: var(--f-body);
+  font-size: 1.0625rem;
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 10px 0;
+  width: 100%;
+  transition: border-color .16s ease;
+}
+.field textarea{ resize: vertical; min-height: 96px; line-height: 1.6; }
+.field input::placeholder,
+.field textarea::placeholder{ color: #5A5A5A; }
+.field input:hover,
+.field textarea:hover{ border-bottom-color: var(--line-hi); }
+.field input:focus,
+.field textarea:focus{ outline: none; border-bottom-color: var(--accent); }
+.field input:focus-visible,
+.field textarea:focus-visible{ outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.btn-secondary{
+  align-self: flex-start;
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 16px 30px;
+  cursor: pointer;
+  transition: background-color .16s ease, border-color .16s ease;
+}
+.btn-secondary:hover{ background: var(--line); border-color: var(--line-hi); }
+
+.form-note{
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  letter-spacing: .06em;
+  color: var(--fg-2);
+}
+.form-note[hidden]{ display: none !important; }
+
+/* ===========================================================================
+   FOOTER
+   =========================================================================== */
+.footer{
+  margin-top: clamp(5rem, 2.6rem + 6.3cqi, 8.5rem);
+  padding: 40px var(--gx) 48px;
+  border-top: 1px solid var(--line);
+}
+.footer-inner{ width: 100%; max-width: var(--maxw); margin-inline: auto; }
+.footer-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.footer-row + .footer-row{ margin-top: 32px; }
+
+.wordmark{
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: .9375rem;
+  letter-spacing: -.02em;
+  color: var(--fg);
+  text-decoration: none;
+}
+.social{ display: flex; gap: 28px; flex-wrap: wrap; }
+.social a{
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  text-decoration: none;
+  transition: color .16s ease;
+}
+.social a:hover{ color: var(--fg); }
+
+.copyright{
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  letter-spacing: .06em;
+  color: var(--fg-2);
+}
+.lang{ display: flex; align-items: center; gap: 8px; }
+.lang button{
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  background: none;
+  border: 0;
+  padding: 2px;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: color .16s ease;
+}
+.lang button[aria-pressed="true"]{ color: var(--fg); }
+.lang span{ color: var(--line-hi); font-size: .75rem; }
+
+:where(a, button, input, textarea, [tabindex]):focus-visible{
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r);
+}
+
+/* ===========================================================================
+   PREVIEW CONTROL — page chrome, not part of the design system
+   =========================================================================== */
+.pv{
+  position: fixed;
+  right: 20px; bottom: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: rgba(22,22,22,.92);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  backdrop-filter: blur(10px);
+}
+.pv button{
+  font-family: var(--f-mono);
+  font-size: .6875rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  background: none;
+  border: 0;
+  border-radius: var(--r);
+  padding: 7px 11px;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: background-color .16s ease, color .16s ease;
+}
+.pv button[aria-pressed="true"]{ background: var(--s2); color: var(--fg); }
+
+/* ===========================================================================
+   MOBILE — columns stack; the vertical rule becomes a horizontal one
+   =========================================================================== */
+@container (max-width: 759px){
+  .stage{ --gx: 24px; }
+
+  .cols{ grid-template-columns: minmax(0, 1fr); }
+  .col-left{ padding-right: 0; }
+  .col-right{
+    padding-left: 0;
+    border-left: 0;
+    margin-top: 56px;
+    padding-top: 48px;
+    border-top: 1px solid var(--line);
+  }
+
+  .support{ font-size: 1.0625rem; margin-top: 22px; }
+  .cta{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 36px;
+    padding: 22px 20px;
+  }
+  .facts{ margin-top: 40px; max-width: 100%; }
+
+  .form-label{ margin-bottom: 28px; }
+  .form{ gap: 28px; }
+  .btn-secondary{ align-self: stretch; text-align: center; }
+
+  .footer{ padding-bottom: 40px; }
+  .footer-row{ align-items: flex-start; gap: 16px; }
+  .footer-row:first-child{ flex-direction: column; }
+  .social{ gap: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ transition-duration: .01ms !important; }
+}
+</style>
+
+<div class="pv" role="group" aria-label="Preview width">
+  <button type="button" data-w="desktop" aria-pressed="true">1440</button>
+  <button type="button" data-w="mobile" aria-pressed="false">390</button>
+</div>
+
+<div class="stage" id="stage">
+
+  <section class="section">
+    <div class="inner">
+      <div class="cols">
+
+        <!-- ================= LEFT — the conversion path ================= -->
+        <div class="col-left">
+          <h2 class="headline">
+            <span class="l" data-en="Let&rsquo;s talk about" data-es="Hablemos de">Let&rsquo;s talk about</span>
+            <span class="l" data-en="your site." data-es="tu web.">your site.</span>
+          </h2>
+
+          <p class="support" data-en="Tell me what your business does. I&rsquo;ll tell you what it needs." data-es="Cu&eacute;ntame qu&eacute; hace tu negocio. Yo te digo qu&eacute; necesita.">Tell me what your business does. I&rsquo;ll tell you what it needs.</p>
+
+          <!-- production href: https://wa.me/<number>?text=… -->
+          <a class="cta" href="#">
+            <span>WhatsApp</span>
+            <span class="arw" aria-hidden="true">&rarr;</span>
+          </a>
+
+          <dl class="facts">
+            <div>
+              <dt data-en="Response time" data-es="Tiempo de respuesta">Response time</dt>
+              <dd data-en="Under 4 hours" data-es="Menos de 4 horas">Under 4 hours</dd>
+            </div>
+            <div>
+              <dt data-en="Timezone" data-es="Zona horaria">Timezone</dt>
+              <dd>UTC&minus;5 &middot; 09:00&ndash;19:00</dd>
+            </div>
+            <div>
+              <dt data-en="Languages" data-es="Idiomas">Languages</dt>
+              <dd>Espa&ntilde;ol / English</dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- ================= RIGHT — the secondary path ================= -->
+        <div class="col-right">
+          <span class="form-label" data-en="Or send a message" data-es="O env&iacute;a un mensaje">Or send a message</span>
+
+          <form class="form" id="form" novalidate>
+            <div class="field">
+              <label for="c-name" data-en="Name" data-es="Nombre">Name</label>
+              <input id="c-name" name="name" type="text" autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="c-mail" data-en="Email" data-es="Email">Email</label>
+              <input id="c-mail" name="email" type="email" autocomplete="email">
+            </div>
+            <div class="field">
+              <label for="c-biz" data-en="What your business does" data-es="Qu&eacute; hace tu negocio">What your business does</label>
+              <textarea id="c-biz" name="business" placeholder="A bakery in the old town, six years open, no website yet."></textarea>
+            </div>
+            <button class="btn-secondary" type="submit" data-en="Send message" data-es="Enviar mensaje">Send message</button>
+            <p class="form-note" id="formNote" hidden data-en="Preview only &mdash; point this form at your endpoint to send." data-es="Solo vista previa &mdash; conecta el formulario a tu endpoint para enviar.">Preview only &mdash; point this form at your endpoint to send.</p>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-row">
+        <a class="wordmark" href="#">Jos&eacute; M. S&aacute;nchez</a>
+        <nav class="social" aria-label="Elsewhere">
+          <a href="#">GitHub</a>
+          <a href="#">LinkedIn</a>
+          <a href="#">Instagram</a>
+          <a href="#">Email</a>
+        </nav>
+      </div>
+      <div class="footer-row">
+        <span class="copyright" data-en="&copy; 2026 &middot; Built from scratch, no page builders" data-es="&copy; 2026 &middot; Hecho a mano, sin maquetadores">&copy; 2026 &middot; Built from scratch, no page builders</span>
+        <div class="lang" role="group" aria-label="Language">
+          <button type="button" data-lang="es" aria-pressed="false">ES</button>
+          <span aria-hidden="true">/</span>
+          <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="grain" aria-hidden="true"></div>
+</div>
+
+<script>
+(function(){
+  var stage = document.getElementById('stage');
+  var form  = document.getElementById('form');
+  var note  = document.getElementById('formNote');
+
+  /* --- form ---------------------------------------------------------------
+     No endpoint is wired up, and pretending one is would be a lie in a
+     preview. Submitting surfaces exactly that. */
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    note.hidden = false;
+  });
+
+  /* --- language ------------------------------------------------------------ */
+  var langBtns = document.querySelectorAll('.lang button');
+  function setLang(code){
+    var nodes = document.querySelectorAll('[data-' + code + ']');
+    Array.prototype.forEach.call(nodes, function(n){
+      n.innerHTML = n.getAttribute('data-' + code);
+    });
+    document.documentElement.lang = code;
+    Array.prototype.forEach.call(langBtns, function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-lang') === code ? 'true' : 'false');
+    });
+  }
+  Array.prototype.forEach.call(langBtns, function(b){
+    b.addEventListener('click', function(){ setLang(b.getAttribute('data-lang')); });
+  });
+
+  /* --- preview width ------------------------------------------------------- */
+  var pvBtns = document.querySelectorAll('.pv button');
+  Array.prototype.forEach.call(pvBtns, function(b){
+    b.addEventListener('click', function(){
+      var mobile = b.getAttribute('data-w') === 'mobile';
+      stage.classList.toggle('is-framed', mobile);
+      document.body.classList.toggle('is-framed', mobile);
+      Array.prototype.forEach.call(pvBtns, function(o){
+        o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
+      });
+      stage.scrollTop = 0;
+      window.scrollTo(0, 0);
+    });
+  });
+})();
+</script>

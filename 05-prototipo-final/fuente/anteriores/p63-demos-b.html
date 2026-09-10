@@ -1,0 +1,265 @@
+
+<script>
+/* ===========================================================================
+   DEMOS INTERACTIVAS — Barbería + Gimnasio
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   03 · BARBERÍA — servicios, barbero y hora en una sola pantalla
+   --------------------------------------------------------------------------- */
+DEMOS.barberia = {
+  mount: function (root, l) {
+    var es = l === 'es';
+    var TX = es ? {
+      nav: ['Servicios', 'Equipo', 'Ubicación'], cta: 'Cita', since: 'Desde 2014 · Envigado',
+      lede: 'Elige qué te hacemos, con quién y a qué hora. El precio y la duración se calculan mientras eliges.',
+      s1: '1 · Servicios', s2: '2 · Barbero', s3: '3 · Día y hora', any: 'Cualquiera', anyD: 'El primero libre',
+      sum: 'Tu cita', dur: 'Duración', who: 'Barbero', when: 'Cuándo', total: 'Total', pick: 'Elige servicio y hora',
+      confirm: 'Reservar silla', okTag: 'Silla reservada', ok: 'Llega cinco minutos antes. Si no puedes venir, avísanos por WhatsApp y liberamos la hora.',
+      again: 'Hacer otra reserva', none: 'Sin horas libres para esa duración. Prueba otro día o barbero.', note: 'Demo con datos de ejemplo: no se envía nada.'
+    } : {
+      nav: ['Services', 'Team', 'Location'], cta: 'Book', since: 'Since 2014 · Envigado',
+      lede: 'Choose what we do, who does it and when. Price and duration update as you pick.',
+      s1: '1 · Services', s2: '2 · Barber', s3: '3 · Day & time', any: 'Anyone', anyD: 'First available',
+      sum: 'Your booking', dur: 'Duration', who: 'Barber', when: 'When', total: 'Total', pick: 'Pick a service and a time',
+      confirm: 'Book the chair', okTag: 'Chair booked', ok: 'Arrive five minutes early. If you can’t make it, message us on WhatsApp and we’ll free the slot.',
+      again: 'Make another booking', none: 'No free slots for that duration. Try another day or barber.', note: 'Demo with sample data: nothing is sent.'
+    };
+    var SERV = [
+      { id: 'corte', es: 'Corte clásico', en: 'Classic cut', min: 40, p: 35000 },
+      { id: 'fade', es: 'Degradado', en: 'Skin fade', min: 45, p: 40000 },
+      { id: 'barba', es: 'Barba con toalla caliente', en: 'Hot-towel beard', min: 30, p: 28000 },
+      { id: 'cejas', es: 'Perfilado de cejas', en: 'Eyebrow trim', min: 10, p: 12000 }
+    ];
+    var BARB = [
+      { n: TX.any, d: TX.anyD },
+      { n: 'Andrés', d: es ? 'Degradados' : 'Fades' },
+      { n: 'Mateo', d: es ? 'Barba clásica' : 'Classic beard' },
+      { n: 'Julián', d: es ? 'Tijera' : 'Scissor cuts' }
+    ];
+    var DAYS = nextDays(5, true);
+    var TIMES = [];
+    for (var hh = 10; hh < 20; hh++) TIMES.push(hh + ':00', hh + ':30');
+    var S = { sv: { corte: true }, b: 0, d: 0, t: null, done: false, who: 0 };
+
+    function dur() { return SERV.reduce(function (a, s) { return a + (S.sv[s.id] ? s.min : 0); }, 0); }
+    function price() { return SERV.reduce(function (a, s) { return a + (S.sv[s.id] ? s.p : 0); }, 0); }
+    function busy(bi, di, ti) { return seeded(DAYS[di].getDate() * 7 + bi, ti) < 0.3; }
+    function past(di, ti) {
+      if (di !== 0 || DAYS[0].toDateString() !== new Date().toDateString()) return false;
+      var p = TIMES[ti].split(':'), t = new Date(); t.setHours(+p[0], +p[1], 0, 0);
+      return t.getTime() < Date.now() + 30 * 60000;
+    }
+    function freeFor(bi, di, ti) {
+      var need = Math.max(1, Math.ceil(dur() / 30));
+      if (ti + need > TIMES.length || past(di, ti)) return false;
+      for (var k = 0; k < need; k++) if (busy(bi, di, ti + k)) return false;
+      return true;
+    }
+    function barberFor(di, ti) {
+      if (S.b > 0) return freeFor(S.b, di, ti) ? S.b : -1;
+      for (var bi = 1; bi < BARB.length; bi++) if (freeFor(bi, di, ti)) return bi;
+      return -1;
+    }
+
+    root.className = 'dm dm-barber';
+    root.innerHTML =
+      '<div class="dm-top"><div class="dm-logo" style="font-family:var(--mono);font-size:13px;letter-spacing:.2em;font-weight:500">CORTE &amp; NAVAJA</div>' +
+      '<nav class="dm-links" aria-label="Demo">' + TX.nav.map(function (n) { return '<span>' + n + '</span>'; }).join('') + '</nav>' +
+      '<a class="dm-btn" href="#bb-book" data-act="jump" data-v="bb-book">' + TX.cta + '</a></div>' +
+      '<div class="dm-pad dm-split" style="padding-top:28px;padding-bottom:28px"><div><p class="dm-tag" style="margin:0">' + TX.since + '</p>' +
+        '<h2 style="margin:8px 0 0;font-weight:700;text-transform:uppercase;letter-spacing:-.045em;line-height:.86;font-size:clamp(2.6rem,1.6rem + 5cqi,5.5rem)">Corte<br>&amp; Navaja</h2>' +
+        '<p class="dm-lede">' + TX.lede + '</p></div>' +
+        '<div style="margin-top:18px">' + dmImg('barberHero', es ? 'Barbería con pared de ladrillo y sillones' : 'Barbershop with brick wall and chairs').replace('class="dm-img ', 'style="aspect-ratio:4/3" class="dm-img ') + '</div></div>' +
+      '<section class="dm-sec" id="bb-book"><div class="dm-layout"><div id="bbFlow"></div><aside class="dm-sticky" id="bbSum"></aside></div>' +
+      '<p class="dm-note">' + TX.note + '</p><p class="dm-live" aria-live="polite" id="bbLive"></p></section>';
+
+    var flow = root.querySelector('#bbFlow'), sum = root.querySelector('#bbSum'), live = root.querySelector('#bbLive');
+
+    function draw() {
+      if (S.done) {
+        flow.innerHTML = '<div class="dm-ok"><div class="dm-tag">✓ ' + TX.okTag + '</div>' +
+          '<h3 class="dm-h2" style="margin-top:8px;text-transform:uppercase">' + fmtDay(DAYS[S.d], l, true) + ' · ' + TIMES[S.t] + '</h3>' +
+          '<p class="dm-lede">' + BARB[S.who].n + ' · ' + dur() + ' min · ' + money(price(), l) + '</p><p class="dm-lede">' + TX.ok + '</p>' +
+          '<button class="dm-btn" style="margin-top:14px" data-act="reset">' + TX.again + '</button></div>';
+        sum.innerHTML = dmImg('barberChair', es ? 'Sillón de barbero negro y plateado' : 'Black and silver barber chair').replace('class="dm-img ', 'style="aspect-ratio:16/10" class="dm-img ');
+        return;
+      }
+      var anyFree = false;
+      var slots = TIMES.map(function (tm, i) {
+        var bi = barberFor(S.d, i), ok = bi > 0 && dur() > 0;
+        if (ok) anyFree = true;
+        return '<button class="dm-chip" data-act="time" data-v="' + i + '" aria-pressed="' + (S.t === i) + '"' + (ok ? '' : ' disabled') + '>' + tm + '</button>';
+      }).join('');
+      flow.innerHTML =
+        '<p class="dm-tag" style="margin:0 0 10px">' + TX.s1 + '</p><div class="dm-opts">' + SERV.map(function (s) {
+          return '<button class="dm-opt" data-act="sv" data-v="' + s.id + '" aria-pressed="' + !!S.sv[s.id] + '"><span><strong>' + s[l] + '</strong><small>' + s.min + ' min</small></span><span class="dm-price">' + money(s.p, l) + '</span></button>';
+        }).join('') + '</div>' +
+        '<p class="dm-tag" style="margin:22px 0 10px">' + TX.s2 + '</p><div class="dm-opts four">' + BARB.map(function (b, i) {
+          return '<button class="dm-opt" data-act="barber" data-v="' + i + '" aria-pressed="' + (S.b === i) + '" style="align-items:center;justify-content:flex-start">' +
+            '<span aria-hidden="true" style="flex:none;width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--d-fg);font-weight:700">' + (i === 0 ? '∗' : b.n.charAt(0)) + '</span>' +
+            '<span><strong>' + b.n + '</strong><small>' + b.d + '</small></span></button>';
+        }).join('') + '</div>' +
+        '<p class="dm-tag" style="margin:22px 0 10px">' + TX.s3 + '</p><div class="dm-chips">' + DAYS.map(function (d, i) {
+          return '<button class="dm-chip" data-act="day" data-v="' + i + '" aria-pressed="' + (S.d === i) + '">' + fmtDay(d, l) + '</button>';
+        }).join('') + '</div><div class="dm-chips" style="margin-top:10px">' + slots + '</div>' +
+        (anyFree ? '' : '<p class="dm-note">' + TX.none + '</p>');
+
+      var ready = S.t !== null && dur() > 0 && barberFor(S.d, S.t) > 0;
+      var who = ready ? barberFor(S.d, S.t) : S.b;
+      sum.innerHTML = dmImg('barberChair', es ? 'Sillón de barbero negro y plateado' : 'Black and silver barber chair').replace('class="dm-img ', 'style="aspect-ratio:16/10" class="dm-img ') +
+        '<div class="dm-sum"><div class="dm-tag" style="margin-bottom:10px">' + TX.sum + '</div><dl>' +
+        SERV.filter(function (s) { return S.sv[s.id]; }).map(function (s) { return '<dt>' + s[l] + '</dt><dd>' + money(s.p, l) + '</dd>'; }).join('') +
+        '<dt>' + TX.dur + '</dt><dd>' + dur() + ' min</dd>' +
+        '<dt>' + TX.who + '</dt><dd>' + (who > 0 ? BARB[who].n : TX.any) + '</dd>' +
+        '<dt>' + TX.when + '</dt><dd>' + (ready ? fmtDay(DAYS[S.d], l) + ' · ' + TIMES[S.t] : '—') + '</dd>' +
+        '<dt><strong>' + TX.total + '</strong></dt><dd><strong>' + money(price(), l) + '</strong></dd></dl>' +
+        '<button class="dm-btn" style="width:100%;margin-top:14px" data-act="confirm"' + (ready ? '' : ' disabled') + '>' + (ready ? TX.confirm : TX.pick) + '</button></div>';
+    }
+
+    on(root, function (act, v, el, e) {
+      if (act === 'jump') { e.preventDefault(); dmScroll(root.querySelector('#' + v)); return; }
+      if (act === 'sv') { if (S.sv[v]) delete S.sv[v]; else S.sv[v] = true; }
+      if (act === 'barber') S.b = +v;
+      if (act === 'day') S.d = +v;
+      if (act === 'time') S.t = +v;
+      if ((act === 'sv' || act === 'barber' || act === 'day') && S.t !== null && barberFor(S.d, S.t) < 0) S.t = null;
+      if (act === 'confirm') { S.who = barberFor(S.d, S.t); S.done = true; live.textContent = TX.okTag; }
+      if (act === 'reset') S = { sv: { corte: true }, b: 0, d: 0, t: null, done: false, who: 0 };
+      draw();
+    });
+    draw();
+  }
+};
+
+/* ---------------------------------------------------------------------------
+   04 · GIMNASIO — el horario es la portada: próxima clase, filtros y plazas
+   --------------------------------------------------------------------------- */
+DEMOS.gimnasio = {
+  mount: function (root, l) {
+    var es = l === 'es';
+    var TX = es ? {
+      nav: ['Horario', 'Planes', 'Sede'], mine: 'Mis clases', next: 'Próxima clase', starts: 'empieza en',
+      all: 'Todas', book: 'Reservar', cancel: 'Cancelar', full: 'Completa', left: function (n) { return n === 1 ? 'Queda 1 plaza' : 'Quedan ' + n + ' plazas'; },
+      mineEmpty: 'Todavía no has reservado ninguna clase.', booked: 'Reservada', noClass: 'No hay clases de ese tipo este día.',
+      note: 'Demo con datos de ejemplo: las plazas se guardan solo mientras está abierta.', today: 'Hoy'
+    } : {
+      nav: ['Timetable', 'Plans', 'Location'], mine: 'My classes', next: 'Next class', starts: 'starts in',
+      all: 'All', book: 'Book', cancel: 'Cancel', full: 'Full', left: function (n) { return n === 1 ? '1 spot left' : n + ' spots left'; },
+      mineEmpty: 'You haven’t booked any classes yet.', booked: 'Booked', noClass: 'No classes of that type on this day.',
+      note: 'Demo with sample data: bookings only last while it’s open.', today: 'Today'
+    };
+    var TYPES = [
+      { id: 'fuerza', img: 'gymStrength', es: 'Fuerza', en: 'Strength', alt: es ? 'Mancuernas negras en un estante' : 'Black dumbbells on a rack' },
+      { id: 'spin', img: 'gymSpin', es: 'Spinning', en: 'Spin', alt: es ? 'Fila de bicicletas estáticas' : 'Row of spin bikes' },
+      { id: 'func', img: 'gymFunctional', es: 'Funcional', en: 'Functional', alt: es ? 'Saltos al cajón en el gimnasio' : 'Box jumps in the gym' },
+      { id: 'yoga', img: 'gymYoga', es: 'Yoga', en: 'Yoga', alt: es ? 'Grupo haciendo yoga' : 'Group doing yoga' }
+    ];
+    var COACH = ['Carla R.', 'Luis M.', 'Sara P.'];
+    var TIMES = ['06:00', '07:00', '12:30', '17:30', '18:30', '19:30'];
+    var DAYS = nextDays(7, false);
+    var S = { d: 0, f: 'all', mine: {}, showMine: false };
+    var timer = 0;
+
+    function classesFor(di) {
+      var d = DAYS[di], wd = d.getDay();
+      return TIMES.map(function (tm, i) {
+        if (wd === 0 && i > 2) return null;                       /* domingo: solo mañana */
+        var ty = TYPES[(i + wd) % 4], cap = ty.id === 'spin' ? 16 : ty.id === 'yoga' ? 14 : 20;
+        return { key: d.toDateString() + '|' + tm, di: di, time: tm, type: ty, coach: COACH[(i + wd) % 3],
+                 min: ty.id === 'yoga' ? 60 : 45, cap: cap, taken: Math.min(cap, Math.floor(seeded(d.getDate(), i) * (cap + 3))) };
+      }).filter(Boolean);
+    }
+    function spots(c) { return c.cap - c.taken - (S.mine[c.key] ? 1 : 0); }
+    function at(c) { var p = c.time.split(':'), t = new Date(DAYS[c.di]); t.setHours(+p[0], +p[1], 0, 0); return t; }
+    function nextClass() {
+      var now = Date.now();
+      for (var di = 0; di < DAYS.length; di++) {
+        var list = classesFor(di);
+        for (var i = 0; i < list.length; i++) if (at(list[i]).getTime() > now) return list[i];
+      }
+      return null;
+    }
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+    root.className = 'dm dm-gym';
+    root.innerHTML =
+      '<div class="dm-top"><div class="dm-logo" style="color:var(--d-acc);letter-spacing:.14em">FORJA</div>' +
+      '<nav class="dm-links" aria-label="Demo">' + TX.nav.map(function (n) { return '<span>' + n + '</span>'; }).join('') + '</nav>' +
+      '<button class="dm-btn" data-act="mine" id="gyMineBtn"></button></div>' +
+      '<div class="dm-cover">' + dmImg('gymHero', es ? 'Gimnasio industrial con bancos y pesas' : 'Industrial gym with benches and weights', '') +
+        '<div class="dm-panel"><div class="dm-tag" id="gyNextTag">' + TX.next + '</div><div class="dm-count" id="gyCount" aria-hidden="true">00:00:00</div>' +
+        '<p class="dm-muted" id="gyNextInfo" style="margin:8px 0 0"></p></div></div>' +
+      '<section class="dm-sec" id="gyMine" hidden></section>' +
+      '<section class="dm-sec"><div class="dm-opts four" id="gyFilters"></div><div class="dm-tabs" id="gyDays" style="margin-top:18px"></div><ul class="dm-classes" id="gyList"></ul>' +
+      '<p class="dm-note">' + TX.note + '</p><p class="dm-live" aria-live="polite" id="gyLive"></p></section>';
+
+    var mineBtn = root.querySelector('#gyMineBtn'), mineEl = root.querySelector('#gyMine'), filters = root.querySelector('#gyFilters'),
+        daysEl = root.querySelector('#gyDays'), listEl = root.querySelector('#gyList'), live = root.querySelector('#gyLive'),
+        countEl = root.querySelector('#gyCount'), infoEl = root.querySelector('#gyNextInfo');
+
+    function tick() {
+      var c = nextClass();
+      if (!c) { countEl.textContent = '—'; infoEl.textContent = ''; return; }
+      var s = Math.max(0, Math.floor((at(c).getTime() - Date.now()) / 1000));
+      countEl.textContent = pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60);
+      infoEl.textContent = c.type[l] + ' · ' + (c.di === 0 ? TX.today : fmtDay(DAYS[c.di], l)) + ' ' + c.time + ' · ' + c.coach + ' · ' + TX.starts;
+    }
+
+    function draw() {
+      var n = Object.keys(S.mine).length;
+      mineBtn.textContent = TX.mine + ' (' + n + ')';
+      mineBtn.setAttribute('aria-expanded', S.showMine ? 'true' : 'false');
+
+      filters.innerHTML = [{ id: 'all' }].concat(TYPES).map(function (t) {
+        var label = t.id === 'all' ? TX.all : t[l];
+        var pic = t.id === 'all' ? '' : '<div style="width:100%;height:84px;margin-bottom:10px">' + dmImg(t.img, t.alt).replace('class="dm-img ', 'style="height:100%" class="dm-img ') + '</div>';
+        return '<button class="dm-opt" data-act="filter" data-v="' + t.id + '" aria-pressed="' + (S.f === t.id) + '" style="flex-direction:column;align-items:stretch' + (t.id === 'all' ? ';justify-content:flex-end;min-height:132px' : '') + '">' + pic + '<strong>' + label + '</strong></button>';
+      }).join('');
+
+      daysEl.innerHTML = DAYS.map(function (d, i) {
+        return '<button class="dm-tab" role="tab" data-act="day" data-v="' + i + '" aria-selected="' + (S.d === i) + '">' + (i === 0 ? TX.today : fmtDay(d, l)) + '</button>';
+      }).join('');
+
+      var list = classesFor(S.d).filter(function (c) { return S.f === 'all' || c.type.id === S.f; });
+      listEl.innerHTML = list.length ? list.map(function (c) {
+        var left = spots(c), mine = !!S.mine[c.key], gone = at(c).getTime() < Date.now();
+        var pct = Math.round(((c.cap - left) / c.cap) * 100);
+        var btn = mine ? '<button class="dm-btn ghost" data-act="book" data-v="' + c.key + '" aria-pressed="true">' + TX.cancel + '</button>'
+          : '<button class="dm-btn" data-act="book" data-v="' + c.key + '"' + (left <= 0 || gone ? ' disabled' : '') + '>' + (left <= 0 ? TX.full : TX.book) + '</button>';
+        return '<li class="dm-class"' + (gone ? ' style="opacity:.45"' : '') + '><span class="t">' + c.time + '</span>' +
+          '<div><strong>' + c.type[l] + '</strong> <span class="dm-muted">· ' + c.min + ' min · ' + c.coach + '</span>' + (mine ? ' <span class="dm-tag" style="color:var(--d-acc)">' + TX.booked + '</span>' : '') + '</div>' +
+          '<div class="act"><span class="dm-cap" aria-hidden="true"><i style="width:' + pct + '%"></i></span><span class="dm-muted" style="font-size:13px;min-width:112px">' + TX.left(Math.max(0, left)) + '</span>' + btn + '</div></li>';
+      }).join('') : '<li class="dm-note">' + TX.noClass + '</li>';
+
+      if (S.showMine) {
+        var keys = Object.keys(S.mine);
+        mineEl.hidden = false;
+        mineEl.innerHTML = '<div class="dm-tag">' + TX.mine + '</div>' + (keys.length ? '<ul class="dm-lines">' + keys.map(function (k) {
+          var c = S.mine[k];
+          return '<li><span>' + c.type[l] + ' · ' + (c.di === 0 ? TX.today : fmtDay(DAYS[c.di], l)) + ' ' + c.time + '</span><button class="dm-btn ghost" data-act="book" data-v="' + k + '">' + TX.cancel + '</button></li>';
+        }).join('') + '</ul>' : '<p class="dm-muted" style="margin:8px 0 0">' + TX.mineEmpty + '</p>');
+      } else { mineEl.hidden = true; }
+    }
+
+    on(root, function (act, v) {
+      if (act === 'filter') S.f = v;
+      if (act === 'day') S.d = +v;
+      if (act === 'mine') S.showMine = !S.showMine;
+      if (act === 'book') {
+        if (S.mine[v]) { live.textContent = TX.cancel + ': ' + S.mine[v].type[l] + ' ' + S.mine[v].time; delete S.mine[v]; }
+        else {
+          var c = null;
+          for (var di = 0; di < DAYS.length && !c; di++) c = classesFor(di).filter(function (x) { return x.key === v; })[0] || null;
+          if (c && spots(c) > 0) { S.mine[v] = c; live.textContent = TX.booked + ': ' + c.type[l] + ' ' + c.time; }
+        }
+      }
+      draw();
+    });
+
+    draw(); tick();
+    timer = setInterval(tick, 1000);
+    return function () { clearInterval(timer); };
+  }
+};
+</script>

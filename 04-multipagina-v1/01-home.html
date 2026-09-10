@@ -1,0 +1,658 @@
+<title>Portafolio JMS — Home</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
+
+<style>
+/* ===========================================================================
+   PHOSPHOR HAIRLINE v1.0 — sistema del portafolio de José M. Sánchez
+   Solo oscuro, por decisión. Dos familias: IBM Plex Sans + IBM Plex Mono.
+   Prohibido: #000000 plano, fondos claros, gradientes de fondo, sombras.
+   =========================================================================== */
+:root{
+  color-scheme: dark;
+
+  --bg:      #0F0F0F;
+  --s1:      #161616;
+  --s2:      #1C1C1C;
+  --line:    #262626;
+  --line-hi: #3A3A3A;
+  --fg:      #EFEFEF;
+  --fg-2:    #8A8A8A;
+
+  /* Acento pendiente de definir. Una sola variable gobierna todo el sitio. */
+  --accent:     #FFB000;
+  --accent-ink: #0F0F0F;
+
+  --r: 2px;
+  --maxw: 1280px;
+  --gx: 24px;
+
+  --f-sans: 'IBM Plex Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  /* Easings propios. Nunca ease-in-out por defecto. */
+  --e-out:  cubic-bezier(0.16, 1, 0.3, 1);
+  --e-both: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --t-hero: clamp(2.25rem, 1.167rem + 4.815vw, 5.5rem);
+  --t-h2:   clamp(1.75rem, 1.417rem + 1.481vw, 2.75rem);
+  --t-h3:   1.3125rem;
+  --t-lead: 1.0625rem;
+  --t-body: 1.0625rem;
+  --t-sm:   0.9375rem;
+  --t-meta: 0.8125rem;
+  --t-lbl:  0.75rem;
+
+  --pad: 96px;
+  --hdr: 64px;
+}
+@media (min-width: 768px){ :root{ --gx: 40px; --pad: 128px; --hdr: 68px; } }
+@media (min-width: 1200px){ :root{ --gx: 64px; --pad: 160px; --hdr: 72px; } }
+
+*, *::before, *::after{ box-sizing: border-box; }
+
+body{
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-sans);
+  font-size: var(--t-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+::selection{ background: var(--accent); color: var(--accent-ink); }
+
+/* transición entre páginas — fundido corto, sin cortina ni loader */
+body{ opacity: 1; transition: opacity .22s var(--e-both); }
+body.leaving{ opacity: 0; }
+
+.wrap{ width: 100%; max-width: var(--maxw); margin-inline: auto; }
+.sec{ padding: var(--pad) var(--gx); }
+
+.mono{
+  font-family: var(--f-mono);
+  font-size: var(--t-lbl);
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+.meta{
+  font-family: var(--f-mono);
+  font-size: var(--t-meta);
+  letter-spacing: .04em;
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
+}
+
+a{ color: inherit; text-decoration: none; }
+:where(a, button, input, textarea, [tabindex]):focus-visible{
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r);
+}
+
+/* --- grano, 4.5%, sobre todo el fondo ------------------------------------ */
+.grain{
+  position: fixed; inset: 0; z-index: 900;
+  pointer-events: none; opacity: .045; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ===========================================================================
+   HEADER FIJO — transparente hasta el scroll
+   =========================================================================== */
+.hdr{
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--hdr);
+  display: flex; align-items: center;
+  padding-inline: var(--gx);
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background-color .28s var(--e-out), border-color .28s var(--e-out), backdrop-filter .28s var(--e-out);
+}
+.hdr.scrolled{
+  background: rgba(15,15,15,.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom-color: var(--line);
+}
+.hdr-in{ display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.mark{ font-weight: 600; font-size: .9375rem; letter-spacing: -.02em; white-space: nowrap; }
+.hdr-r{ display: flex; align-items: center; gap: 20px; }
+.nav{ display: none; gap: 28px; }
+@media (min-width: 768px){ .nav{ display: flex; } }
+.nav a{ font-family: var(--f-mono); font-size: var(--t-lbl); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-2); transition: color .16s var(--e-out); }
+.nav a:hover, .nav a[aria-current="page"]{ color: var(--fg); }
+
+.lang{ display: flex; align-items: center; gap: 7px; padding-left: 20px; border-left: 1px solid var(--line); }
+.lang button{
+  font-family: var(--f-mono); font-size: var(--t-lbl); letter-spacing: .14em; text-transform: uppercase;
+  background: none; border: 0; padding: 2px; color: var(--fg-2); cursor: pointer;
+  transition: color .16s var(--e-out);
+}
+.lang button[aria-pressed="true"]{ color: var(--fg); }
+.lang i{ color: var(--line-hi); font-style: normal; }
+
+.burger{
+  display: block;
+  font-family: var(--f-mono); font-size: var(--t-lbl); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--fg); background: none; border: 1px solid var(--line); border-radius: var(--r);
+  padding: 8px 11px; cursor: pointer;
+}
+@media (min-width: 768px){ .burger{ display: none; } }
+
+.menu{ position: fixed; inset: 0; z-index: 200; background: var(--bg); padding: var(--gx); display: flex; flex-direction: column; }
+.menu[hidden]{ display: none !important; }
+.menu-top{ display: flex; align-items: center; justify-content: space-between; }
+.menu nav{ display: flex; flex-direction: column; margin-top: 48px; }
+.menu nav a{ font-size: 1.875rem; font-weight: 600; letter-spacing: -.03em; padding-block: 14px; border-bottom: 1px solid var(--line); }
+
+/* ===========================================================================
+   HERO — anclado al tercio inferior izquierdo
+   =========================================================================== */
+.hero{
+  min-height: 100svh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  gap: 36px;
+  padding: var(--hdr) var(--gx) 40px;
+}
+@media (min-width: 768px){ .hero{ gap: 44px; padding-bottom: 52px; } }
+.hero-in{ width: 100%; max-width: var(--maxw); margin-inline: auto; }
+.eyebrow{ margin: 0 0 20px; font-family: var(--f-mono); font-size: var(--t-lbl); font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--fg-2); }
+@media (min-width: 768px){ .eyebrow{ letter-spacing: .2em; margin-bottom: 26px; } }
+
+h1{
+  margin: 0;
+  font-size: var(--t-hero);
+  font-weight: 700;
+  line-height: .95;
+  letter-spacing: -.045em;
+}
+/* máscara del revelado del titular */
+.line{ display: block; overflow: hidden; padding-bottom: .14em; margin-bottom: -.14em; }
+.line > span{ display: block; }
+.line:last-child > span{ color: var(--fg-2); }
+
+.support{ margin: 26px 0 0; max-width: 60ch; font-size: var(--t-lead); line-height: 1.6; color: var(--fg-2); }
+@media (min-width: 768px){ .support{ font-size: 1.125rem; margin-top: 30px; } }
+
+.acts{ display: flex; flex-direction: column; align-items: stretch; gap: 18px; margin-top: 36px; }
+@media (min-width: 768px){ .acts{ flex-direction: row; align-items: center; gap: 32px; margin-top: 44px; } }
+
+.btn{
+  font-family: var(--f-mono); font-size: var(--t-lbl); font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase;
+  border-radius: var(--r); border: 1px solid transparent;
+  padding: 18px 20px; cursor: pointer; text-align: center; white-space: nowrap;
+  transition: background-color .18s var(--e-out), border-color .18s var(--e-out), color .18s var(--e-out);
+}
+@media (min-width: 768px){ .btn{ padding: 18px 34px; } }
+.btn-1{ background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-1:hover{ background: #FFBE2E; border-color: #FFBE2E; }
+.btn-2{ background: transparent; color: var(--fg); border-color: var(--line); }
+.btn-2:hover{ background: var(--line); border-color: var(--line-hi); }
+
+.tlink{ display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; color: var(--fg); border-bottom: 1px solid transparent; padding-bottom: 2px; transition: color .18s var(--e-out), border-color .18s var(--e-out); }
+.tlink .arw{ transition: transform .28s var(--e-out); }
+.tlink:hover{ color: var(--accent); border-bottom-color: rgba(255,176,0,.45); }
+.tlink:hover .arw{ transform: translateX(4px); }
+
+.scroll{ width: 100%; max-width: var(--maxw); margin-inline: auto; display: flex; align-items: center; gap: 14px; }
+.scroll i{ position: relative; display: block; width: 1px; height: 34px; background: var(--line); overflow: hidden; flex: none; }
+.scroll i::after{
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 45%;
+  background: linear-gradient(to bottom, rgba(239,239,239,0), var(--fg));
+  animation: tick 2.6s var(--e-both) infinite;
+}
+@keyframes tick{ 0%{ transform: translateY(-100%);} 55%,100%{ transform: translateY(230%);} }
+
+/* ===========================================================================
+   PROPUESTA DE VALOR — mucho aire, máximo 60 caracteres
+   =========================================================================== */
+.value{ border-top: 1px solid var(--line); }
+.value p{ margin: 0; max-width: 60ch; font-size: clamp(1.25rem, 1rem + 1.1vw, 1.875rem); line-height: 1.45; letter-spacing: -.02em; }
+.value p + p{ margin-top: 28px; font-size: var(--t-body); line-height: 1.6; color: var(--fg-2); letter-spacing: 0; max-width: 58ch; }
+
+/* ===========================================================================
+   ENCABEZADO DE BLOQUE
+   =========================================================================== */
+.bhead{ display: flex; flex-direction: column; gap: 14px; padding-bottom: 26px; border-bottom: 1px solid var(--line); margin-bottom: 44px; }
+@media (min-width: 768px){ .bhead{ flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 48px; } }
+.bhead p{ margin: 0; max-width: 42ch; font-size: var(--t-sm); color: var(--fg-2); }
+
+/* ===========================================================================
+   TARJETAS DE PROYECTO — marco neutro, capturas opuestas
+   =========================================================================== */
+.grid{ display: grid; grid-template-columns: minmax(0,1fr); gap: 32px; }
+@media (min-width: 768px){ .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+
+.card{ position: relative; display: flex; flex-direction: column; min-width: 0; }
+.shot{
+  position: relative; aspect-ratio: 16 / 10;
+  border: 1px solid var(--line); border-radius: var(--r);
+  overflow: hidden; background: var(--s1);
+  transition: border-color .3s var(--e-out);
+}
+.shot svg{ display: block; width: 100%; height: 100%; transform-origin: center; transition: transform .8s var(--e-out); }
+.card:hover .shot svg, .card:focus-within .shot svg{ transform: scale(1.03); }
+.card:hover .shot, .card:focus-within .shot{ border-color: var(--accent); }
+.card:hover .arw, .card:focus-within .arw{ transform: translateX(4px); }
+
+.sector{ margin: 22px 0 0; font-family: var(--f-mono); font-size: .6875rem; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+.card h3{ margin: 11px 0 0; font-size: var(--t-h3); font-weight: 600; letter-spacing: -.022em; line-height: 1.2; }
+.card .desc{
+  margin: 11px 0 0; font-size: var(--t-sm); line-height: 1.6; color: var(--fg-2);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+.cmeta{ margin-top: auto; padding-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.tags{ display: flex; flex-wrap: wrap; gap: 6px; }
+.tag{ font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-2); border: 1px solid var(--line); border-radius: var(--r); padding: 3px 8px; white-space: nowrap; }
+.dlink{ display: inline-flex; align-items: center; gap: 9px; font-family: var(--f-mono); font-size: .6875rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--fg); white-space: nowrap; transition: color .18s var(--e-out); }
+.dlink .arw{ transition: transform .28s var(--e-out); }
+.dlink::after{ content: ""; position: absolute; inset: 0; }
+.card:hover .dlink, .card:focus-within .dlink{ color: var(--accent); }
+
+.more{ margin-top: 44px; }
+
+/* ===========================================================================
+   LISTA DE SERVICIOS
+   =========================================================================== */
+.slist{ list-style: none; margin: 0; padding: 0; }
+.slist li:last-child .srow{ border-bottom: 1px solid var(--line); }
+.srow{
+  position: relative; display: grid; align-items: start;
+  grid-template-columns: 40px minmax(0,1fr) 18px;
+  column-gap: 14px; row-gap: 9px;
+  padding: 24px 12px; margin-inline: -12px;
+  border-top: 1px solid var(--line);
+  transition: background-color 400ms var(--e-out);
+}
+@media (min-width: 1200px){
+  .srow{
+    grid-template-columns: 84px minmax(0,.9fr) minmax(0,1.1fr) 22px;
+    align-items: baseline; column-gap: 36px;
+    padding: 30px 22px; margin-inline: -22px;
+  }
+}
+.srow:hover, .srow:focus-visible{ background-color: var(--s1); }
+.snum{ font-family: var(--f-mono); font-size: var(--t-meta); font-weight: 500; letter-spacing: .12em; color: var(--fg-2); font-variant-numeric: tabular-nums; transition: color 400ms var(--e-out); padding-top: 5px; }
+@media (min-width: 1200px){ .snum{ padding-top: 0; } }
+.srow:hover .snum, .srow:focus-visible .snum{ color: var(--accent); }
+.sname{ font-size: clamp(1.375rem, 1rem + 1.4vw, 2.25rem); font-weight: 600; letter-spacing: -.03em; line-height: 1.1; }
+.sdesc{ margin: 0; font-size: var(--t-sm); line-height: 1.6; color: var(--fg-2); grid-column: 2; }
+@media (min-width: 1200px){ .sdesc{ grid-column: 3; font-size: 1rem; } }
+.sarw{ justify-self: end; color: var(--accent); opacity: 0; transform: translateX(-8px); transition: opacity 400ms var(--e-out), transform 400ms var(--e-out); }
+.srow:hover .sarw, .srow:focus-visible .sarw{ opacity: 1; transform: translateX(0); }
+@media (max-width: 1199px){ .sarw{ opacity: 1; transform: none; color: var(--fg-2); grid-column: 3; grid-row: 1; padding-top: 5px; } }
+
+/* ===========================================================================
+   CTA FINAL
+   =========================================================================== */
+.cta{ border-top: 1px solid var(--line); }
+.cta h2{ margin: 0; font-size: var(--t-hero); font-weight: 700; line-height: .98; letter-spacing: -.045em; max-width: 16ch; }
+.cta h2 span{ color: var(--fg-2); }
+.cta .acts{ margin-top: 40px; }
+
+/* ===========================================================================
+   FOOTER
+   =========================================================================== */
+footer{ border-top: 1px solid var(--line); padding: 40px var(--gx) 48px; }
+.frow{ display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+.frow + .frow{ margin-top: 28px; }
+.social{ display: flex; gap: 22px; flex-wrap: wrap; }
+.social a{ font-family: var(--f-mono); font-size: var(--t-lbl); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-2); transition: color .16s var(--e-out); }
+.social a:hover{ color: var(--fg); }
+.copy{ font-family: var(--f-mono); font-size: var(--t-lbl); letter-spacing: .06em; color: var(--fg-2); }
+
+/* ===========================================================================
+   DEMO LIGHTBOX — 1 clic desde la entrada hasta un demo real
+   =========================================================================== */
+.lb{ position: fixed; inset: 0; z-index: 800; background: rgba(15,15,15,.92); backdrop-filter: blur(8px); display: flex; flex-direction: column; padding: var(--gx); gap: 16px; }
+.lb[hidden]{ display: none !important; }
+.lb-top{ display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; max-width: 1100px; margin-inline: auto; }
+.lb-body{ width: 100%; max-width: 1100px; margin-inline: auto; border: 1px solid var(--line-hi); border-radius: var(--r); overflow: auto; }
+.lb-body svg{ display: block; width: 100%; height: auto; }
+
+/* ===========================================================================
+   MOVIMIENTO
+   Estados iniciales solo cuando hay JS y el usuario no pidió menos movimiento.
+   Sin JS o con prefers-reduced-motion, todo queda visible y legible.
+   =========================================================================== */
+.js .rv{ opacity: 0; transform: translateY(24px); }
+.js .rv-32{ transform: translateY(32px); }
+.js .rv-fade{ transform: none; }              /* propuesta de valor y CTA: sin desplazamiento */
+.js .rv.in{ opacity: 1; transform: none; transition: opacity .7s var(--e-out), transform .7s var(--e-out); }
+.js .line > span{ transform: translateY(100%); }
+.js .line.in > span{ transform: translateY(0); transition: transform .9s var(--e-out); }
+
+@media (prefers-reduced-motion: reduce){
+  *{ transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  .js .rv, .js .line > span{ opacity: 1 !important; transform: none !important; }
+  .scroll i::after{ animation: none; transform: translateY(60%); }
+}
+</style>
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="hdr" id="hdr">
+  <div class="hdr-in wrap">
+    <a class="mark" href="01-home.html">José M. Sánchez</a>
+    <div class="hdr-r">
+      <nav class="nav" aria-label="Principal">
+        <a href="02-proyectos.html" data-es="Trabajo" data-en="Work">Trabajo</a>
+        <a href="03-servicios.html" data-es="Servicios" data-en="Services">Servicios</a>
+        <a href="04-contacto.html" data-es="Contacto" data-en="Contact">Contacto</a>
+      </nav>
+      <div class="lang" role="group" aria-label="Idioma">
+        <button type="button" data-lang="es" aria-pressed="true">ES</button>
+        <i aria-hidden="true">/</i>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <button class="burger" id="burger" type="button" aria-expanded="false" aria-controls="menu" data-es="Menú" data-en="Menu">Menú</button>
+    </div>
+  </div>
+</header>
+
+<div class="menu" id="menu" hidden>
+  <div class="menu-top">
+    <span class="mono">José M. Sánchez</span>
+    <button class="burger" id="mclose" type="button" data-es="Cerrar" data-en="Close">Cerrar</button>
+  </div>
+  <nav aria-label="Móvil">
+    <a href="02-proyectos.html" data-es="Trabajo" data-en="Work">Trabajo</a>
+    <a href="03-servicios.html" data-es="Servicios" data-en="Services">Servicios</a>
+    <a href="04-contacto.html" data-es="Contacto" data-en="Contact">Contacto</a>
+  </nav>
+</div>
+
+<main>
+  <!-- ============================ HERO ============================ -->
+  <section class="hero">
+    <div class="hero-in">
+      <p class="eyebrow rv" data-es="Desarrollador web — disponible en todo el mundo" data-en="Web developer — available worldwide">Desarrollador web &mdash; disponible en todo el mundo</p>
+      <h1>
+        <span class="line"><span data-es="Webs que te traen clientes." data-en="Websites that bring you customers.">Webs que te traen clientes.</span></span>
+        <span class="line"><span data-es="No decoración." data-en="Not decoration.">No decoraci&oacute;n.</span></span>
+      </h1>
+      <p class="support rv" data-es="Creo sitios rápidos y modernos para pequeños negocios. Una persona, de principio a fin." data-en="I build fast, modern sites for small businesses. One person, start to finish.">Creo sitios r&aacute;pidos y modernos para peque&ntilde;os negocios. Una persona, de principio a fin.</p>
+      <div class="acts rv">
+        <!-- producción: https://wa.me/<número>?text=… -->
+        <a class="btn btn-1" href="04-contacto.html" data-es="Escríbeme por WhatsApp" data-en="Message me on WhatsApp">Escr&iacute;beme por WhatsApp</a>
+        <a class="tlink" href="02-proyectos.html">
+          <span data-es="Ver el trabajo" data-en="See the work">Ver el trabajo</span>
+          <span class="arw" aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
+    </div>
+    <div class="scroll rv">
+      <i aria-hidden="true"></i>
+      <span class="mono" data-es="Desliza" data-en="Scroll">Desliza</span>
+    </div>
+  </section>
+
+  <!-- ====================== PROPUESTA DE VALOR ====================== -->
+  <section class="sec value">
+    <div class="wrap">
+      <p class="rv rv-fade" data-es="Tu sitio es la primera persona que atiende a tu cliente. Y no duerme." data-en="Your site is the first person who attends your customer. And it never sleeps.">Tu sitio es la primera persona que atiende a tu cliente. Y no duerme.</p>
+      <p class="rv rv-fade" data-es="Por eso no empiezo por el diseño, sino por la llamada que quieres recibir. Todo lo que no lleve a esa llamada sobra." data-en="So I don't start with the design, I start with the call you want to receive. Anything that doesn't lead to that call is surplus.">Por eso no empiezo por el dise&ntilde;o, sino por la llamada que quieres recibir. Todo lo que no lleve a esa llamada sobra.</p>
+    </div>
+  </section>
+
+  <!-- ====================== PREVIEW PROYECTOS ====================== -->
+  <section class="sec" id="trabajo">
+    <div class="wrap">
+      <div class="bhead rv rv-fade">
+        <span class="mono" data-es="Trabajo seleccionado / 01" data-en="Selected work / 01">Trabajo seleccionado / 01</span>
+        <p data-es="Demos funcionales, construidos para enseñar qué necesita cada oficio." data-en="Functional demos built to show what each industry needs.">Demos funcionales, construidos para ense&ntilde;ar qu&eacute; necesita cada oficio.</p>
+      </div>
+
+      <div class="grid" id="cards"></div>
+
+      <div class="more rv">
+        <a class="tlink" href="02-proyectos.html">
+          <span data-es="Ver los cuatro demos" data-en="See all four demos">Ver los cuatro demos</span>
+          <span class="arw" aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== PREVIEW SERVICIOS ====================== -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="bhead rv rv-fade">
+        <span class="mono" data-es="Servicios / 02" data-en="Services / 02">Servicios / 02</span>
+        <p data-es="Cuatro maneras de empezar. Ninguna incluye cuotas mensuales." data-en="Four ways to start. None of them involves a monthly fee.">Cuatro maneras de empezar. Ninguna incluye cuotas mensuales.</p>
+      </div>
+
+      <ol class="slist">
+        <li><a class="srow rv" href="03-servicios.html">
+          <span class="snum">01</span>
+          <span class="sname" data-es="Sitio para tu negocio" data-en="Business website">Sitio para tu negocio</span>
+          <p class="sdesc" data-es="Un lugar donde te encuentran en Google, te entienden en diez segundos y se van con tu teléfono." data-en="A place customers find on Google, understand in ten seconds, and leave with your phone number.">Un lugar donde te encuentran en Google, te entienden en diez segundos y se van con tu tel&eacute;fono.</p>
+          <span class="sarw" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="srow rv" href="03-servicios.html">
+          <span class="snum">02</span>
+          <span class="sname" data-es="Página de aterrizaje" data-en="Landing page">P&aacute;gina de aterrizaje</span>
+          <p class="sdesc" data-es="Una sola página con un solo trabajo: convertir en consultas a quien ya hizo clic en tu anuncio." data-en="One page with one job: turning the people already clicking your ad into enquiries.">Una sola p&aacute;gina con un solo trabajo: convertir en consultas a quien ya hizo clic en tu anuncio.</p>
+          <span class="sarw" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="srow rv" href="03-servicios.html">
+          <span class="snum">03</span>
+          <span class="sname" data-es="Reservas online" data-en="Online booking">Reservas online</span>
+          <p class="sdesc" data-es="Tus clientes reservan solos a las once de la noche, y dejas de perder a los que no dejan mensaje." data-en="Customers book themselves in at eleven at night, and you stop losing the ones who won't leave a voicemail.">Tus clientes reservan solos a las once de la noche, y dejas de perder a los que no dejan mensaje.</p>
+          <span class="sarw" aria-hidden="true">&rarr;</span>
+        </a></li>
+        <li><a class="srow rv" href="03-servicios.html">
+          <span class="snum">04</span>
+          <span class="sname" data-es="Rediseño" data-en="Redesign">Redise&ntilde;o</span>
+          <p class="sdesc" data-es="Tu web conserva lo que ya funciona, suelta lo que confunde y deja de parecer más vieja que tu negocio." data-en="Your site keeps what works, drops what confuses people, and stops looking older than your business is.">Tu web conserva lo que ya funciona, suelta lo que confunde y deja de parecer m&aacute;s vieja que tu negocio.</p>
+          <span class="sarw" aria-hidden="true">&rarr;</span>
+        </a></li>
+      </ol>
+
+      <div class="more rv">
+        <a class="tlink" href="03-servicios.html">
+          <span data-es="Ver cómo trabajo" data-en="See how I work">Ver c&oacute;mo trabajo</span>
+          <span class="arw" aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================== CTA FINAL ========================== -->
+  <section class="sec cta">
+    <div class="wrap">
+      <h2 class="rv rv-fade">
+        <span data-es="¿Hablamos de" data-en="Let's talk about">&iquest;Hablamos de</span><br>
+        <span data-es="tu sitio?" data-en="your site?">tu sitio?</span>
+      </h2>
+      <div class="acts rv rv-fade">
+        <a class="btn btn-1" href="04-contacto.html" data-es="Escríbeme por WhatsApp" data-en="Message me on WhatsApp">Escr&iacute;beme por WhatsApp</a>
+        <span class="meta" data-es="Respondo en menos de 4 horas" data-en="I reply in under 4 hours">Respondo en menos de 4 horas</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <a class="mark" href="01-home.html">José M. Sánchez</a>
+      <nav class="social" aria-label="Redes">
+        <a href="#">GitHub</a><a href="#">LinkedIn</a><a href="#">Instagram</a><a href="#">Email</a>
+      </nav>
+    </div>
+    <div class="frow">
+      <span class="copy" data-es="© 2026 · Hecho a mano, sin maquetadores" data-en="© 2026 · Built by hand, no page builders">&copy; 2026 &middot; Hecho a mano, sin maquetadores</span>
+      <span class="meta">UTC&minus;5 &middot; ES / EN</span>
+    </div>
+  </div>
+</footer>
+
+<div class="lb" id="lb" hidden>
+  <div class="lb-top">
+    <span class="mono" id="lbTitle">Demo</span>
+    <button class="burger" id="lbClose" type="button" data-es="Cerrar" data-en="Close">Cerrar</button>
+  </div>
+  <div class="lb-body" id="lbBody"></div>
+</div>
+
+<script>
+/* ==========================================================================
+   CAPTURAS DE SECTOR
+   Marcos idénticos, contenidos deliberadamente opuestos: si el marco aguanta
+   una clínica en blanco clínico junto a un gimnasio en lima sobre negro,
+   aguanta cualquier cosa.
+   ========================================================================== */
+var SHOTS = {
+  dental: '<svg viewBox="0 0 320 200" role="img" aria-label="Clínica dental"><rect width="320" height="200" fill="#F3F8FB"/><rect width="320" height="26" fill="#FFF"/><circle cx="20" cy="13" r="5" fill="#2E86C1"/><rect x="32" y="11" width="38" height="4" rx="1" fill="#A8BCCA"/><rect x="212" y="11" width="20" height="4" rx="1" fill="#A8BCCA"/><rect x="240" y="11" width="20" height="4" rx="1" fill="#A8BCCA"/><rect x="272" y="6" width="34" height="14" rx="2" fill="#2E86C1"/><rect x="20" y="50" width="122" height="10" rx="1" fill="#12293C"/><rect x="20" y="66" width="94" height="10" rx="1" fill="#12293C"/><rect x="20" y="88" width="128" height="4" rx="1" fill="#9AB0C0"/><rect x="20" y="97" width="100" height="4" rx="1" fill="#9AB0C0"/><rect x="20" y="113" width="76" height="19" rx="2" fill="#2E86C1"/><text x="30" y="126" font-family="monospace" font-size="7.5" letter-spacing="1.2" fill="#FFF">RESERVAR</text><rect x="178" y="44" width="122" height="92" rx="2" fill="#D6E8F3"/><circle cx="239" cy="82" r="21" fill="#B6D5E8"/><rect x="20" y="150" width="86" height="34" rx="2" fill="#FFF"/><rect x="30" y="160" width="34" height="3" rx="1" fill="#2E86C1"/><rect x="30" y="169" width="58" height="3" rx="1" fill="#B9C8D3"/><rect x="117" y="150" width="86" height="34" rx="2" fill="#FFF"/><rect x="127" y="160" width="34" height="3" rx="1" fill="#2E86C1"/><rect x="127" y="169" width="58" height="3" rx="1" fill="#B9C8D3"/><rect x="214" y="150" width="86" height="34" rx="2" fill="#FFF"/><rect x="224" y="160" width="34" height="3" rx="1" fill="#2E86C1"/><rect x="224" y="169" width="58" height="3" rx="1" fill="#B9C8D3"/></svg>',
+  restaurante: '<svg viewBox="0 0 320 200" role="img" aria-label="Restaurante"><rect width="320" height="200" fill="#15100D"/><rect width="320" height="120" fill="#452317"/><ellipse cx="128" cy="66" rx="104" ry="56" fill="#7A3A22"/><ellipse cx="214" cy="94" rx="72" ry="40" fill="#9A542E"/><ellipse cx="72" cy="34" rx="54" ry="28" fill="#5C2D1C"/><rect width="320" height="120" fill="#1A0E08" opacity=".34"/><text x="160" y="58" text-anchor="middle" font-family="Georgia,serif" font-size="21" letter-spacing="5" fill="#F0E4CE">TRATTORIA</text><rect x="128" y="70" width="64" height="1" fill="#C98A4B"/><text x="160" y="88" text-anchor="middle" font-family="monospace" font-size="7" letter-spacing="2.4" fill="#D6C2A2">CARTA · RESERVAS</text><rect x="24" y="138" width="72" height="6" rx="1" fill="#E6D8BE"/><rect x="24" y="152" width="128" height="3" rx="1" fill="#7E6E58"/><rect x="24" y="161" width="104" height="3" rx="1" fill="#7E6E58"/><rect x="24" y="174" width="140" height="3" rx="1" fill="#5E5142"/><rect x="230" y="146" width="66" height="22" rx="2" fill="#C0522E"/><text x="263" y="160" text-anchor="middle" font-family="monospace" font-size="7" letter-spacing="1.4" fill="#F6EADA">RESERVAR</text></svg>',
+  barberia: '<svg viewBox="0 0 320 200" role="img" aria-label="Barbería"><rect width="320" height="200" fill="#E9E2D5"/><rect width="320" height="22" fill="#141210"/><text x="16" y="14.5" font-family="monospace" font-size="7" letter-spacing="2.2" fill="#E9E2D5">CORTE &amp; NAVAJA</text><text x="270" y="14.5" font-family="monospace" font-size="7" letter-spacing="1.6" fill="#B0A692">CITA</text><rect x="16" y="42" width="178" height="21" fill="#141210"/><rect x="16" y="68" width="126" height="21" fill="#141210"/><rect x="16" y="94" width="156" height="21" fill="#141210"/><rect x="216" y="38" width="36" height="122" fill="#141210"/><rect x="222" y="50" width="24" height="7" fill="#E9E2D5"/><rect x="222" y="68" width="24" height="7" fill="#E9E2D5"/><rect x="222" y="86" width="24" height="7" fill="#E9E2D5"/><rect x="222" y="104" width="24" height="7" fill="#E9E2D5"/><rect x="222" y="122" width="24" height="7" fill="#E9E2D5"/><text x="16" y="138" font-family="monospace" font-size="7" letter-spacing="2.4" fill="#141210">PRECIOS</text><rect x="16" y="148" width="46" height="3" fill="#141210"/><rect x="70" y="148" width="86" height="1" fill="#A79C88"/><rect x="164" y="148" width="18" height="3" fill="#141210"/><rect x="16" y="162" width="60" height="3" fill="#141210"/><rect x="84" y="162" width="72" height="1" fill="#A79C88"/><rect x="164" y="162" width="18" height="3" fill="#141210"/><rect x="16" y="176" width="38" height="3" fill="#141210"/><rect x="62" y="176" width="94" height="1" fill="#A79C88"/><rect x="164" y="176" width="18" height="3" fill="#141210"/></svg>',
+  gimnasio: '<svg viewBox="0 0 320 200" role="img" aria-label="Gimnasio"><rect width="320" height="200" fill="#0B0B0B"/><rect width="320" height="24" fill="#131313"/><text x="16" y="15.5" font-family="sans-serif" font-weight="700" font-size="9" letter-spacing="1.6" fill="#C9FF2E">FORJA</text><rect x="252" y="8" width="52" height="9" rx="1" fill="#C9FF2E"/><text x="16" y="82" font-family="sans-serif" font-weight="700" font-size="46" letter-spacing="-3" fill="#C9FF2E">06:00</text><text x="17" y="100" font-family="monospace" font-size="7" letter-spacing="2.4" fill="#6E6E6E">PRIMERA CLASE</text><rect x="16" y="116" width="146" height="1" fill="#242424"/><text x="16" y="134" font-family="monospace" font-size="7" letter-spacing="2.4" fill="#6E6E6E">HORARIO</text><rect x="16" y="144" width="26" height="14" fill="#1A1A1A"/><rect x="46" y="144" width="26" height="14" fill="#C9FF2E"/><rect x="76" y="144" width="26" height="14" fill="#1A1A1A"/><rect x="106" y="144" width="26" height="14" fill="#1A1A1A"/><rect x="136" y="144" width="26" height="14" fill="#C9FF2E"/><rect x="16" y="162" width="26" height="14" fill="#1A1A1A"/><rect x="46" y="162" width="26" height="14" fill="#1A1A1A"/><rect x="76" y="162" width="26" height="14" fill="#C9FF2E"/><rect x="106" y="162" width="26" height="14" fill="#1A1A1A"/><rect x="136" y="162" width="26" height="14" fill="#1A1A1A"/><rect x="186" y="40" width="118" height="144" fill="#141414"/><rect x="198" y="54" width="58" height="5" rx="1" fill="#C9FF2E"/><rect x="198" y="70" width="94" height="3" rx="1" fill="#3A3A3A"/><rect x="198" y="80" width="76" height="3" rx="1" fill="#3A3A3A"/><rect x="198" y="98" width="94" height="1" fill="#242424"/><rect x="198" y="110" width="52" height="3" rx="1" fill="#5E5E5E"/><rect x="198" y="120" width="86" height="3" rx="1" fill="#3A3A3A"/><rect x="198" y="138" width="94" height="1" fill="#242424"/><rect x="198" y="152" width="80" height="18" rx="1" fill="#C9FF2E"/></svg>'
+};
+
+var PROJECTS = [
+  { k:'dental', sector:{es:'Dental',en:'Dental'}, title:'Cl&iacute;nica Dental Aurora',
+    desc:{es:'Reservas online que llenan los huecos entre citas, con los precios a la vista antes de que nadie tenga que llamar.', en:'Online booking that fills the gaps between appointments, with prices visible before anyone has to call.'},
+    tags:['Vanilla JS','CSS Grid','Calendario'] },
+  { k:'restaurante', sector:{es:'Restaurante',en:'Restaurant'}, title:'Trattoria Nove',
+    desc:{es:'Una carta que carga en menos de un segundo en el móvil, y reservas que entran directas a WhatsApp.', en:'A menu that loads in under a second on a phone, and reservations that land straight in WhatsApp.'},
+    tags:['Astro','WebP','WhatsApp'] },
+  { k:'barberia', sector:{es:'Barbería',en:'Barbershop'}, title:'Corte &amp; Navaja',
+    desc:{es:'Barberos, precios y un botón de cita antes del primer scroll. Nada más compite por el toque.', en:'Barbers, prices and a booking button above the fold. Nothing else competes for the tap.'},
+    tags:['Vanilla JS','Tipos variables'] },
+  { k:'gimnasio', sector:{es:'Gimnasio',en:'Gym'}, title:'Forja Studio',
+    desc:{es:'El horario de clases es la portada. El socio ve la próxima sesión sin buscar en ningún menú.', en:'The class timetable is the homepage. Members see the next session without hunting through a menu.'},
+    tags:['Vanilla JS','ICS','PWA'] }
+];
+
+(function(){
+  var d = document, root = d.documentElement;
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  root.classList.add('js');
+  root.lang = 'es';
+
+  /* ---- tarjetas ---- */
+  var wrap = d.getElementById('cards');
+  PROJECTS.forEach(function(p){
+    var a = d.createElement('article');
+    a.className = 'card rv rv-32';
+    a.innerHTML =
+      '<div class="shot">' + SHOTS[p.k] + '</div>' +
+      '<p class="sector" data-es="' + p.sector.es + '" data-en="' + p.sector.en + '">' + p.sector.es + '</p>' +
+      '<h3>' + p.title + '</h3>' +
+      '<p class="desc" data-es="' + p.desc.es + '" data-en="' + p.desc.en + '">' + p.desc.es + '</p>' +
+      '<div class="cmeta"><div class="tags">' + p.tags.map(function(t){ return '<span class="tag">' + t + '</span>'; }).join('') + '</div>' +
+      '<a class="dlink" href="#demo-' + p.k + '" data-demo="' + p.k + '"><span data-es="Ver demo en vivo" data-en="View live demo">Ver demo en vivo</span><span class="arw" aria-hidden="true">&rarr;</span></a></div>';
+    wrap.appendChild(a);
+  });
+
+  /* ---- idioma. En producción: rutas separadas /es/ y /en/ ---- */
+  var langBtns = d.querySelectorAll('.lang button');
+  function setLang(code){
+    var nodes = d.querySelectorAll('[data-' + code + ']');
+    Array.prototype.forEach.call(nodes, function(n){ n.innerHTML = n.getAttribute('data-' + code); });
+    root.lang = code;
+    Array.prototype.forEach.call(langBtns, function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-lang') === code ? 'true' : 'false');
+    });
+    try { localStorage.setItem('jms-lang', code); } catch(e){}
+  }
+  Array.prototype.forEach.call(langBtns, function(b){
+    b.addEventListener('click', function(){ setLang(b.getAttribute('data-lang')); });
+  });
+  try { var saved = localStorage.getItem('jms-lang'); if (saved === 'en') setLang('en'); } catch(e){}
+
+  /* ---- header: sin borde hasta el scroll ---- */
+  var hdr = d.getElementById('hdr');
+  function onScroll(){ hdr.classList.toggle('scrolled', (window.scrollY || 0) > 8); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---- menú móvil ---- */
+  var menu = d.getElementById('menu'), burger = d.getElementById('burger'), mclose = d.getElementById('mclose');
+  function setMenu(open){ menu.hidden = !open; burger.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+  burger.addEventListener('click', function(){ setMenu(menu.hidden); });
+  mclose.addEventListener('click', function(){ setMenu(false); });
+
+  /* ---- lightbox de demo: 1 clic desde la entrada ---- */
+  var lb = d.getElementById('lb'), lbBody = d.getElementById('lbBody'), lbTitle = d.getElementById('lbTitle');
+  d.addEventListener('click', function(e){
+    var t = e.target.closest ? e.target.closest('[data-demo]') : null;
+    if (t){
+      e.preventDefault();
+      var k = t.getAttribute('data-demo');
+      lbBody.innerHTML = SHOTS[k];
+      lbTitle.textContent = 'DEMO — ' + k.toUpperCase();
+      lb.hidden = false;
+      d.getElementById('lbClose').focus();
+    }
+  });
+  d.getElementById('lbClose').addEventListener('click', function(){ lb.hidden = true; });
+  d.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){ if(!lb.hidden) lb.hidden = true; if(!menu.hidden) setMenu(false); }
+  });
+
+  /* ---- revelados ----------------------------------------------------------
+     Hero: las líneas suben desde una máscara, 80ms entre sí, al cargar.
+     El resto entra con fade + 24px después. Las tarjetas, 100ms escalonadas
+     al 20% de visibilidad; las filas de servicio igual.
+     ---------------------------------------------------------------------- */
+  function revealAll(){
+    Array.prototype.forEach.call(d.querySelectorAll('.rv, .line'), function(n){ n.classList.add('in'); });
+  }
+  if (reduced || !('IntersectionObserver' in window)){
+    revealAll();
+  } else {
+    var lines = d.querySelectorAll('.hero .line');
+    var heroRv = d.querySelectorAll('.hero .rv');
+    var start = function(){
+      Array.prototype.forEach.call(lines, function(l, i){
+        setTimeout(function(){ l.classList.add('in'); }, i * 80);
+      });
+      Array.prototype.forEach.call(heroRv, function(n, i){
+        setTimeout(function(){ n.classList.add('in'); }, 240 + i * 60);
+      });
+    };
+    if (d.fonts && d.fonts.ready) { d.fonts.ready.then(start); setTimeout(start, 1200); } else { start(); }
+
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (!en.isIntersecting) return;
+        var el = en.target;
+        var sibs = el.parentNode ? el.parentNode.querySelectorAll(':scope > .rv, :scope > li > .rv') : [];
+        var idx = Array.prototype.indexOf.call(sibs, el);
+        setTimeout(function(){ el.classList.add('in'); }, idx > 0 ? idx * 100 : 0);
+        io.unobserve(el);
+      });
+    }, { threshold: 0.2 });
+    Array.prototype.forEach.call(d.querySelectorAll('.rv'), function(n){
+      if (!n.closest('.hero')) io.observe(n);
+    });
+  }
+
+  /* ---- scroll con inercia (Lenis) + easing propio ---- */
+  if (window.Lenis && !reduced){
+    var lenis = new window.Lenis({
+      duration: 1.15,
+      easing: function(t){ return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+      smoothWheel: true
+    });
+    function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+    requestAnimationFrame(raf);
+    lenis.on('scroll', onScroll);
+  }
+
+  /* ---- transición entre páginas: fundido corto, sin cortina ---- */
+  d.addEventListener('click', function(e){
+    var a = e.target.closest ? e.target.closest('a[href$=".html"]') : null;
+    if (!a || a.target || e.metaKey || e.ctrlKey) return;
+    e.preventDefault();
+    d.body.classList.add('leaving');
+    setTimeout(function(){ window.location.href = a.getAttribute('href'); }, reduced ? 0 : 220);
+  });
+})();
+</script>

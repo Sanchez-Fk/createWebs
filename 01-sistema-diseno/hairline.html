@@ -1,0 +1,1150 @@
+<title>Phosphor Hairline</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+
+  /* --- ground + elevation ------------------------------------ */
+  --bg:      #0F0F0F;   /* canvas. never #000000 */
+  --s1:      #161616;   /* elevation +1 : cards, panels */
+  --s2:      #1C1C1C;   /* elevation +2 : nested, inputs-on-card */
+  --line:    #262626;   /* the only separator. 1px, always */
+  --line-hi: #3A3A3A;   /* hairline under pointer */
+
+  /* --- ink ---------------------------------------------------- */
+  --fg:      #EFEFEF;
+  --fg-2:    #8A8A8A;
+
+  /* --- the single accent -------------------------------------- */
+  --accent:     #FFB000;  /* P3 amber phosphor */
+  --accent-ink: #0F0F0F;  /* text that sits on the accent fill */
+
+  /* --- geometry ----------------------------------------------- */
+  --r: 2px;
+  --maxw: 1200px;
+  --gut: clamp(20px, 4.5vw, 64px);
+  --rail: 148px;
+
+  /* --- 8px scale ---------------------------------------------- */
+  --sp-1: 8px;  --sp-2: 16px; --sp-3: 24px; --sp-4: 32px;
+  --sp-5: 40px; --sp-6: 48px; --sp-8: 64px; --sp-10: 80px;
+  --sp-12: 96px; --sp-16: 128px; --sp-20: 160px;
+
+  /* --- families ----------------------------------------------- */
+  --f-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --f-body:    'IBM Plex Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --f-mono:    'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  /* --- fluid type --------------------------------------------- */
+  --t-display: clamp(2.25rem, 1.167rem + 4.815vw, 5.5rem);   /* 36 -> 88 */
+  --t-h2:      clamp(1.75rem, 1.417rem + 1.481vw, 2.75rem);  /* 28 -> 44 */
+  --t-h3:      1.25rem;
+  --t-lead:    1.125rem;
+  --t-body:    1.0625rem;
+  --t-sm:      0.9375rem;
+  --t-meta:    0.8125rem;
+  --t-label:   0.75rem;
+
+  --pad-sec: clamp(6rem, 3.144rem + 7.619vw, 10rem);          /* 96 -> 160 */
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body{
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: var(--t-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+/* ============================================================
+   FILM GRAIN — fixed over the whole canvas, 4.5% opacity
+   ============================================================ */
+.grain{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: .045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.grain[hidden]{ display: none !important; }
+
+/* ============================================================
+   SHELL
+   ============================================================ */
+.shell{
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gut);
+}
+
+.mono{
+  font-family: var(--f-mono);
+  font-size: var(--t-label);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+.meta{
+  font-family: var(--f-mono);
+  font-size: var(--t-meta);
+  letter-spacing: .04em;
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
+}
+
+a{ color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+a:hover{ border-bottom-color: var(--accent); }
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible{
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r);
+}
+
+/* ============================================================
+   MASTHEAD
+   ============================================================ */
+.mast{
+  padding-block: var(--sp-6) var(--sp-12);
+  border-bottom: 1px solid var(--line);
+}
+.mast-bar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-10);
+}
+.mast-id{ display: flex; align-items: baseline; gap: var(--sp-2); }
+.dot{
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 1px;
+  transform: translateY(-1px);
+}
+
+.controls{ display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.ctl{ display: flex; align-items: center; gap: var(--sp-1); }
+.swatch-btn{
+  width: 22px; height: 22px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--sw);
+  cursor: pointer;
+}
+.swatch-btn[aria-pressed="true"]{ border-color: var(--fg); }
+.toggle{
+  font-family: var(--f-mono);
+  font-size: var(--t-label);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.toggle[aria-pressed="true"]{ color: var(--fg); border-color: var(--line-hi); }
+
+h1{
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: var(--t-display);
+  line-height: .95;
+  letter-spacing: -.04em;
+  margin: 0 0 var(--sp-4);
+  text-wrap: balance;
+}
+.lead{
+  font-size: var(--t-lead);
+  line-height: 1.6;
+  color: var(--fg-2);
+  max-width: 58ch;
+  margin: 0 0 var(--sp-8);
+}
+.lead strong{ color: var(--fg); font-weight: 500; }
+
+/* datasheet grid */
+.sheet{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--s1);
+  margin: 0;
+}
+.sheet > div{
+  padding: var(--sp-2) var(--sp-3) calc(var(--sp-2) + 2px);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sheet > div:last-child{ border-right: 0; }
+.sheet dt{ margin: 0; }
+.sheet dd{
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: var(--t-meta);
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   SECTIONS  (rail + specimen)
+   ============================================================ */
+.sec{
+  padding-block: var(--pad-sec);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: var(--sp-6);
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+@media (min-width: 900px){
+  .sec{ grid-template-columns: var(--rail) 1fr; column-gap: var(--sp-8); }
+  .rail{ position: sticky; top: var(--sp-5); }
+}
+.rail{ display: flex; flex-direction: column; gap: var(--sp-2); }
+.rail-no{
+  font-family: var(--f-mono);
+  font-size: var(--t-meta);
+  letter-spacing: .1em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.rail-note{
+  font-size: var(--t-sm);
+  color: var(--fg-2);
+  line-height: 1.55;
+  max-width: 30ch;
+  margin: 0;
+}
+.body-col{ display: flex; flex-direction: column; gap: var(--sp-5); min-width: 0; }
+
+h2{
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: var(--t-h2);
+  line-height: 1.05;
+  letter-spacing: -.03em;
+  margin: 0;
+  text-wrap: balance;
+}
+h3{
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: var(--t-h3);
+  letter-spacing: -.015em;
+  line-height: 1.3;
+  margin: 0;
+}
+p{ margin: 0; max-width: 65ch; }
+.dim{ color: var(--fg-2); }
+
+.subhead{
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.subhead::after{
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* ============================================================
+   §01 COLOR
+   ============================================================ */
+.swatches{
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+}
+.sw{
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--s1);
+  display: flex;
+  flex-direction: column;
+}
+.sw-chip{ height: 84px; border-bottom: 1px solid var(--line); }
+.sw-body{ padding: var(--sp-2) var(--sp-2) calc(var(--sp-2) + 2px); display: flex; flex-direction: column; gap: 6px; }
+.sw-role{ font-size: var(--t-sm); color: var(--fg); line-height: 1.35; }
+.copy{
+  font-family: var(--f-mono);
+  font-size: var(--t-meta);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r);
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.copy:hover{ color: var(--fg); }
+.sw-ratio{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  font-family: var(--f-mono);
+  font-size: var(--t-meta);
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.badge{
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border: 1px solid var(--line-hi);
+  border-radius: var(--r);
+  color: var(--fg);
+  white-space: nowrap;
+}
+.badge.pass{ border-color: var(--accent); color: var(--accent); }
+.badge.na{ border-color: var(--line); color: var(--fg-2); }
+
+/* ============================================================
+   §02 TYPE
+   ============================================================ */
+.ty{ display: flex; flex-direction: column; }
+.ty-row{
+  display: grid;
+  gap: var(--sp-2);
+  padding-block: var(--sp-4);
+  border-top: 1px solid var(--line);
+  align-items: baseline;
+}
+.ty-row:first-child{ border-top: 0; padding-top: 0; }
+@media (min-width: 720px){ .ty-row{ grid-template-columns: 212px 1fr; column-gap: var(--sp-5); } }
+.ty-key{ display: flex; flex-direction: column; gap: 4px; }
+.spec-display{
+  font-family: var(--f-display); font-weight: 700;
+  font-size: var(--t-display); line-height: .95; letter-spacing: -.04em;
+}
+.spec-h2{
+  font-family: var(--f-display); font-weight: 600;
+  font-size: var(--t-h2); line-height: 1.05; letter-spacing: -.03em;
+}
+.spec-h3{
+  font-family: var(--f-display); font-weight: 600;
+  font-size: var(--t-h3); letter-spacing: -.015em;
+}
+.spec-lead{ font-size: var(--t-lead); line-height: 1.6; color: var(--fg); max-width: 60ch; }
+.spec-body{ font-size: var(--t-body); line-height: 1.6; max-width: 65ch; }
+.spec-mono{
+  font-family: var(--f-mono); font-size: var(--t-label);
+  letter-spacing: .14em; text-transform: uppercase; color: var(--fg);
+}
+
+/* ============================================================
+   §03 SPACE
+   ============================================================ */
+.scale{ display: flex; flex-direction: column; }
+.scale-row{
+  display: grid;
+  grid-template-columns: 96px 64px 1fr;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-block: 9px;
+  border-top: 1px solid var(--line);
+}
+.scale-row:first-child{ border-top: 0; }
+.bar{ height: 10px; background: var(--fg-2); border-radius: 1px; }
+.bar.accent{ background: var(--accent); }
+
+.kv{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--s1);
+  margin: 0;
+}
+.kv > div{
+  padding: var(--sp-2) var(--sp-3);
+  border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 5px;
+}
+.kv > div:last-child{ border-right: 0; }
+.kv dd{ margin: 0; font-family: var(--f-mono); font-size: var(--t-meta); color: var(--fg); font-variant-numeric: tabular-nums; }
+.kv dt{ margin: 0; }
+
+/* ============================================================
+   §04 SURFACES
+   ============================================================ */
+.elev{ display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(212px, 1fr)); }
+.panel{
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-3);
+  display: flex; flex-direction: column; gap: var(--sp-1);
+  min-height: 136px;
+}
+.e0{ background: var(--bg); }
+.e1{ background: var(--s1); }
+.e2{ background: var(--s2); }
+.panel-t{ font-family: var(--f-display); font-weight: 600; font-size: 1rem; letter-spacing: -.01em; }
+.panel-d{ font-size: var(--t-sm); color: var(--fg-2); margin-top: auto; line-height: 1.45; }
+
+.radius-demo{ display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.rcell{ display: flex; gap: var(--sp-3); align-items: flex-start; }
+.rbox{
+  width: 88px; height: 88px; flex: none;
+  background: var(--s2);
+  border: 1px solid var(--line);
+  display: grid; place-items: center;
+}
+.rbox.on{ border-radius: 2px; }
+.rbox.off{ border-radius: 12px; opacity: .45; }
+.rcap{ display: flex; flex-direction: column; gap: 6px; }
+.rcap p{ font-size: var(--t-sm); line-height: 1.5; }
+
+/* ============================================================
+   §05 BUTTONS
+   ============================================================ */
+.btn{
+  font-family: var(--f-mono);
+  font-size: var(--t-label);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-weight: 500;
+  border-radius: var(--r);
+  padding: 14px 28px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease;
+  white-space: nowrap;
+}
+.btn-primary{ background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-primary:hover, .btn-primary.is-hover{ background: color-mix(in srgb, var(--accent) 82%, #FFFFFF); border-color: color-mix(in srgb, var(--accent) 82%, #FFFFFF); }
+
+.btn-secondary{ background: transparent; color: var(--fg); border-color: var(--line); }
+.btn-secondary:hover, .btn-secondary.is-hover{ background: var(--line); border-color: var(--line-hi); }
+
+.btn-ghost{ background: transparent; color: var(--fg-2); border-color: transparent; padding-inline: 0; }
+.btn-ghost:hover, .btn-ghost.is-hover{ color: var(--accent); }
+
+.btn:disabled{ opacity: .38; cursor: not-allowed; }
+.is-focus{ outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.matrix-wrap{ overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--s1); }
+.matrix{
+  min-width: 760px;
+  display: grid;
+  grid-template-columns: 122px repeat(4, 1fr);
+}
+.matrix > *{
+  padding: var(--sp-3);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center;
+}
+.matrix > *:nth-child(5n){ border-right: 0; }
+.matrix > *:nth-last-child(-n+5){ border-bottom: 0; }
+.matrix .hd{ background: var(--s2); }
+
+/* ============================================================
+   §06 INPUTS
+   ============================================================ */
+.form{ display: grid; gap: var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(256px, 1fr)); }
+.field{ display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+.field label{
+  font-family: var(--f-mono); font-size: var(--t-label);
+  letter-spacing: .14em; text-transform: uppercase; color: var(--fg-2);
+}
+.field input, .field textarea{
+  font-family: var(--f-body);
+  font-size: var(--t-body);
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 10px 0;
+  width: 100%;
+  transition: border-color .16s ease;
+}
+.field textarea{ resize: vertical; min-height: 88px; line-height: 1.6; }
+.field input::placeholder, .field textarea::placeholder{ color: #5A5A5A; }
+.field input:hover, .field textarea:hover{ border-bottom-color: var(--line-hi); }
+.field input:focus, .field textarea:focus{
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+.field input:focus-visible, .field textarea:focus-visible{
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.field .hint{ font-family: var(--f-mono); font-size: var(--t-meta); color: var(--fg-2); letter-spacing: .04em; }
+.field.is-focus-demo input{ border-bottom-color: var(--accent); }
+
+/* ============================================================
+   §07 IN CONTEXT
+   ============================================================ */
+.demo{
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg);
+  padding: var(--sp-5);
+  display: flex; flex-direction: column; gap: var(--sp-6);
+}
+.nav{
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-3); flex-wrap: wrap;
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+.nav-links{ display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+.nav-links a{
+  font-family: var(--f-mono); font-size: var(--t-label);
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--fg-2); border-bottom: 0;
+}
+.nav-links a:hover{ color: var(--fg); }
+.nav-links a[aria-current="page"]{ color: var(--fg); }
+
+.cards{ display: grid; gap: var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); }
+.card{
+  background: var(--s1);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-3);
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  transition: background-color .18s ease, border-color .18s ease;
+}
+.card:hover{ background: var(--s2); border-color: var(--line-hi); }
+.card-top{ display: flex; justify-content: space-between; gap: var(--sp-2); align-items: baseline; }
+.card p{ font-size: var(--t-sm); color: var(--fg-2); line-height: 1.6; }
+.tags{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: var(--sp-1); }
+.tag{
+  font-family: var(--f-mono); font-size: 11px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--fg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 3px 7px;
+}
+.card-link{
+  font-family: var(--f-mono); font-size: var(--t-label);
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--fg); border-bottom: 0;
+  align-self: flex-start;
+}
+.card:hover .card-link{ color: var(--accent); }
+
+.cta-row{ display: flex; gap: var(--sp-3); align-items: center; flex-wrap: wrap; }
+
+/* ============================================================
+   §08 COMPLIANCE + FOOTER
+   ============================================================ */
+.rules{ display: flex; flex-direction: column; }
+.rule-row{
+  display: grid; gap: var(--sp-1) var(--sp-3);
+  grid-template-columns: 1fr;
+  padding-block: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+@media (min-width: 720px){ .rule-row{ grid-template-columns: 196px 1fr; } }
+.rule-row:first-child{ border-top: 0; padding-top: 0; }
+.rule-row p{ font-size: var(--t-sm); color: var(--fg-2); }
+
+footer{
+  padding-block: var(--sp-8) var(--sp-10);
+  display: flex; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap;
+}
+
+.toast{
+  position: fixed;
+  left: 50%; bottom: 24px;
+  transform: translateX(-50%);
+  background: var(--s2);
+  border: 1px solid var(--line-hi);
+  border-radius: var(--r);
+  padding: 8px 14px;
+  font-family: var(--f-mono); font-size: var(--t-meta);
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--fg);
+  z-index: 10000;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+</style>
+
+<div class="grain" id="grain" aria-hidden="true"></div>
+
+<div class="shell">
+
+  <header class="mast">
+    <div class="mast-bar">
+      <div class="mast-id">
+        <span class="dot" aria-hidden="true"></span>
+        <span class="mono">Hairline &middot; v1.0 &middot; dark only</span>
+      </div>
+      <div class="controls">
+        <div class="ctl" role="group" aria-label="Accent candidate">
+          <span class="mono" aria-hidden="true">Accent</span>
+          <button class="swatch-btn" style="--sw:#FFB000" data-accent="#FFB000" data-name="Phosphor amber" aria-pressed="true" aria-label="Phosphor amber #FFB000" title="Phosphor amber #FFB000"></button>
+          <button class="swatch-btn" style="--sw:#4CC2FF" data-accent="#4CC2FF" data-name="Ion blue" aria-pressed="false" aria-label="Ion blue #4CC2FF" title="Ion blue #4CC2FF"></button>
+          <button class="swatch-btn" style="--sw:#FF6E8A" data-accent="#FF6E8A" data-name="Signal rose" aria-pressed="false" aria-label="Signal rose #FF6E8A" title="Signal rose #FF6E8A"></button>
+          <button class="swatch-btn" style="--sw:#9281F7" data-accent="#9281F7" data-name="Lumina violet" aria-pressed="false" aria-label="Lumina violet #9281F7, current brand" title="Lumina violet #9281F7 — current brand"></button>
+        </div>
+        <button class="toggle" id="grainToggle" aria-pressed="true">Grain on</button>
+      </div>
+    </div>
+
+    <h1>Phosphor<br>Hairline</h1>
+    <p class="lead">The interface system for <strong>Jos&eacute; Manuel S&aacute;nchez</strong> &mdash; dark-only, built on hairlines and surface elevation. <strong>No shadows, no gradients, no pure black.</strong> Depth comes from three greys and a 1px rule; the accent is allowed to appear fewer than a dozen times on any page.</p>
+
+    <dl class="sheet">
+      <div><dt class="mono">Base unit</dt><dd>8px</dd></div>
+      <div><dt class="mono">Radius</dt><dd>2px</dd></div>
+      <div><dt class="mono">Max width</dt><dd>1200px</dd></div>
+      <div><dt class="mono">Shadows</dt><dd>none</dd></div>
+      <div><dt class="mono">Ground</dt><dd>#0F0F0F</dd></div>
+      <div><dt class="mono">Accent</dt><dd id="accentHex">#FFB000</dd></div>
+    </dl>
+  </header>
+
+  <main>
+
+    <!-- ==================== 01 COLOR ==================== -->
+    <section class="sec" id="color">
+      <div class="rail">
+        <span class="rail-no">&sect; 01</span>
+        <span class="mono">Color</span>
+        <p class="rail-note">Six neutrals and one accent. Ratios are measured against the ground and recalculated when the accent changes.</p>
+      </div>
+      <div class="body-col">
+        <h2>Three greys carry the depth</h2>
+        <p class="dim">Elevation is the only spatial cue. A panel steps from <span class="meta">#0F0F0F</span> to <span class="meta">#161616</span>; anything nested inside it steps again to <span class="meta">#1C1C1C</span>. Every edge is the same 1px <span class="meta">#262626</span> hairline, and nothing casts a shadow.</p>
+
+        <div class="swatches">
+          <div class="sw">
+            <div class="sw-chip" style="background:#0F0F0F"></div>
+            <div class="sw-body">
+              <button class="copy" data-copy="#0F0F0F">#0F0F0F &mdash; copy</button>
+              <span class="sw-role">Ground &mdash; the canvas</span>
+              <span class="sw-ratio"><span data-fg="--bg" data-bg="--bg">1.00:1</span> <span class="badge na">Base</span></span>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:#161616"></div>
+            <div class="sw-body">
+              <button class="copy" data-copy="#161616">#161616 &mdash; copy</button>
+              <span class="sw-role">Surface &plus;1 &mdash; cards, panels</span>
+              <span class="sw-ratio"><span data-fg="--s1" data-bg="--bg">1.06:1</span> <span class="badge na">Non-text</span></span>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:#1C1C1C"></div>
+            <div class="sw-body">
+              <button class="copy" data-copy="#1C1C1C">#1C1C1C &mdash; copy</button>
+              <span class="sw-role">Surface &plus;2 &mdash; nested, table heads</span>
+              <span class="sw-ratio"><span data-fg="--s2" data-bg="--bg">1.13:1</span> <span class="badge na">Non-text</span></span>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:#262626"></div>
+            <div class="sw-body">
+              <button class="copy" data-copy="#262626">#262626 &mdash; copy</button>
+              <span class="sw-role">Hairline &mdash; every border, 1px</span>
+              <span class="sw-ratio"><span data-fg="--line" data-bg="--bg">1.27:1</span> <span class="badge na">Non-text</span></span>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:#EFEFEF"></div>
+            <div class="sw-body">
+              <button class="copy" data-copy="#EFEFEF">#EFEFEF &mdash; copy</button>
+              <span class="sw-role">Text primary &mdash; headings, body</span>
+              <span class="sw-ratio"><span data-fg="--fg" data-bg="--bg">16.68:1</span> <span class="badge pass">AAA</span></span>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:#8A8A8A"></div>
+            <div class="sw-body">
+              <button class="copy" data-copy="#8A8A8A">#8A8A8A &mdash; copy</button>
+              <span class="sw-role">Text secondary &mdash; meta, captions</span>
+              <span class="sw-ratio"><span data-fg="--fg-2" data-bg="--bg">5.55:1</span> <span class="badge pass">AA</span></span>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:var(--accent)"></div>
+            <div class="sw-body">
+              <button class="copy" data-copy="#FFB000" id="accentCopy">#FFB000 &mdash; copy</button>
+              <span class="sw-role">Accent &mdash; links, focus, one CTA</span>
+              <span class="sw-ratio"><span data-fg="--accent" data-bg="--bg">10.47:1</span> <span class="badge pass">AAA</span></span>
+            </div>
+          </div>
+        </div>
+
+        <dl class="kv">
+          <div><dt class="mono">Accent budget</dt><dd>1 filled CTA per view</dd></div>
+          <div><dt class="mono">Also permitted</dt><dd>links, focus ring, rail index</dd></div>
+          <div><dt class="mono">Never</dt><dd>headings, backgrounds, borders</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ==================== 02 TYPE ==================== -->
+    <section class="sec" id="type">
+      <div class="rail">
+        <span class="rail-no">&sect; 02</span>
+        <span class="mono">Typography</span>
+        <p class="rail-note">Archivo for display, IBM Plex Sans for reading, IBM Plex Mono for anything the machine wrote.</p>
+      </div>
+      <div class="body-col">
+        <h2>Tight at the top, open at the bottom</h2>
+        <p class="dim">Tracking tightens as size grows &mdash; &minus;0.04em at 88px, neutral at 17px, then opens back out to &plus;0.14em for uppercase mono labels. Body copy holds a 1.6 line height and stops at 65 characters.</p>
+
+        <div class="ty">
+          <div class="ty-row">
+            <div class="ty-key">
+              <span class="mono">Display / H1</span>
+              <span class="meta">Archivo 700 &middot; 36&rarr;88px &middot; &minus;0.04em &middot; 0.95</span>
+            </div>
+            <div class="spec-display">Selected work</div>
+          </div>
+          <div class="ty-row">
+            <div class="ty-key">
+              <span class="mono">Section / H2</span>
+              <span class="meta">Archivo 600 &middot; 28&rarr;44px &middot; &minus;0.03em &middot; 1.05</span>
+            </div>
+            <div class="spec-h2">Interfaces that survive production</div>
+          </div>
+          <div class="ty-row">
+            <div class="ty-key">
+              <span class="mono">Subhead / H3</span>
+              <span class="meta">Archivo 600 &middot; 20px &middot; &minus;0.015em &middot; 1.3</span>
+            </div>
+            <div class="spec-h3">Lumina Dev &mdash; studio showcase</div>
+          </div>
+          <div class="ty-row">
+            <div class="ty-key">
+              <span class="mono">Lead</span>
+              <span class="meta">Plex Sans 400 &middot; 18px &middot; 1.6</span>
+            </div>
+            <div class="spec-lead">Frontend developer working in Spanish and English, building portfolio and product sites where the motion layer can be removed without the layout noticing.</div>
+          </div>
+          <div class="ty-row">
+            <div class="ty-key">
+              <span class="mono">Body</span>
+              <span class="meta">Plex Sans 400 &middot; 17px &middot; 1.6 &middot; 65ch</span>
+            </div>
+            <div class="spec-body">The reading size is 17px rather than 16px. On a #0F0F0F ground, light text renders optically thinner than it measures, and the extra pixel buys that weight back without touching the font stack. Line length is capped at 65 characters so the eye returns to a predictable left edge, and paragraphs are separated by 24px instead of an indent.</div>
+          </div>
+          <div class="ty-row">
+            <div class="ty-key">
+              <span class="mono">Mono label</span>
+              <span class="meta">Plex Mono 500 &middot; 12px &middot; &plus;0.14em &middot; upper</span>
+            </div>
+            <div class="spec-mono">Section index &middot; role &middot; year</div>
+          </div>
+          <div class="ty-row">
+            <div class="ty-key">
+              <span class="mono">Mono meta</span>
+              <span class="meta">Plex Mono 400 &middot; 13px &middot; &plus;0.04em</span>
+            </div>
+            <div class="meta">2025 &mdash; 2026 &middot; 04 projects &middot; ES / EN &middot; 0 dependencies</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 03 SPACE ==================== -->
+    <section class="sec" id="space">
+      <div class="rail">
+        <span class="rail-no">&sect; 03</span>
+        <span class="mono">Spacing</span>
+        <p class="rail-note">Every gap is a multiple of 8. A value that is not on this list is a bug.</p>
+      </div>
+      <div class="body-col">
+        <h2>One scale, no in-between values</h2>
+
+        <div class="scale">
+          <div class="scale-row"><span class="mono">space-1</span><span class="meta">8px</span><span class="bar" style="width:8px"></span></div>
+          <div class="scale-row"><span class="mono">space-2</span><span class="meta">16px</span><span class="bar" style="width:16px"></span></div>
+          <div class="scale-row"><span class="mono">space-3</span><span class="meta">24px</span><span class="bar" style="width:24px"></span></div>
+          <div class="scale-row"><span class="mono">space-4</span><span class="meta">32px</span><span class="bar" style="width:32px"></span></div>
+          <div class="scale-row"><span class="mono">space-5</span><span class="meta">40px</span><span class="bar" style="width:40px"></span></div>
+          <div class="scale-row"><span class="mono">space-6</span><span class="meta">48px</span><span class="bar" style="width:48px"></span></div>
+          <div class="scale-row"><span class="mono">space-8</span><span class="meta">64px</span><span class="bar" style="width:64px"></span></div>
+          <div class="scale-row"><span class="mono">space-10</span><span class="meta">80px</span><span class="bar" style="width:80px"></span></div>
+          <div class="scale-row"><span class="mono">space-12</span><span class="meta">96px</span><span class="bar accent" style="width:96px"></span></div>
+          <div class="scale-row"><span class="mono">space-16</span><span class="meta">128px</span><span class="bar" style="width:128px"></span></div>
+          <div class="scale-row"><span class="mono">space-20</span><span class="meta">160px</span><span class="bar accent" style="width:160px"></span></div>
+        </div>
+        <p class="dim">The two accented bars are the section rhythm: <span class="meta">96px</span> of vertical padding on mobile, <span class="meta">160px</span> from 900px up, interpolated by a clamp in between. Everything else on the page is a smaller step on the same ladder.</p>
+
+        <dl class="kv">
+          <div><dt class="mono">Section padding</dt><dd>96px &rarr; 160px</dd></div>
+          <div><dt class="mono">Content width</dt><dd>1200px max</dd></div>
+          <div><dt class="mono">Side gutter</dt><dd>20px &rarr; 64px</dd></div>
+          <div><dt class="mono">Grid gap</dt><dd>24px</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ==================== 04 SURFACES ==================== -->
+    <section class="sec" id="surfaces">
+      <div class="rail">
+        <span class="rail-no">&sect; 04</span>
+        <span class="mono">Surfaces</span>
+        <p class="rail-note">Borders and radius are load-bearing here. They are the entire depth model.</p>
+      </div>
+      <div class="body-col">
+        <h2>Elevation without a single shadow</h2>
+
+        <div class="elev">
+          <div class="panel e0">
+            <span class="mono">Elevation 0</span>
+            <span class="panel-t">Ground</span>
+            <span class="panel-d">#0F0F0F &middot; bordered only where it meets a sibling</span>
+          </div>
+          <div class="panel e1">
+            <span class="mono">Elevation &plus;1</span>
+            <span class="panel-t">Panel</span>
+            <span class="panel-d">#161616 &middot; 1px #262626 &middot; radius 2px</span>
+          </div>
+          <div class="panel e2">
+            <span class="mono">Elevation &plus;2</span>
+            <span class="panel-t">Nested</span>
+            <span class="panel-d">#1C1C1C &middot; 1px #262626 &middot; radius 2px</span>
+          </div>
+        </div>
+
+        <div class="subhead"><span class="mono">Radius</span></div>
+        <div class="radius-demo">
+          <div class="rcell">
+            <div class="rbox on"><span class="mono">2px</span></div>
+            <div class="rcap">
+              <span class="mono">In system</span>
+              <p class="dim">Cards, inputs, buttons, chips. Nearly square &mdash; enough to take the bite off a hard corner, not enough to read as rounded.</p>
+            </div>
+          </div>
+          <div class="rcell">
+            <div class="rbox off"><span class="mono">12px</span></div>
+            <div class="rcap">
+              <span class="mono">Out of system</span>
+              <p class="dim">Anything above 4px. Softness is the one thing this system does not spend.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 05 BUTTONS ==================== -->
+    <section class="sec" id="buttons">
+      <div class="rail">
+        <span class="rail-no">&sect; 05</span>
+        <span class="mono">Buttons</span>
+        <p class="rail-note">States below are forced, not waiting for a pointer &mdash; hover and focus are rendered as specimens.</p>
+      </div>
+      <div class="body-col">
+        <h2>One filled button per view</h2>
+        <p class="dim">The primary is the only place the accent becomes a surface. Secondary is a hairline that fills with graphite on hover &mdash; the border expanding into the shape. Tertiary drops the box entirely and picks up the accent on the label.</p>
+
+        <div class="matrix-wrap">
+          <div class="matrix">
+            <div class="hd"></div>
+            <div class="hd"><span class="mono">Default</span></div>
+            <div class="hd"><span class="mono">Hover</span></div>
+            <div class="hd"><span class="mono">Focus</span></div>
+            <div class="hd"><span class="mono">Disabled</span></div>
+
+            <div class="hd"><span class="mono">Primary</span></div>
+            <div><button class="btn btn-primary">Start a project</button></div>
+            <div><button class="btn btn-primary is-hover">Start a project</button></div>
+            <div><button class="btn btn-primary is-focus">Start a project</button></div>
+            <div><button class="btn btn-primary" disabled>Start a project</button></div>
+
+            <div class="hd"><span class="mono">Secondary</span></div>
+            <div><button class="btn btn-secondary">View source</button></div>
+            <div><button class="btn btn-secondary is-hover">View source</button></div>
+            <div><button class="btn btn-secondary is-focus">View source</button></div>
+            <div><button class="btn btn-secondary" disabled>View source</button></div>
+
+            <div class="hd"><span class="mono">Tertiary</span></div>
+            <div><button class="btn btn-ghost">Read the case &rarr;</button></div>
+            <div><button class="btn btn-ghost is-hover">Read the case &rarr;</button></div>
+            <div><button class="btn btn-ghost is-focus">Read the case &rarr;</button></div>
+            <div><button class="btn btn-ghost" disabled>Read the case &rarr;</button></div>
+          </div>
+        </div>
+
+        <dl class="kv">
+          <div><dt class="mono">Label</dt><dd>Plex Mono 500 / 12px / &plus;0.14em</dd></div>
+          <div><dt class="mono">Padding</dt><dd>14px 28px</dd></div>
+          <div><dt class="mono">Focus ring</dt><dd>2px accent, offset 3px</dd></div>
+          <div><dt class="mono">Ring contrast</dt><dd><span data-fg="--accent" data-bg="--bg">10.47:1</span></dd></div>
+        </dl>
+        <p class="dim">Tab through the buttons above to see the real <span class="meta">:focus-visible</span> ring. The 3px offset leaves a band of ground between the accent fill and the accent ring, so it stays legible on the primary as well.</p>
+      </div>
+    </section>
+
+    <!-- ==================== 06 INPUTS ==================== -->
+    <section class="sec" id="inputs">
+      <div class="rail">
+        <span class="rail-no">&sect; 06</span>
+        <span class="mono">Inputs</span>
+        <p class="rail-note">No boxes. A label, a value, and one rule underneath it.</p>
+      </div>
+      <div class="body-col">
+        <h2>A line, not a container</h2>
+        <p class="dim">Fields are transparent with a single bottom hairline. The label sits above in uppercase mono, so a field reads as a labelled entry on a spec sheet rather than a form control dropped into the page.</p>
+
+        <form class="form" onsubmit="return false">
+          <div class="field">
+            <label for="f-name">Name</label>
+            <input id="f-name" type="text" value="Ana Restrepo" autocomplete="off">
+            <span class="hint">Filled &middot; rest state</span>
+          </div>
+          <div class="field">
+            <label for="f-mail">Email</label>
+            <input id="f-mail" type="email" placeholder="you@studio.com" autocomplete="off">
+            <span class="hint">Empty &middot; placeholder #5A5A5A</span>
+          </div>
+          <div class="field is-focus-demo">
+            <label for="f-budget">Budget</label>
+            <input id="f-budget" type="text" value="USD 4,000 - 8,000" autocomplete="off">
+            <span class="hint">Focus &middot; bottom border to accent</span>
+          </div>
+          <div class="field" style="grid-column: 1 / -1">
+            <label for="f-brief">Brief</label>
+            <textarea id="f-brief" placeholder="What are you building, and what has to be true when it ships?"></textarea>
+            <span class="hint">Textarea &middot; vertical resize only</span>
+          </div>
+        </form>
+
+        <div class="cta-row">
+          <button class="btn btn-primary">Send brief</button>
+          <button class="btn btn-secondary">Save draft</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 07 IN CONTEXT ==================== -->
+    <section class="sec" id="context">
+      <div class="rail">
+        <span class="rail-no">&sect; 07</span>
+        <span class="mono">In context</span>
+        <p class="rail-note">The parts assembled &mdash; nav, cards, inline link, and the one CTA allowed to be filled.</p>
+      </div>
+      <div class="body-col">
+        <h2>How it reads assembled</h2>
+
+        <div class="demo">
+          <nav class="nav">
+            <span class="mono" style="color:var(--fg)">JMS &mdash; Lumina Dev</span>
+            <div class="nav-links">
+              <a href="#context" aria-current="page">Work</a>
+              <a href="#context">About</a>
+              <a href="#context">Writing</a>
+              <a href="#context">Contact</a>
+              <a href="#context">ES</a>
+            </div>
+          </nav>
+
+          <div class="cards">
+            <article class="card">
+              <div class="card-top">
+                <h3>Lumina Dev</h3>
+                <span class="meta">2026</span>
+              </div>
+              <p>Studio showcase with a horizontal project rail, a grid-and-grain canvas layer, and a motion switch in the footer that strips every transition without reflowing the page.</p>
+              <div class="tags">
+                <span class="tag">Vanilla JS</span><span class="tag">Canvas</span><span class="tag">i18n</span>
+              </div>
+              <a class="card-link" href="#context">Case study &rarr;</a>
+            </article>
+            <article class="card">
+              <div class="card-top">
+                <h3>Portafolio personal</h3>
+                <span class="meta">2025</span>
+              </div>
+              <p>Single-page portfolio in Spanish and English. Eight stylesheets, no framework and no build step, served straight from a forty-line Python dev server.</p>
+              <div class="tags">
+                <span class="tag">CSS layers</span><span class="tag">Reveals</span><span class="tag">A11y</span>
+              </div>
+              <a class="card-link" href="#context">Case study &rarr;</a>
+            </article>
+          </div>
+
+          <p class="dim" style="font-size:var(--t-sm)">Inline links take the accent with a 40% underline that goes solid on hover &mdash; for instance, <a href="#color">the contrast table in &sect;01</a>. Everything else in this view stays inside the two greys.</p>
+
+          <div class="cta-row">
+            <button class="btn btn-primary">Start a project</button>
+            <span class="meta">&larr; the only filled element on the page</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 08 COMPLIANCE ==================== -->
+    <section class="sec" id="a11y">
+      <div class="rail">
+        <span class="rail-no">&sect; 08</span>
+        <span class="mono">Compliance</span>
+        <p class="rail-note">Measured, not assumed. Switch the accent in the header and these numbers move with it.</p>
+      </div>
+      <div class="body-col">
+        <h2>What has to stay true</h2>
+
+        <div class="rules">
+          <div class="rule-row">
+            <span class="mono">Text contrast</span>
+            <p>Primary text <span class="meta"><span data-fg="--fg" data-bg="--bg">16.68:1</span></span> and secondary text <span class="meta"><span data-fg="--fg-2" data-bg="--bg">5.55:1</span></span> against the ground. Secondary drops to <span class="meta"><span data-fg="--fg-2" data-bg="--s2">4.94:1</span></span> on elevation &plus;2 &mdash; still AA, and the floor for where it is allowed to sit.</p>
+          </div>
+          <div class="rule-row">
+            <span class="mono">Accent on ground</span>
+            <p><span class="meta"><span data-fg="--accent" data-bg="--bg">10.47:1</span></span> as text or as a ring. As a fill it carries <span class="meta">#0F0F0F</span> ink at the same ratio, so the primary button passes in both directions.</p>
+          </div>
+          <div class="rule-row">
+            <span class="mono">Focus</span>
+            <p>A 2px accent outline at 3px offset on every interactive element, never removed &mdash; well past the 3:1 minimum for non-text indicators.</p>
+          </div>
+          <div class="rule-row">
+            <span class="mono">Grain</span>
+            <p>4.5% opacity, <span class="meta">overlay</span> blend, <span class="meta">pointer-events: none</span>. It sits above the whole canvas but never intercepts a click, and it is decorative, so it is hidden from assistive tech.</p>
+          </div>
+          <div class="rule-row">
+            <span class="mono">Motion</span>
+            <p>Transitions cap at 180ms and touch color only. <span class="meta">prefers-reduced-motion</span> collapses them to zero, and nothing on this page animates on load or on scroll.</p>
+          </div>
+          <div class="rule-row">
+            <span class="mono">Theme</span>
+            <p>Dark only, by decision rather than omission. Every color is painted explicitly so the page holds its own ground instead of borrowing the host's.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span class="mono">Phosphor Hairline &middot; v1.0</span>
+    <span class="meta">7 color tokens &middot; 11 space steps &middot; 3 families &middot; 0 shadows</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var root = document.documentElement;
+
+  /* ---- WCAG 2.1 relative luminance + contrast ---- */
+  function lin(v){ v = v / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+  function lum(hex){
+    hex = String(hex).trim().replace('#', '');
+    if (hex.length === 3) hex = hex.replace(/./g, function(c){ return c + c; });
+    var r = parseInt(hex.slice(0, 2), 16),
+        g = parseInt(hex.slice(2, 4), 16),
+        b = parseInt(hex.slice(4, 6), 16);
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return 0;
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  }
+  function ratio(a, b){
+    var la = lum(a), lb = lum(b);
+    var hi = Math.max(la, lb), lo = Math.min(la, lb);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+  function tok(name){
+    return getComputedStyle(root).getPropertyValue(name).trim() || '#000000';
+  }
+
+  function refresh(){
+    var nodes = document.querySelectorAll('[data-fg][data-bg]');
+    for (var i = 0; i < nodes.length; i++){
+      var n = nodes[i];
+      var r = ratio(tok(n.getAttribute('data-fg')), tok(n.getAttribute('data-bg')));
+      n.textContent = r.toFixed(2) + ':1';
+      var wrap = n.parentNode;
+      var badge = wrap ? wrap.querySelector('.badge') : null;
+      if (badge && !badge.classList.contains('na')){
+        badge.textContent = r >= 7 ? 'AAA' : (r >= 4.5 ? 'AA' : (r >= 3 ? 'AA Large' : 'Fail'));
+        badge.className = 'badge ' + (r >= 4.5 ? 'pass' : 'na');
+      }
+    }
+  }
+
+  /* ---- toast ---- */
+  var timer;
+  function flash(msg){
+    var el = document.querySelector('.toast');
+    if (!el){ el = document.createElement('div'); el.className = 'toast'; document.body.appendChild(el); }
+    el.textContent = msg;
+    clearTimeout(timer);
+    timer = setTimeout(function(){ if (el && el.parentNode) el.parentNode.removeChild(el); }, 1800);
+  }
+
+  /* ---- accent switcher ---- */
+  var buttons = document.querySelectorAll('.swatch-btn');
+  var hexOut = document.getElementById('accentHex');
+  var accentCopy = document.getElementById('accentCopy');
+
+  Array.prototype.forEach.call(buttons, function(btn){
+    btn.addEventListener('click', function(){
+      var hex = btn.getAttribute('data-accent');
+      root.style.setProperty('--accent', hex);
+      Array.prototype.forEach.call(buttons, function(b){
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+      hexOut.textContent = hex;
+      accentCopy.textContent = hex + ' — copy';
+      accentCopy.setAttribute('data-copy', hex);
+      refresh();
+      flash(btn.getAttribute('data-name') + ' ' + hex);
+    });
+  });
+
+  /* ---- grain toggle ---- */
+  var grain = document.getElementById('grain');
+  var gt = document.getElementById('grainToggle');
+  gt.addEventListener('click', function(){
+    var on = gt.getAttribute('aria-pressed') === 'true';
+    gt.setAttribute('aria-pressed', on ? 'false' : 'true');
+    gt.textContent = on ? 'Grain off' : 'Grain on';
+    grain.hidden = on;
+  });
+
+  /* ---- copy hex ---- */
+  document.addEventListener('click', function(e){
+    var btn = e.target && e.target.closest ? e.target.closest('.copy') : null;
+    if (!btn) return;
+    var val = btn.getAttribute('data-copy');
+    try {
+      navigator.clipboard.writeText(val).then(
+        function(){ flash('Copied ' + val); },
+        function(){ flash(val + ' — select to copy'); }
+      );
+    } catch (err){
+      flash(val + ' — select to copy');
+    }
+  });
+
+  refresh();
+})();
+</script>

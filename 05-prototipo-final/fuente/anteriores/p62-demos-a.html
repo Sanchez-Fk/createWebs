@@ -1,0 +1,266 @@
+
+<script>
+/* ===========================================================================
+   DEMOS INTERACTIVAS — utilidades comunes + Dental + Restaurante
+   Todo ocurre en el navegador con datos de ejemplo: no se envía nada.
+   =========================================================================== */
+var IMG = window.IMG || {};          /* data URIs, se rellenan en p45-images */
+var CREDITS = window.CREDITS || {};
+
+function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function money(n, l) { return n === 0 ? (l === 'es' ? 'Gratis' : 'Free') : '$' + n.toLocaleString('es-CO'); }
+function seeded(a, b) { var x = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return x - Math.floor(x); }
+function nextDays(n, skipSunday) {
+  var out = [], d = new Date(); d.setHours(0, 0, 0, 0);
+  while (out.length < n) { if (!(skipSunday && d.getDay() === 0)) out.push(new Date(d)); d.setDate(d.getDate() + 1); }
+  return out;
+}
+function fmtDay(d, l, long) {
+  var loc = l === 'es' ? 'es-CO' : 'en-US';
+  return long ? d.toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long' })
+              : d.toLocaleDateString(loc, { weekday: 'short', day: 'numeric' });
+}
+function dmImg(key, alt, extra) {
+  var src = key && IMG[key];
+  if (src) return '<div class="dm-img ' + (extra || '') + '"><img src="' + src + '" alt="' + esc(alt) + '" decoding="async">' +
+    (CREDITS[key] ? '<span class="dm-credit">' + esc(CREDITS[key]) + ' · Unsplash</span>' : '') + '</div>';
+  return '<div class="dm-img ' + (extra || '') + '"><span class="noimg">' + esc(alt) + '</span></div>';
+}
+function monogram(txt) {
+  return '<div class="dm-img" aria-hidden="true" style="display:grid;place-items:center;font-family:var(--d-head);font-size:28px;color:var(--d-acc-t,var(--d-fg))">' + esc(txt.charAt(0)) + '</div>';
+}
+function dmScroll(el) { if (window.__scrollToEl) window.__scrollToEl(el); else el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+function on(root, fn) { root.addEventListener('click', function (e) { var b = e.target.closest('[data-act]'); if (b && root.contains(b) && !b.disabled) fn(b.getAttribute('data-act'), b.getAttribute('data-v'), b, e); }); }
+
+var DEMOS = {};
+
+/* ---------------------------------------------------------------------------
+   01 · DENTAL — reserva en tres pasos con precios visibles antes de llamar
+   --------------------------------------------------------------------------- */
+DEMOS.dental = {
+  mount: function (root, l) {
+    var es = l === 'es';
+    var TX = es ? {
+      nav: ['Tratamientos', 'Equipo', 'Contacto'], book: 'Reservar',
+      h: 'Tu próxima cita, en dos minutos.', lede: 'Elige el tratamiento, mira el precio y reserva el hueco que te sirve. Sin llamadas ni esperas.',
+      steps: ['Tratamiento', 'Fecha y hora', 'Tus datos'], next: 'Continuar', back: 'Atrás', confirm: 'Confirmar cita',
+      pickDay: 'Elige un día', pickSlot: 'Horas disponibles', name: 'Nombre completo', phone: 'Teléfono (WhatsApp)',
+      sum: 'Resumen', treat: 'Tratamiento', when: 'Cuándo', price: 'Precio', dur: 'Duración',
+      okTag: 'Cita confirmada', okText: 'Te enviamos un recordatorio por WhatsApp 24 horas antes. Puedes cambiarla desde el mismo mensaje.',
+      again: 'Reservar otra cita', note: 'Demo con datos de ejemplo: no se envía nada.', none: 'Aún no has elegido',
+      trust: [['4,9 / 5', '1.240 reseñas'], ['Lun–Sáb', '8:00 – 18:00'], ['A 3 min', 'de la estación Poblado']]
+    } : {
+      nav: ['Treatments', 'Team', 'Contact'], book: 'Book',
+      h: 'Your next appointment, in two minutes.', lede: 'Pick the treatment, see the price and book the slot that suits you. No calls, no waiting.',
+      steps: ['Treatment', 'Date & time', 'Your details'], next: 'Continue', back: 'Back', confirm: 'Confirm appointment',
+      pickDay: 'Pick a day', pickSlot: 'Available times', name: 'Full name', phone: 'Phone (WhatsApp)',
+      sum: 'Summary', treat: 'Treatment', when: 'When', price: 'Price', dur: 'Duration',
+      okTag: 'Appointment confirmed', okText: 'We’ll send a WhatsApp reminder 24 hours before. You can reschedule from that same message.',
+      again: 'Book another', note: 'Demo with sample data: nothing is sent.', none: 'Not chosen yet',
+      trust: [['4.9 / 5', '1,240 reviews'], ['Mon–Sat', '8:00 – 18:00'], ['3 min', 'from Poblado station']]
+    };
+    var TREAT = [
+      { id: 'limp', es: 'Limpieza dental', en: 'Dental cleaning', min: 45, price: 120000 },
+      { id: 'orto', es: 'Valoración de ortodoncia', en: 'Orthodontic assessment', min: 30, price: 0 },
+      { id: 'blan', es: 'Blanqueamiento', en: 'Whitening', min: 60, price: 450000 },
+      { id: 'urge', es: 'Urgencia', en: 'Emergency visit', min: 30, price: 90000 }
+    ];
+    var DAYS = nextDays(6, true);
+    var SLOTS = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'];
+    var S = { step: 1, t: null, d: 0, s: null, name: '', phone: '', done: false };
+
+    root.className = 'dm dm-dental';
+    root.innerHTML =
+      '<div class="dm-top"><div class="dm-logo"><span style="width:12px;height:12px;border-radius:50%;background:var(--d-acc)"></span>Clínica Dental Aurora</div>' +
+      '<nav class="dm-links" aria-label="Demo">' + TX.nav.map(function (n) { return '<span>' + n + '</span>'; }).join('') + '</nav>' +
+      '<a class="dm-btn" href="#dm-book" data-act="jump">' + TX.book + '</a></div>' +
+      '<div class="dm-pad dm-split" style="padding-top:28px;padding-bottom:28px">' +
+        '<div><h2 class="dm-h1">' + TX.h + '</h2><p class="dm-lede">' + TX.lede + '</p>' +
+        '<div class="dm-row" style="margin-top:18px;gap:18px">' + TX.trust.map(function (t) { return '<div><strong>' + t[0] + '</strong><div class="dm-muted" style="font-size:13px">' + t[1] + '</div></div>'; }).join('') + '</div></div>' +
+        '<div style="margin-top:18px">' + dmImg('dentalHero', es ? 'Consultorio dental con sillón y escritorio' : 'Dental room with chair and desk', '').replace('class="dm-img ', 'style="aspect-ratio:16/11" class="dm-img ') + '</div>' +
+      '</div>' +
+      '<section class="dm-sec" id="dm-book"><div class="dm-layout"><div id="dmFlow"></div><aside class="dm-sticky" id="dmSum"></aside></div>' +
+      '<p class="dm-note">' + TX.note + '</p><p class="dm-live" aria-live="polite" id="dmLive"></p></section>';
+
+    var flow = root.querySelector('#dmFlow'), sum = root.querySelector('#dmSum'), live = root.querySelector('#dmLive');
+    function tr() { return S.t === null ? null : TREAT[S.t]; }
+
+    function stepper() {
+      return '<div class="dm-steps">' + TX.steps.map(function (n, i) {
+        var k = i + 1;
+        return '<span class="dm-step' + (k < S.step ? ' done' : '') + '"' + (k === S.step ? ' aria-current="step"' : '') + '>' + k + ' · ' + n + '</span>';
+      }).join('') + '</div>';
+    }
+    function drawSum() {
+      var t = tr();
+      sum.innerHTML = '<div class="dm-sum"><div class="dm-tag" style="margin-bottom:10px">' + TX.sum + '</div><dl>' +
+        '<dt>' + TX.treat + '</dt><dd>' + (t ? t[l] : '<span class="dm-muted">' + TX.none + '</span>') + '</dd>' +
+        '<dt>' + TX.dur + '</dt><dd>' + (t ? t.min + ' min' : '—') + '</dd>' +
+        '<dt>' + TX.when + '</dt><dd>' + (S.s ? fmtDay(DAYS[S.d], l) + ' · ' + S.s : '—') + '</dd>' +
+        '<dt>' + TX.price + '</dt><dd><strong>' + (t ? money(t.price, l) : '—') + '</strong></dd></dl></div>';
+    }
+    function draw() {
+      var html = stepper();
+      if (S.done) {
+        var t = tr();
+        html = '<div class="dm-ok"><div class="dm-tag">✓ ' + TX.okTag + '</div>' +
+          '<h3 class="dm-h2" style="margin-top:8px">' + esc(S.name.split(' ')[0]) + ', ' + fmtDay(DAYS[S.d], l, true) + ' · ' + S.s + '</h3>' +
+          '<p class="dm-lede">' + t[l] + ' · ' + t.min + ' min · ' + money(t.price, l) + '</p><p class="dm-lede">' + TX.okText + '</p>' +
+          '<button class="dm-btn ghost" style="margin-top:14px" data-act="reset">' + TX.again + '</button></div>';
+      } else if (S.step === 1) {
+        html += '<div class="dm-opts">' + TREAT.map(function (t, i) {
+          return '<button class="dm-opt" data-act="treat" data-v="' + i + '" aria-pressed="' + (S.t === i) + '"><span><strong>' + t[l] + '</strong><small>' + t.min + ' min</small></span><span class="dm-price">' + money(t.price, l) + '</span></button>';
+        }).join('') + '</div><div class="dm-row" style="margin-top:16px"><button class="dm-btn" data-act="go" data-v="2"' + (S.t === null ? ' disabled' : '') + '>' + TX.next + ' →</button></div>';
+      } else if (S.step === 2) {
+        html += '<p class="dm-tag" style="margin:0 0 8px">' + TX.pickDay + '</p><div class="dm-chips">' + DAYS.map(function (d, i) {
+          return '<button class="dm-chip" data-act="day" data-v="' + i + '" aria-pressed="' + (S.d === i) + '">' + fmtDay(d, l) + '</button>';
+        }).join('') + '</div><p class="dm-tag" style="margin:18px 0 8px">' + TX.pickSlot + '</p><div class="dm-chips">' + SLOTS.map(function (s, i) {
+          var taken = seeded(DAYS[S.d].getDate(), i) < 0.34;
+          return '<button class="dm-chip" data-act="slot" data-v="' + s + '" aria-pressed="' + (S.s === s) + '"' + (taken ? ' disabled aria-label="' + s + ' ' + (es ? 'ocupada' : 'taken') + '"' : '') + '>' + s + '</button>';
+        }).join('') + '</div><div class="dm-row" style="margin-top:18px"><button class="dm-btn ghost" data-act="go" data-v="1">' + TX.back + '</button>' +
+          '<button class="dm-btn" data-act="go" data-v="3"' + (S.s ? '' : ' disabled') + '>' + TX.next + ' →</button></div>';
+      } else {
+        html += '<div class="dm-grid2"><div class="dm-field"><label for="dmName">' + TX.name + '</label><input id="dmName" autocomplete="name" value="' + esc(S.name) + '"></div>' +
+          '<div class="dm-field"><label for="dmPhone">' + TX.phone + '</label><input id="dmPhone" inputmode="tel" autocomplete="tel" placeholder="300 123 4567" value="' + esc(S.phone) + '"></div></div>' +
+          '<div class="dm-row" style="margin-top:18px"><button class="dm-btn ghost" data-act="go" data-v="2">' + TX.back + '</button>' +
+          '<button class="dm-btn" data-act="confirm" id="dmConfirm"' + (valid() ? '' : ' disabled') + '>' + TX.confirm + '</button></div>';
+      }
+      flow.innerHTML = html;
+      drawSum();
+    }
+    function valid() { return S.name.trim().length >= 3 && S.phone.replace(/\D/g, '').length >= 7; }
+
+    on(root, function (act, v, el, e) {
+      if (act === 'jump') { e.preventDefault(); dmScroll(root.querySelector('#dm-book')); return; }
+      if (act === 'treat') S.t = +v;
+      if (act === 'day') { S.d = +v; S.s = null; }
+      if (act === 'slot') S.s = v;
+      if (act === 'go') { S.step = +v; live.textContent = TX.steps[S.step - 1]; }
+      if (act === 'confirm') { S.done = true; live.textContent = TX.okTag; }
+      if (act === 'reset') { S = { step: 1, t: null, d: 0, s: null, name: '', phone: '', done: false }; }
+      draw();
+    });
+    root.addEventListener('input', function (e) {
+      if (e.target.id === 'dmName') S.name = e.target.value;
+      if (e.target.id === 'dmPhone') S.phone = e.target.value;
+      var b = root.querySelector('#dmConfirm'); if (b) b.disabled = !valid();
+    });
+    draw();
+  }
+};
+
+/* ---------------------------------------------------------------------------
+   02 · RESTAURANTE — carta con pedido y reserva que acaban en WhatsApp
+   --------------------------------------------------------------------------- */
+DEMOS.restaurante = {
+  mount: function (root, l) {
+    var es = l === 'es';
+    var TX = es ? {
+      sub: 'Cocina italiana · Laureles, Medellín', tabs: { antipasti: 'Antipasti', pasta: 'Pasta', pizza: 'Pizza', dolci: 'Dolci' },
+      order: 'Tu pedido', empty: 'Añade platos desde la carta.', total: 'Total', send: 'Pedir por WhatsApp',
+      resH: 'Reserva tu mesa', people: 'Personas', day: 'Día', time: 'Hora', reserve: 'Reservar por WhatsApp', full: 'completo',
+      msgTitle: 'Mensaje que se enviaría', note: 'Demo con datos de ejemplo: no se abre WhatsApp ni se envía nada.',
+      today: 'Hoy', tomorrow: 'Mañana', hello: 'Hola Trattoria Nove, quiero pedir:', resMsg: function (p, d, t) { return 'Hola Trattoria Nove, quiero reservar mesa para ' + p + ' ' + (p === 1 ? 'persona' : 'personas') + ' el ' + d + ' a las ' + t + '.'; },
+      add: 'Añadir', remove: 'Quitar'
+    } : {
+      sub: 'Italian kitchen · Laureles, Medellín', tabs: { antipasti: 'Antipasti', pasta: 'Pasta', pizza: 'Pizza', dolci: 'Dolci' },
+      order: 'Your order', empty: 'Add dishes from the menu.', total: 'Total', send: 'Order on WhatsApp',
+      resH: 'Book a table', people: 'People', day: 'Day', time: 'Time', reserve: 'Book on WhatsApp', full: 'full',
+      msgTitle: 'Message that would be sent', note: 'Demo with sample data: WhatsApp does not open and nothing is sent.',
+      today: 'Today', tomorrow: 'Tomorrow', hello: 'Hi Trattoria Nove, I’d like to order:', resMsg: function (p, d, t) { return 'Hi Trattoria Nove, I’d like a table for ' + p + ' on ' + d + ' at ' + t + '.'; },
+      add: 'Add', remove: 'Remove'
+    };
+    var MENU = {
+      antipasti: [
+        { id: 'burr', img: 'dishAntipasto', n: 'Burrata e pomodoro', es: 'Burrata, tomate de huerta, albahaca', en: 'Burrata, garden tomato, basil', p: 38000 },
+        { id: 'brus', img: null, n: 'Bruschetta', es: 'Pan de masa madre, ajo, aceite de oliva', en: 'Sourdough, garlic, olive oil', p: 22000 }
+      ],
+      pasta: [
+        { id: 'spag', img: 'dishSpaghetti', n: 'Spaghetti al pomodoro', es: 'Salsa de tomate lenta, parmesano', en: 'Slow tomato sauce, parmesan', p: 42000 },
+        { id: 'trof', img: 'dishPesto', n: 'Trofie al pesto', es: 'Pesto genovés, piñones, tomate cherry', en: 'Genovese pesto, pine nuts, cherry tomato', p: 46000 },
+        { id: 'carb', img: null, n: 'Carbonara', es: 'Guanciale, yema, pecorino', en: 'Guanciale, egg yolk, pecorino', p: 48000 }
+      ],
+      pizza: [
+        { id: 'marg', img: 'dishPizza', n: 'Margherita', es: 'Tomate, mozzarella, romero', en: 'Tomato, mozzarella, rosemary', p: 44000 },
+        { id: 'diav', img: null, n: 'Diavola', es: 'Salami picante, mozzarella', en: 'Spicy salami, mozzarella', p: 49000 }
+      ],
+      dolci: [
+        { id: 'tira', img: 'dishTiramisu', n: 'Tiramisù', es: 'Mascarpone, café, cacao', en: 'Mascarpone, coffee, cocoa', p: 24000 },
+        { id: 'panc', img: null, n: 'Panna cotta', es: 'Frutos rojos', en: 'Red berries', p: 21000 }
+      ]
+    };
+    var ALL = {}; Object.keys(MENU).forEach(function (k) { MENU[k].forEach(function (d) { ALL[d.id] = d; }); });
+    var DAYS = nextDays(5, false);
+    var TIMES = ['19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'];
+    var S = { tab: 'pasta', cart: {}, people: 2, day: 0, time: '20:00', msg: '' };
+
+    root.className = 'dm dm-rest';
+    root.innerHTML =
+      '<div class="dm-top"><div class="dm-logo" style="letter-spacing:.18em;text-transform:uppercase;font-weight:400">Trattoria Nove</div>' +
+      '<nav class="dm-links" aria-label="Demo"><span>' + TX.tabs.pasta + '</span><span>' + TX.resH + '</span></nav><span class="dm-tag">★ 4,8</span></div>' +
+      '<div class="dm-cover">' + dmImg('restHero', es ? 'Mesa servida con copas de vino y platos' : 'Table set with wine glasses and dishes', '') +
+        '<div class="dm-panel"><div class="dm-tag">' + TX.sub + '</div><h2 class="dm-h1" style="margin-top:6px;font-weight:400;letter-spacing:.02em">Trattoria Nove</h2>' +
+        '<div class="dm-row" style="margin-top:14px"><a class="dm-btn" href="#rt-menu" data-act="jump" data-v="rt-menu">Carta</a><a class="dm-btn ghost" href="#rt-res" data-act="jump" data-v="rt-res">' + TX.resH + '</a></div></div></div>' +
+      '<section class="dm-sec" id="rt-menu"><div class="dm-layout"><div><div class="dm-tabs" role="tablist" id="rtTabs"></div><div class="dm-items" id="rtItems" role="tabpanel"></div></div>' +
+        '<aside class="dm-sticky"><div class="dm-sum" id="rtOrder"></div></aside></div></section>' +
+      '<section class="dm-sec" id="rt-res"><h3 class="dm-h2">' + TX.resH + '</h3><div id="rtRes" style="margin-top:14px"></div></section>' +
+      '<section class="dm-sec" id="rtMsgWrap" hidden><div class="dm-tag">' + TX.msgTitle + '</div><pre class="dm-msg" id="rtMsg"></pre><p class="dm-note">' + TX.note + '</p></section>' +
+      '<p class="dm-live" aria-live="polite" id="rtLive"></p>';
+
+    var tabsEl = root.querySelector('#rtTabs'), itemsEl = root.querySelector('#rtItems'), orderEl = root.querySelector('#rtOrder'),
+        resEl = root.querySelector('#rtRes'), msgWrap = root.querySelector('#rtMsgWrap'), msgEl = root.querySelector('#rtMsg'), live = root.querySelector('#rtLive');
+
+    function count() { return Object.keys(S.cart).reduce(function (a, k) { return a + S.cart[k]; }, 0); }
+    function total() { return Object.keys(S.cart).reduce(function (a, k) { return a + S.cart[k] * ALL[k].p; }, 0); }
+    function dayLabel(i) { return i === 0 ? TX.today : i === 1 ? TX.tomorrow : fmtDay(DAYS[i], l); }
+
+    function drawMenu() {
+      tabsEl.innerHTML = Object.keys(MENU).map(function (k) {
+        return '<button class="dm-tab" role="tab" data-act="tab" data-v="' + k + '" aria-selected="' + (S.tab === k) + '">' + TX.tabs[k] + '</button>';
+      }).join('');
+      itemsEl.innerHTML = MENU[S.tab].map(function (d) {
+        var q = S.cart[d.id] || 0;
+        return '<div class="dm-item">' + (d.img ? dmImg(d.img, d.n) : monogram(d.n)) +
+          '<div><strong>' + d.n + '</strong><small>' + d[l] + '</small><small style="color:var(--d-fg);margin-top:4px">' + money(d.p, l) + '</small></div>' +
+          '<button class="dm-add" data-act="add" data-v="' + d.id + '" aria-pressed="' + (q > 0) + '" aria-label="' + TX.add + ' ' + d.n + '">' + (q > 0 ? q : '+') + '</button></div>';
+      }).join('');
+    }
+    function drawOrder() {
+      var keys = Object.keys(S.cart);
+      orderEl.innerHTML = '<div class="dm-row" style="justify-content:space-between"><span class="dm-tag">' + TX.order + '</span><span class="dm-tag">' + count() + '</span></div>' +
+        (keys.length ? '<ul class="dm-lines">' + keys.map(function (k) {
+          return '<li><span>' + ALL[k].n + '</span><span class="dm-qty"><button data-act="dec" data-v="' + k + '" aria-label="' + TX.remove + '">−</button>' + S.cart[k] + '<button data-act="add" data-v="' + k + '" aria-label="' + TX.add + '">+</button></span></li>';
+        }).join('') + '</ul><div class="dm-total"><span>' + TX.total + '</span><span>' + money(total(), l) + '</span></div>' +
+        '<button class="dm-btn" style="width:100%;margin-top:14px" data-act="order">' + TX.send + '</button>'
+        : '<p class="dm-muted" style="margin:10px 0 0">' + TX.empty + '</p>');
+    }
+    function drawRes() {
+      resEl.innerHTML = '<div class="dm-row" style="gap:14px"><span class="dm-tag">' + TX.people + '</span><span class="dm-qty"><button data-act="pp" data-v="-1" aria-label="−">−</button><strong>' + S.people + '</strong><button data-act="pp" data-v="1" aria-label="+">+</button></span></div>' +
+        '<p class="dm-tag" style="margin:16px 0 8px">' + TX.day + '</p><div class="dm-chips">' + DAYS.map(function (d, i) {
+          return '<button class="dm-chip" data-act="rday" data-v="' + i + '" aria-pressed="' + (S.day === i) + '">' + dayLabel(i) + '</button>';
+        }).join('') + '</div><p class="dm-tag" style="margin:16px 0 8px">' + TX.time + '</p><div class="dm-chips">' + TIMES.map(function (t, i) {
+          var full = seeded(DAYS[S.day].getDate() + S.people, i) < 0.25;
+          return '<button class="dm-chip" data-act="rtime" data-v="' + t + '" aria-pressed="' + (S.time === t && !full) + '"' + (full ? ' disabled aria-label="' + t + ' ' + TX.full + '"' : '') + '>' + t + '</button>';
+        }).join('') + '</div><button class="dm-btn" style="margin-top:18px" data-act="reserve">' + TX.reserve + '</button>';
+    }
+    function show(text) { msgEl.textContent = text; msgWrap.hidden = false; live.textContent = TX.msgTitle; dmScroll(msgWrap); }
+
+    on(root, function (act, v, el, e) {
+      if (act === 'jump') { e.preventDefault(); dmScroll(root.querySelector('#' + v)); return; }
+      if (act === 'tab') S.tab = v;
+      if (act === 'add') { S.cart[v] = (S.cart[v] || 0) + 1; live.textContent = ALL[v].n + ' × ' + S.cart[v]; }
+      if (act === 'dec') { S.cart[v] -= 1; if (S.cart[v] <= 0) delete S.cart[v]; }
+      if (act === 'pp') S.people = Math.max(1, Math.min(12, S.people + (+v)));
+      if (act === 'rday') S.day = +v;
+      if (act === 'rtime') S.time = v;
+      if (act === 'order') {
+        show(TX.hello + '\n' + Object.keys(S.cart).map(function (k) { return S.cart[k] + '× ' + ALL[k].n + ' — ' + money(S.cart[k] * ALL[k].p, l); }).join('\n') + '\n\n' + TX.total + ': ' + money(total(), l));
+        return;
+      }
+      if (act === 'reserve') { show(TX.resMsg(S.people, S.day < 2 ? dayLabel(S.day).toLowerCase() : fmtDay(DAYS[S.day], l, true), S.time)); return; }
+      drawMenu(); drawOrder(); drawRes();
+    });
+    drawMenu(); drawOrder(); drawRes();
+  }
+};
+</script>

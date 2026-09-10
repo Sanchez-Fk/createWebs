@@ -1,0 +1,231 @@
+
+<script>
+(function () {
+  'use strict';
+
+  var vp = document.getElementById('vp');
+  var box = document.getElementById('box');
+  var stage = document.getElementById('stage');
+  var scroller = document.getElementById('scroller');
+  var site = document.getElementById('site');
+  var page = document.getElementById('page');
+  var hdr = document.getElementById('hdr');
+  var menu = document.getElementById('menu');
+  var motionBtn = document.getElementById('motionBtn');
+  var routeLabel = document.getElementById('routeLabel');
+
+  var systemReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var motionOn = !systemReduced;
+  var mode = 'fit';
+  var scale = 1;
+  var lenis = null;
+  var io = null;
+  var current = null;
+  var routeText = '/es/';
+  var demoCleanup = null;
+
+  /* ---------------------------------------------------------------------------
+     ANCHO DE VISTA — el stage se escala para caber; las consultas de contenedor
+     siguen viendo el ancho real de diseño (1440 / 768 / 390)
+     --------------------------------------------------------------------------- */
+  function layout() {
+    var aw = window.innerWidth, ah = window.innerHeight - 64, W, H;
+    if (mode === 'fit') {
+      W = aw; H = ah; scale = 1;
+      vp.classList.remove('framed');
+      box.style.width = aw + 'px'; box.style.height = ah + 'px';
+    } else {
+      W = +mode;
+      var availH = ah - 24;
+      scale = Math.min(1, (aw - 32) / W);
+      H = availH / scale;
+      vp.classList.add('framed');
+      box.style.width = (W * scale) + 'px'; box.style.height = availH + 'px';
+    }
+    stage.style.width = W + 'px';
+    stage.style.height = H + 'px';
+    stage.style.transform = scale === 1 ? 'none' : 'scale(' + scale + ')';
+    stage.style.setProperty('--vh', H + 'px');
+    grid.resize();
+    if (lenis) lenis.resize();
+  }
+
+  /* ---------------------------------------------------------------------------
+     LENIS — inercia con easing propio (design.md), nunca ease-in-out por defecto
+     --------------------------------------------------------------------------- */
+  function startLenis() {
+    if (lenis || !window.Lenis) return;
+    try {
+      lenis = new window.Lenis({
+        wrapper: scroller, content: site, duration: 1.15,
+        easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); }
+      });
+      var loop = function (time) { if (!lenis) return; lenis.raf(time); requestAnimationFrame(loop); };
+      requestAnimationFrame(loop);
+    } catch (e) { lenis = null; }
+  }
+  window.__scrollToEl = function (el, extra) {
+    var top = scroller.scrollTop + (el.getBoundingClientRect().top - scroller.getBoundingClientRect().top) / scale - hdr.offsetHeight - 16 - (extra || 0);
+    if (lenis) lenis.scrollTo(top); else scroller.scrollTo({ top: top, behavior: motionOn ? 'smooth' : 'auto' });
+  };
+  function stopLenis() { if (lenis) { lenis.destroy(); lenis = null; } }
+
+  function applyMotion() {
+    stage.classList.toggle('m', motionOn);
+    motionBtn.setAttribute('aria-pressed', motionOn ? 'true' : 'false');
+    motionBtn.textContent = motionOn ? 'Activo' : (systemReduced ? 'Reducido · sistema' : 'Reducido');
+    if (motionOn) startLenis(); else stopLenis();
+    grid.draw();
+  }
+
+  /* ---------------------------------------------------------------------------
+     ROUTER — #/es/proyectos ⇄ #/en/work
+     --------------------------------------------------------------------------- */
+  function parse() {
+    var parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+    var l = parts[0];
+    if (l !== 'es' && l !== 'en') return null;
+    var slug = parts[1] || '', sub = parts[2] || '', key = null;
+    Object.keys(ROUTES[l]).forEach(function (k) { if (key === null && ROUTES[l][k] === slug) key = k; });
+    if (key === null) return null;
+    if (key === 'demo' && !sub) key = 'home';
+    return { l: l, key: key, sub: key === 'demo' ? sub : '' };
+  }
+  function goDefault() {
+    try { history.replaceState(null, '', '#/es/'); } catch (e) { location.hash = '#/es/'; }
+  }
+
+  function render(r, fresh) {
+    var go = function () {
+      if (demoCleanup) { demoCleanup(); demoCleanup = null; }
+      current = r;
+      document.documentElement.lang = r.l;
+      hdr.innerHTML = r.key === 'demo' ? DemoBar(r.l, r.sub) : Header(r.l, r.key, r.sub);
+      hdr.classList.toggle('is-demo', r.key === 'demo');
+      menu.innerHTML = r.key === 'demo' ? '' : Menu(r.l, r.key, r.sub);
+      menu.hidden = true;
+      page.innerHTML = r.key === 'demo' ? PAGES.demo(r.l, r.sub) : PAGES[r.key](r.l);
+      if (r.key === 'demo') {
+        var dRoot = document.getElementById('demoRoot'), dm = DEMOS[r.sub] || DEMOS.dental;
+        if (dRoot && dm) {
+          var offDemo = dm.mount(dRoot, r.l) || null;
+          var offBg = DSBG.mount(dRoot, r.sub in DEMOS ? r.sub : 'dental', function () { return motionOn; });
+          demoCleanup = function () { if (offDemo) offDemo(); if (offBg) offBg(); };
+        }
+      }
+      document.title = 'José M. Sánchez · ' + T[r.l].titles[r.key];
+      routeText = '/' + r.l + '/' + (ROUTES[r.l][r.key] || '') + (r.sub ? '/' + r.sub : '');
+      routeLabel.textContent = routeText;
+      if (lenis) { lenis.start(); lenis.scrollTo(0, { immediate: true, force: true }); }
+      scroller.scrollTop = 0;
+      onScroll();
+      bind();
+      reveals(fresh);
+      page.classList.remove('is-out');
+      if (!fresh) page.focus({ preventScroll: true });
+    };
+    if (fresh || !motionOn) { go(); return; }
+    page.classList.add('is-out');               /* fundido corto: sin cortina ni loader */
+    setTimeout(go, 170);
+  }
+
+  /* ---------------------------------------------------------------------------
+     REVELADOS
+     · Hero: máscara hacia arriba, 80ms entre líneas; el resto sube 24px después
+     · Tarjetas: 100ms de escalonado, 32px, al 20% de visibilidad
+     · Filas: escalonadas 80ms · Propuesta y CTA final: solo fundido
+     Sin movimiento: nada se oculta nunca.
+     --------------------------------------------------------------------------- */
+  function reveals(fresh) { MOTION.run(page, hdr, fresh); }
+
+  /* ---------------------------------------------------------------------------
+     HEADER, MENÚ, FORMULARIO, ENLACES EXTERNOS
+     --------------------------------------------------------------------------- */
+  function onScroll() { hdr.classList.toggle('is-scrolled', scroller.scrollTop > 8); }
+  scroller.addEventListener('scroll', onScroll, { passive: true });
+
+  function setMenu(open) {
+    menu.hidden = !open;
+    var mb = document.getElementById('menuBtn');
+    if (mb) mb.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) { if (lenis) lenis.stop(); var a = menu.querySelector('a'); if (a) a.focus(); }
+    else { if (lenis) lenis.start(); if (mb) mb.focus(); }
+  }
+  function bind() {
+    var mb = document.getElementById('menuBtn'), mc = document.getElementById('menuClose');
+    if (mb) mb.onclick = function () { setMenu(true); };
+    if (mc) mc.onclick = function () { setMenu(false); };
+    var form = document.getElementById('form');
+    if (form) form.onsubmit = function (e) { e.preventDefault(); document.getElementById('formNote').hidden = false; };
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
+
+  var flashT;
+  stage.addEventListener('click', function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (!a) return;
+    var h = a.getAttribute('href');
+    if (h.indexOf('#/') === 0 || a.closest('.ds')) return;
+    e.preventDefault();
+    var names = { '#wa': 'WhatsApp', '#mail': 'Email', '#gh': 'GitHub', '#li': 'LinkedIn', '#ig': 'Instagram' };
+    routeLabel.textContent = (current && current.l === 'en' ? 'External link in production: ' : 'Enlace externo en producción: ') + (names[h] || h);
+    clearTimeout(flashT);
+    flashT = setTimeout(function () { routeLabel.textContent = routeText; }, 2400);
+  });
+
+  /* ---------------------------------------------------------------------------
+     HUD INTERACTIVO (p65-hud) — sustituye a la retícula de puntos de design.md
+     --------------------------------------------------------------------------- */
+  var grid = HUD({
+    canvas: document.getElementById("grid"),
+    stage: stage,
+    isMotion: function () { return motionOn; },
+    getScale: function () { return scale; },
+    getScroll: function () { return scroller.scrollTop; },
+    getLang: function () { return current ? current.l : "es"; }
+  });
+
+  MOTION.init({
+    stage: stage,
+    scroller: scroller,
+    isOn: function () { return motionOn; },
+    getScale: function () { return scale; }
+  });
+
+  /* ---------------------------------------------------------------------------
+     CONTROLES DEL PROTOTIPO
+     --------------------------------------------------------------------------- */
+  Array.prototype.forEach.call(document.querySelectorAll('[data-vw]'), function (b, _, all) {
+    b.addEventListener('click', function () {
+      mode = b.getAttribute('data-vw');
+      Array.prototype.forEach.call(document.querySelectorAll('[data-vw]'), function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+      layout();
+    });
+  });
+  motionBtn.addEventListener('click', function () { motionOn = !motionOn; applyMotion(); if (current) render(current, true); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-accent]'), function (b) {
+    b.addEventListener('click', function () {
+      var hex = b.getAttribute('data-accent');
+      stage.style.setProperty('--accent', hex);
+      Array.prototype.forEach.call(document.querySelectorAll('[data-accent]'), function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+      grid.accent(hex);
+    });
+  });
+
+  var rT;
+  window.addEventListener('resize', function () { clearTimeout(rT); rT = setTimeout(layout, 150); });
+  window.addEventListener('hashchange', function () {
+    var r = parse();
+    if (!r) { goDefault(); r = parse() || { l: 'es', key: 'home', sub: '' }; }
+    render(r, false);
+  });
+
+  /* ---------------------------------------------------------------------------
+     ARRANQUE
+     --------------------------------------------------------------------------- */
+  if (!parse()) goDefault();
+  layout();
+  applyMotion();
+  render(parse() || { l: 'es', key: 'home', sub: '' }, true);
+})();
+</script>

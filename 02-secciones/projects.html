@@ -1,0 +1,593 @@
+<title>Sector Demos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+
+<style>
+/* ===========================================================================
+   TOKENS — Phosphor Hairline v1.0 (same system as the spec sheet + hero)
+   =========================================================================== */
+:root{
+  color-scheme: dark;
+
+  --bg:      #0F0F0F;
+  --s1:      #161616;
+  --s2:      #1C1C1C;
+  --line:    #262626;
+  --line-hi: #3A3A3A;
+
+  --fg:      #EFEFEF;
+  --fg-2:    #8A8A8A;
+
+  --accent:     #FFB000;
+  --accent-ink: #0F0F0F;
+
+  --r: 2px;
+  --maxw: 1280px;
+  --gx: 64px;
+
+  --f-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --f-body:    'IBM Plex Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --f-mono:    'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after{ box-sizing: border-box; }
+
+body{
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+body.is-framed{ background: var(--s1); padding: 40px 0 56px; }
+
+::selection{ background: var(--accent); color: var(--accent-ink); }
+
+/* ===========================================================================
+   STAGE — scroll container + query container, so the same stylesheet drives
+   the real 1440 viewport and the 390 frame. Sizes come from cqi, not vw.
+   =========================================================================== */
+.stage{
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+.stage.is-framed{
+  width: 390px;
+  height: 844px;
+  overflow-y: auto;
+  margin-inline: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  scrollbar-width: none;
+}
+.stage.is-framed::-webkit-scrollbar{ display: none; }
+
+/* --- film grain ----------------------------------------------------------- */
+.grain{
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  pointer-events: none;
+  opacity: .045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ===========================================================================
+   SECTION
+   =========================================================================== */
+.section{
+  padding: clamp(6rem, 3.1rem + 7.6cqi, 10rem) var(--gx);
+}
+.inner{ width: 100%; max-width: var(--maxw); margin-inline: auto; }
+
+.sec-head{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 48px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 56px;
+}
+.sec-label{
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  white-space: nowrap;
+  padding-top: 3px;
+}
+.sec-note{
+  margin: 0;
+  max-width: 42ch;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--fg-2);
+}
+
+/* ===========================================================================
+   GRID — 2 up on desktop, 1 up on mobile, 32px gap
+   =========================================================================== */
+.grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+}
+
+/* ===========================================================================
+   CARD — the neutral frame.
+   Identical structure in every instance: shot / sector / title / line / meta.
+   The copy is clamped to two lines and the meta row is pushed by margin-auto,
+   so cards stay the same height however long the sentence runs.
+   No border, no fill, no radius on the card itself — the screenshot's 1px
+   hairline is the only drawn edge, which is what makes the accent shift on
+   hover unambiguous.
+   =========================================================================== */
+.card{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.shot{
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;                 /* keeps the 1px edge crisp while the art scales */
+  background: var(--s1);
+  transition: border-color .3s ease;
+}
+.shot svg{
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  transition: transform .85s var(--ease);   /* slow ease, per spec */
+}
+
+/* --- hover / focus -------------------------------------------------------
+   Deliberately absent: shadow, lift (translateY), colour overlay, background
+   change. The only three things that move are the ones asked for. */
+.card:hover .shot svg,
+.card:focus-within .shot svg{ transform: scale(1.03); }
+
+.card:hover .shot,
+.card:focus-within .shot{ border-color: var(--accent); }
+
+.card:hover .arw,
+.card:focus-within .arw{ transform: translateX(4px); }
+
+.sector{
+  margin: 26px 0 0;
+  font-family: var(--f-mono);
+  font-size: .6875rem;
+  font-weight: 500;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.card-title{
+  margin: 12px 0 0;
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 1.4375rem;
+  line-height: 1.2;
+  letter-spacing: -.022em;
+  color: var(--fg);
+}
+.card-copy{
+  margin: 12px 0 0;
+  font-size: .9375rem;
+  line-height: 1.6;
+  color: var(--fg-2);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;            /* hard cap at two lines */
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.card-meta{
+  margin-top: auto;
+  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.tags{ display: flex; flex-wrap: wrap; gap: 6px; }
+.tag{
+  font-family: var(--f-mono);
+  font-size: .6875rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+.demo-link{
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--f-mono);
+  font-size: .6875rem;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--fg);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .18s ease;
+}
+.demo-link .arw{ transition: transform .28s var(--ease); }
+.card:hover .demo-link,
+.card:focus-within .demo-link{ color: var(--accent); }
+
+/* stretched link — one anchor makes the whole card clickable without
+   nesting interactive elements inside an <a> */
+.demo-link::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+:where(a, button, [tabindex]):focus-visible{
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r);
+}
+.demo-link:focus-visible{ outline-offset: 4px; }
+
+/* ===========================================================================
+   PREVIEW CONTROL — page chrome, not part of the design system
+   =========================================================================== */
+.pv{
+  position: fixed;
+  right: 20px; bottom: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: rgba(22,22,22,.92);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  backdrop-filter: blur(10px);
+}
+.pv button{
+  font-family: var(--f-mono);
+  font-size: .6875rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  background: none;
+  border: 0;
+  border-radius: var(--r);
+  padding: 7px 11px;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: background-color .16s ease, color .16s ease;
+}
+.pv button[aria-pressed="true"]{ background: var(--s2); color: var(--fg); }
+
+/* ===========================================================================
+   MOBILE — container-driven, so the 390 frame gets it too
+   =========================================================================== */
+@container (max-width: 759px){
+  .stage{ --gx: 24px; }
+
+  .sec-head{
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .sec-note{ max-width: 100%; font-size: .9375rem; }
+
+  .grid{ grid-template-columns: minmax(0, 1fr); gap: 32px; }
+
+  .sector{ margin-top: 20px; }
+  .card-title{ font-size: 1.3125rem; }
+  .card-meta{ padding-top: 18px; gap: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ transition-duration: .01ms !important; }
+  .card:hover .shot svg,
+  .card:focus-within .shot svg{ transform: none; }
+}
+</style>
+
+<div class="pv" role="group" aria-label="Preview width">
+  <button type="button" data-w="desktop" aria-pressed="true">1440</button>
+  <button type="button" data-w="mobile" aria-pressed="false">390</button>
+</div>
+
+<div class="stage" id="stage">
+  <section class="section">
+    <div class="inner">
+
+      <div class="sec-head">
+        <span class="sec-label">Selected work / 01</span>
+        <p class="sec-note">Functional demos built to show what each industry needs.</p>
+      </div>
+
+      <div class="grid">
+
+        <!-- ============ DENTAL — clinical light, booking-first ============ -->
+        <article class="card">
+          <div class="shot">
+            <svg viewBox="0 0 320 200" role="img" aria-label="Dental clinic site mockup: light clinical layout with a booking button">
+              <rect width="320" height="200" fill="#F3F8FB"/>
+              <rect x="0" y="0" width="320" height="26" fill="#FFFFFF"/>
+              <circle cx="20" cy="13" r="5" fill="#2E86C1"/>
+              <rect x="32" y="11" width="38" height="4" rx="1" fill="#A8BCCA"/>
+              <rect x="212" y="11" width="20" height="4" rx="1" fill="#A8BCCA"/>
+              <rect x="240" y="11" width="20" height="4" rx="1" fill="#A8BCCA"/>
+              <rect x="272" y="6" width="34" height="14" rx="2" fill="#2E86C1"/>
+              <rect x="20" y="50" width="122" height="10" rx="1" fill="#12293C"/>
+              <rect x="20" y="66" width="94" height="10" rx="1" fill="#12293C"/>
+              <rect x="20" y="88" width="128" height="4" rx="1" fill="#9AB0C0"/>
+              <rect x="20" y="97" width="100" height="4" rx="1" fill="#9AB0C0"/>
+              <rect x="20" y="113" width="76" height="19" rx="2" fill="#2E86C1"/>
+              <text x="30" y="126" font-family="IBM Plex Mono, monospace" font-size="7.5" letter-spacing="1.2" fill="#FFFFFF">RESERVAR</text>
+              <rect x="178" y="44" width="122" height="92" rx="2" fill="#D6E8F3"/>
+              <circle cx="239" cy="82" r="21" fill="#B6D5E8"/>
+              <rect x="20" y="150" width="86" height="34" rx="2" fill="#FFFFFF"/>
+              <rect x="30" y="160" width="34" height="3" rx="1" fill="#2E86C1"/>
+              <rect x="30" y="169" width="58" height="3" rx="1" fill="#B9C8D3"/>
+              <rect x="117" y="150" width="86" height="34" rx="2" fill="#FFFFFF"/>
+              <rect x="127" y="160" width="34" height="3" rx="1" fill="#2E86C1"/>
+              <rect x="127" y="169" width="58" height="3" rx="1" fill="#B9C8D3"/>
+              <rect x="214" y="150" width="86" height="34" rx="2" fill="#FFFFFF"/>
+              <rect x="224" y="160" width="34" height="3" rx="1" fill="#2E86C1"/>
+              <rect x="224" y="169" width="58" height="3" rx="1" fill="#B9C8D3"/>
+            </svg>
+          </div>
+          <p class="sector">Dental</p>
+          <h3 class="card-title">Cl&iacute;nica Dental Aurora</h3>
+          <p class="card-copy">Online booking that fills the gaps between appointments, with treatment prices stated before anyone has to phone and ask.</p>
+          <div class="card-meta">
+            <div class="tags">
+              <span class="tag">Vanilla JS</span><span class="tag">CSS Grid</span><span class="tag">Calendar API</span>
+            </div>
+            <a class="demo-link" href="#">View live demo <span class="arw" aria-hidden="true">&rarr;</span></a>
+          </div>
+        </article>
+
+        <!-- ============ RESTAURANT — warm, dark, photo-led ============ -->
+        <article class="card">
+          <div class="shot">
+            <svg viewBox="0 0 320 200" role="img" aria-label="Restaurant site mockup: dark photo-led header over a menu list">
+              <rect width="320" height="200" fill="#15100D"/>
+              <rect x="0" y="0" width="320" height="120" fill="#452317"/>
+              <ellipse cx="128" cy="66" rx="104" ry="56" fill="#7A3A22"/>
+              <ellipse cx="214" cy="94" rx="72" ry="40" fill="#9A542E"/>
+              <ellipse cx="72" cy="34" rx="54" ry="28" fill="#5C2D1C"/>
+              <rect x="0" y="0" width="320" height="120" fill="#1A0E08" opacity="0.34"/>
+              <text x="160" y="58" text-anchor="middle" font-family="Georgia, serif" font-size="21" letter-spacing="5" fill="#F0E4CE">TRATTORIA</text>
+              <rect x="128" y="70" width="64" height="1" fill="#C98A4B"/>
+              <text x="160" y="88" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="7" letter-spacing="2.4" fill="#D6C2A2">CARTA &middot; RESERVAS</text>
+              <rect x="24" y="138" width="72" height="6" rx="1" fill="#E6D8BE"/>
+              <rect x="24" y="152" width="128" height="3" rx="1" fill="#7E6E58"/>
+              <rect x="24" y="161" width="104" height="3" rx="1" fill="#7E6E58"/>
+              <rect x="24" y="174" width="140" height="3" rx="1" fill="#5E5142"/>
+              <rect x="24" y="183" width="88" height="3" rx="1" fill="#5E5142"/>
+              <rect x="230" y="146" width="66" height="22" rx="2" fill="#C0522E"/>
+              <text x="263" y="160" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="7" letter-spacing="1.4" fill="#F6EADA">RESERVAR</text>
+            </svg>
+          </div>
+          <p class="sector">Restaurant</p>
+          <h3 class="card-title">Trattoria Nove</h3>
+          <p class="card-copy">A menu that loads in under a second on a phone at the table, and reservations that arrive straight in WhatsApp.</p>
+          <div class="card-meta">
+            <div class="tags">
+              <span class="tag">Astro</span><span class="tag">WebP</span><span class="tag">WhatsApp API</span>
+            </div>
+            <a class="demo-link" href="#">View live demo <span class="arw" aria-hidden="true">&rarr;</span></a>
+          </div>
+        </article>
+
+        <!-- ============ BARBERSHOP — cream, near-black, huge type ============ -->
+        <article class="card">
+          <div class="shot">
+            <svg viewBox="0 0 320 200" role="img" aria-label="Barbershop site mockup: cream ground with oversized black type and a price list">
+              <rect width="320" height="200" fill="#E9E2D5"/>
+              <rect x="0" y="0" width="320" height="22" fill="#141210"/>
+              <text x="16" y="14.5" font-family="IBM Plex Mono, monospace" font-size="7" letter-spacing="2.2" fill="#E9E2D5">CORTE &amp; NAVAJA</text>
+              <text x="266" y="14.5" font-family="IBM Plex Mono, monospace" font-size="7" letter-spacing="1.6" fill="#B0A692">CITA</text>
+              <rect x="16" y="42" width="178" height="21" fill="#141210"/>
+              <rect x="16" y="68" width="126" height="21" fill="#141210"/>
+              <rect x="16" y="94" width="156" height="21" fill="#141210"/>
+              <rect x="216" y="38" width="36" height="122" fill="#141210"/>
+              <rect x="222" y="50" width="24" height="7" fill="#E9E2D5"/>
+              <rect x="222" y="68" width="24" height="7" fill="#E9E2D5"/>
+              <rect x="222" y="86" width="24" height="7" fill="#E9E2D5"/>
+              <rect x="222" y="104" width="24" height="7" fill="#E9E2D5"/>
+              <rect x="222" y="122" width="24" height="7" fill="#E9E2D5"/>
+              <text x="16" y="138" font-family="IBM Plex Mono, monospace" font-size="7" letter-spacing="2.4" fill="#141210">PRECIOS</text>
+              <rect x="16" y="148" width="46" height="3" fill="#141210"/>
+              <rect x="70" y="148" width="86" height="1" fill="#A79C88"/>
+              <rect x="164" y="148" width="18" height="3" fill="#141210"/>
+              <rect x="16" y="162" width="60" height="3" fill="#141210"/>
+              <rect x="84" y="162" width="72" height="1" fill="#A79C88"/>
+              <rect x="164" y="162" width="18" height="3" fill="#141210"/>
+              <rect x="16" y="176" width="38" height="3" fill="#141210"/>
+              <rect x="62" y="176" width="94" height="1" fill="#A79C88"/>
+              <rect x="164" y="176" width="18" height="3" fill="#141210"/>
+            </svg>
+          </div>
+          <p class="sector">Barbershop</p>
+          <h3 class="card-title">Corte &amp; Navaja</h3>
+          <p class="card-copy">Barbers, prices and a booking button above the fold. Nothing else on the page competes for the tap.</p>
+          <div class="card-meta">
+            <div class="tags">
+              <span class="tag">Vanilla JS</span><span class="tag">Variable fonts</span>
+            </div>
+            <a class="demo-link" href="#">View live demo <span class="arw" aria-hidden="true">&rarr;</span></a>
+          </div>
+        </article>
+
+        <!-- ============ GYM — black, lime, timetable-as-homepage ============ -->
+        <article class="card">
+          <div class="shot">
+            <svg viewBox="0 0 320 200" role="img" aria-label="Gym site mockup: black ground with lime accents and a class timetable grid">
+              <rect width="320" height="200" fill="#0B0B0B"/>
+              <rect x="0" y="0" width="320" height="24" fill="#131313"/>
+              <text x="16" y="15.5" font-family="Archivo, sans-serif" font-weight="700" font-size="9" letter-spacing="1.6" fill="#C9FF2E">FORJA</text>
+              <rect x="252" y="8" width="52" height="9" rx="1" fill="#C9FF2E"/>
+              <text x="16" y="82" font-family="Archivo, sans-serif" font-weight="700" font-size="46" letter-spacing="-3" fill="#C9FF2E">06:00</text>
+              <text x="17" y="100" font-family="IBM Plex Mono, monospace" font-size="7" letter-spacing="2.4" fill="#6E6E6E">PRIMERA CLASE</text>
+              <rect x="16" y="116" width="146" height="1" fill="#242424"/>
+              <text x="16" y="134" font-family="IBM Plex Mono, monospace" font-size="7" letter-spacing="2.4" fill="#6E6E6E">HORARIO</text>
+              <rect x="16" y="144" width="26" height="14" fill="#1A1A1A"/>
+              <rect x="46" y="144" width="26" height="14" fill="#C9FF2E"/>
+              <rect x="76" y="144" width="26" height="14" fill="#1A1A1A"/>
+              <rect x="106" y="144" width="26" height="14" fill="#1A1A1A"/>
+              <rect x="136" y="144" width="26" height="14" fill="#C9FF2E"/>
+              <rect x="16" y="162" width="26" height="14" fill="#1A1A1A"/>
+              <rect x="46" y="162" width="26" height="14" fill="#1A1A1A"/>
+              <rect x="76" y="162" width="26" height="14" fill="#C9FF2E"/>
+              <rect x="106" y="162" width="26" height="14" fill="#1A1A1A"/>
+              <rect x="136" y="162" width="26" height="14" fill="#1A1A1A"/>
+              <rect x="186" y="40" width="118" height="144" fill="#141414"/>
+              <rect x="198" y="54" width="58" height="5" rx="1" fill="#C9FF2E"/>
+              <rect x="198" y="70" width="94" height="3" rx="1" fill="#3A3A3A"/>
+              <rect x="198" y="80" width="76" height="3" rx="1" fill="#3A3A3A"/>
+              <rect x="198" y="98" width="94" height="1" fill="#242424"/>
+              <rect x="198" y="110" width="52" height="3" rx="1" fill="#5E5E5E"/>
+              <rect x="198" y="120" width="86" height="3" rx="1" fill="#3A3A3A"/>
+              <rect x="198" y="138" width="94" height="1" fill="#242424"/>
+              <rect x="198" y="152" width="80" height="18" rx="1" fill="#C9FF2E"/>
+            </svg>
+          </div>
+          <p class="sector">Gym</p>
+          <h3 class="card-title">Forja Studio</h3>
+          <p class="card-copy">The class timetable is the homepage. Members check the next session without hunting through a menu.</p>
+          <div class="card-meta">
+            <div class="tags">
+              <span class="tag">Vanilla JS</span><span class="tag">ICS feed</span><span class="tag">PWA</span>
+            </div>
+            <a class="demo-link" href="#">View live demo <span class="arw" aria-hidden="true">&rarr;</span></a>
+          </div>
+        </article>
+
+        <!-- ============ NOTARY — navy, gold, dense formal columns ============ -->
+        <article class="card">
+          <div class="shot">
+            <svg viewBox="0 0 320 200" role="img" aria-label="Notary office site mockup: navy ground, gold rules and two dense text columns">
+              <rect width="320" height="200" fill="#0E1826"/>
+              <rect x="0" y="0" width="320" height="26" fill="#0A1220"/>
+              <rect x="16" y="11" width="42" height="5" rx="1" fill="#C8A96A"/>
+              <rect x="222" y="12" width="24" height="3" rx="1" fill="#6C7B8E"/>
+              <rect x="254" y="12" width="24" height="3" rx="1" fill="#6C7B8E"/>
+              <rect x="286" y="12" width="18" height="3" rx="1" fill="#6C7B8E"/>
+              <rect x="76" y="50" width="168" height="1" fill="#C8A96A"/>
+              <text x="160" y="74" text-anchor="middle" font-family="Georgia, serif" font-size="17" letter-spacing="4" fill="#E9E3D6">NOTAR&Iacute;A</text>
+              <rect x="76" y="86" width="168" height="1" fill="#C8A96A"/>
+              <text x="160" y="102" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="6.5" letter-spacing="2.2" fill="#93A2B6">TARIFAS &middot; DOCUMENTACI&Oacute;N</text>
+              <rect x="24" y="124" width="122" height="3" rx="1" fill="#2A3B52"/>
+              <rect x="24" y="133" width="134" height="3" rx="1" fill="#2A3B52"/>
+              <rect x="24" y="142" width="112" height="3" rx="1" fill="#2A3B52"/>
+              <rect x="24" y="151" width="130" height="3" rx="1" fill="#2A3B52"/>
+              <rect x="24" y="160" width="90" height="3" rx="1" fill="#2A3B52"/>
+              <rect x="174" y="124" width="122" height="3" rx="1" fill="#2A3B52"/>
+              <rect x="174" y="133" width="108" height="3" rx="1" fill="#2A3B52"/>
+              <rect x="174" y="142" width="126" height="3" rx="1" fill="#2A3B52"/>
+              <rect x="174" y="151" width="96" height="3" rx="1" fill="#2A3B52"/>
+              <rect x="174" y="160" width="118" height="3" rx="1" fill="#2A3B52"/>
+              <rect x="128" y="176" width="64" height="16" rx="1" fill="#C8A96A"/>
+            </svg>
+          </div>
+          <p class="sector">Notary</p>
+          <h3 class="card-title">Notar&iacute;a Vega</h3>
+          <p class="card-copy">Document checklists and fees published up front, so the first phone call is already an informed one.</p>
+          <div class="card-meta">
+            <div class="tags">
+              <span class="tag">11ty</span><span class="tag">Static</span><span class="tag">WCAG AA</span>
+            </div>
+            <a class="demo-link" href="#">View live demo <span class="arw" aria-hidden="true">&rarr;</span></a>
+          </div>
+        </article>
+
+        <!-- ============ AUTO REPAIR — steel, safety orange, quote form ============ -->
+        <article class="card">
+          <div class="shot">
+            <svg viewBox="0 0 320 200" role="img" aria-label="Auto repair shop site mockup: steel grey with safety orange and a quote request form">
+              <rect width="320" height="200" fill="#1C1F22"/>
+              <rect x="0" y="0" width="320" height="26" fill="#111417"/>
+              <rect x="16" y="10" width="48" height="7" fill="#FF6B1A"/>
+              <rect x="236" y="12" width="26" height="3" rx="1" fill="#79838B"/>
+              <rect x="270" y="12" width="34" height="3" rx="1" fill="#79838B"/>
+              <rect x="0" y="26" width="320" height="5" fill="#FF6B1A"/>
+              <text x="18" y="56" font-family="IBM Plex Mono, monospace" font-size="7" letter-spacing="2.4" fill="#8B959C">PRESUPUESTO</text>
+              <rect x="18" y="68" width="42" height="3" rx="1" fill="#5C666D"/>
+              <rect x="18" y="78" width="140" height="1" fill="#3A4147"/>
+              <rect x="18" y="92" width="52" height="3" rx="1" fill="#5C666D"/>
+              <rect x="18" y="102" width="140" height="1" fill="#3A4147"/>
+              <rect x="18" y="116" width="36" height="3" rx="1" fill="#5C666D"/>
+              <rect x="18" y="126" width="140" height="1" fill="#3A4147"/>
+              <rect x="18" y="140" width="140" height="22" rx="2" fill="#24282C"/>
+              <rect x="26" y="148" width="60" height="3" rx="1" fill="#4C555B"/>
+              <rect x="18" y="172" width="96" height="18" rx="2" fill="#FF6B1A"/>
+              <text x="66" y="184" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="7" letter-spacing="1.4" fill="#141414">SOLICITAR</text>
+              <rect x="182" y="74" width="122" height="30" rx="4" fill="#2B3035"/>
+              <rect x="202" y="54" width="74" height="24" rx="4" fill="#353B41"/>
+              <rect x="196" y="88" width="96" height="6" fill="#22262A"/>
+              <circle cx="212" cy="106" r="11" fill="#0F1215"/>
+              <circle cx="212" cy="106" r="4.5" fill="#4E575E"/>
+              <circle cx="276" cy="106" r="11" fill="#0F1215"/>
+              <circle cx="276" cy="106" r="4.5" fill="#4E575E"/>
+              <rect x="182" y="132" width="122" height="1" fill="#31373C"/>
+              <rect x="182" y="144" width="66" height="3" rx="1" fill="#4C555B"/>
+              <rect x="182" y="154" width="94" height="3" rx="1" fill="#3A4147"/>
+            </svg>
+          </div>
+          <p class="sector">Auto repair</p>
+          <h3 class="card-title">Taller Mec&aacute;nico Ruiz</h3>
+          <p class="card-copy">Quote requests with photos attached, so the workshop can price the repair before the car is even dropped off.</p>
+          <div class="card-meta">
+            <div class="tags">
+              <span class="tag">Vanilla JS</span><span class="tag">Uploads</span><span class="tag">Forms</span>
+            </div>
+            <a class="demo-link" href="#">View live demo <span class="arw" aria-hidden="true">&rarr;</span></a>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="grain" aria-hidden="true"></div>
+</div>
+
+<script>
+(function(){
+  var stage  = document.getElementById('stage');
+  var pvBtns = document.querySelectorAll('.pv button');
+
+  Array.prototype.forEach.call(pvBtns, function(b){
+    b.addEventListener('click', function(){
+      var mobile = b.getAttribute('data-w') === 'mobile';
+      stage.classList.toggle('is-framed', mobile);
+      document.body.classList.toggle('is-framed', mobile);
+      Array.prototype.forEach.call(pvBtns, function(o){
+        o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
+      });
+      stage.scrollTop = 0;
+      window.scrollTo(0, 0);
+    });
+  });
+})();
+</script>
