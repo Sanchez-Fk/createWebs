@@ -97,3 +97,16 @@ El autor de `gymStrength.webp` no está confirmado.
 - Solo se conserva la **última versión de cada archivo**. Las iteraciones intermedias están en el historial
   de versiones de cada vista en vivo, no en este repositorio.
 - Direcciones, teléfonos, reseñas y nombres de las demos son **datos de ejemplo**.
+
+---
+
+## Ver el prototipo en local
+
+Este repositorio es independiente del sitio del portafolio. Para abrirlo con un servidor local desde esta carpeta:
+
+```bash
+python -m http.server 8765 --bind 127.0.0.1
+```
+
+Luego abre <http://127.0.0.1:8765/05-prototipo-final/prototipo.html>. La misma configuración está en
+`.claude/launch.json` con el nombre `prototipo`, con rutas relativas: funciona en cualquier equipo.
