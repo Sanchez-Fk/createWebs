@@ -42,8 +42,8 @@ DEMOS.barberia = {
       for (var i = 0; i < DAYS.length; i++) { var s = slots(DAYS[i]); for (var j = 0; j < s.length; j++) if (freeBarber(DAYS[i], j, bi) > 0) return { d: DAYS[i], t: s[j] }; }
       return null;
     }
-    function stamps() { return db.get('sellos', 2); }
-    function mine() { return db.get('reservas', []); }
+    function stamps() { var n = parseInt(db.get('sellos', 2), 10); return n >= 0 && n < 10000 ? n : 2; }
+    function mine() { return DS.arr(db.get('reservas', [])).filter(function (r) { return r && typeof r === 'object'; }); }
 
     var nx = nextFor(0);
     root.className = 'dm ds ds-barber';
@@ -157,24 +157,31 @@ DEMOS.barberia = {
     function keepTime() { if (S.t !== null && (dur() === 0 || freeBarber(DAYS[S.d], S.t, S.b) < 0)) S.t = null; }
 
     DS.actions(root, function (act, v) {
-      if (act === 'sv') { if (S.sv[v]) delete S.sv[v]; else S.sv[v] = true; keepTime(); return draw(); }
-      if (act === 'barber') { S.b = +v; keepTime(); return draw(); }
-      if (act === 'pick') { S.b = +v; S.done = null; keepTime(); draw(); return DS.go(root, 'reservar'); }
-      if (act === 'day') { S.d = +v; S.t = null; return draw(); }
-      if (act === 'time') { S.t = +v; return draw(); }
+      var i;
+      if (act === 'sv') { if (!SERV.some(function (x) { return x.id === v; })) return; if (S.sv[v]) delete S.sv[v]; else S.sv[v] = true; keepTime(); return draw(); }
+      if (act === 'barber') { if ((i = DS.idx(v, BARB.length)) === null) return; S.b = i; keepTime(); return draw(); }
+      if (act === 'pick') { if ((i = DS.idx(v, BARB.length)) === null) return; S.b = i; S.done = null; keepTime(); draw(); return DS.go(root, 'reservar'); }
+      if (act === 'day') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.d = i; S.t = null; return draw(); }
+      if (act === 'time') { if ((i = DS.idx(v, slots(DAYS[S.d]).length)) === null || dur() === 0 || freeBarber(DAYS[S.d], i, S.b) < 0) return; S.t = i; return draw(); }
       if (act === 'confirm') {
+        if (S.done || S.t === null || dur() === 0 || freeBarber(DAYS[S.d], S.t, S.b) < 0) return;
         var a = DS.ok.name(S.name), b = DS.ok.phone(S.phone);
         DS.setErr(side, 'bbName', a ? '' : L('Escribe tu nombre.', 'Enter your name.'));
         DS.setErr(side, 'bbPhone', b ? '' : L('Celular de 10 dígitos que empiece por 3.', '10-digit mobile starting with 3.'));
         if (!(a && b)) { var bad = side.querySelector('[aria-invalid="true"]'); if (bad) bad.focus(); return; }
-        var who = freeBarber(DAYS[S.d], S.t, S.b), names = SERV.filter(function (s) { return S.sv[s.id]; }).map(function (s) { return s.n; }).join(' + ');
+        var who = freeBarber(DAYS[S.d], S.t, S.b), names = SERV.filter(function (x) { return S.sv[x.id]; }).map(function (x) { return x.n; }).join(' + ');
         S.done = { code: DS.code('CN'), when: DS.dayLong(DAYS[S.d], l) + ' · ' + DS.hm(slots(DAYS[S.d])[S.t], l), detail: names + ' · ' + BARB[who].n + ' · ' + money(price()) };
         var r = mine(); r.unshift(S.done); db.set('reservas', r.slice(0, 6)); db.set('sellos', stamps() + 1);
         DS.toast(root, L('Silla reservada · ', 'Chair booked · ') + S.done.code);
         draw(); drawClub(); drawTeam(); return;
       }
       if (act === 'again') { S.done = null; S.t = null; return draw(); }
-      if (act === 'cancel') { var ls = mine(), c = ls.splice(+v, 1)[0]; db.set('reservas', ls); DS.toast(root, L('Reserva cancelada · ', 'Booking cancelled · ') + (c ? c.code : '')); return drawSide(); }
+      if (act === 'cancel') {
+        var ls = mine(); if ((i = DS.idx(v, ls.length)) === null) return;
+        var c = ls.splice(i, 1)[0]; db.set('reservas', ls);
+        DS.toast(root, L('Reserva cancelada · ', 'Booking cancelled · ') + (c && c.code ? c.code : ''));
+        return drawSide();
+      }
     });
     root.addEventListener('input', function (e) {
       if (e.target.id === 'bbName') S.name = e.target.value;

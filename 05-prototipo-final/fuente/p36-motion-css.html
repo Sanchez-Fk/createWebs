@@ -56,9 +56,10 @@
 .m .rv-card[data-sector="gimnasio"].is-pre .shot{ clip-path:inset(50% 50% 50% 50%); }
 
 /* parallax de fotos: translate va con el scroll (sin transición), scale con transición */
-.m .shot img,
+.m .shot img{ transform:none; translate:0 var(--py, 0px); scale:var(--sc, 1.12); transition:scale 1.5s var(--ease-slow); will-change:translate; }
+/* portadas de las demos: solo el zoom de asentamiento; nada ligado al scroll que las haga saltar */
 .m .ds-hero__img img,
-.m .ds-cover__img img{ transform:none; translate:0 var(--py, 0px); scale:var(--sc, 1.12); transition:scale 1.5s var(--ease-slow); will-change:translate; }
+.m .ds-cover__img img{ scale:var(--sc, 1); transition:scale 1.4s var(--ease-slow); }
 .m .card:hover .shot img,
 .m .card:focus-within .shot img{ transform:none; --sc:1.16; }
 .m .rv-card.is-pre .shot img,

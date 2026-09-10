@@ -97,20 +97,33 @@
 
   function render(r, fresh) {
     var go = function () {
-      if (demoCleanup) { demoCleanup(); demoCleanup = null; }
+      if (demoCleanup) { try { demoCleanup(); } catch (err) { /* limpieza silenciosa */ } demoCleanup = null; }
       current = r;
       document.documentElement.lang = r.l;
       hdr.innerHTML = r.key === 'demo' ? DemoBar(r.l, r.sub) : Header(r.l, r.key, r.sub);
       hdr.classList.toggle('is-demo', r.key === 'demo');
       menu.innerHTML = r.key === 'demo' ? '' : Menu(r.l, r.key, r.sub);
       menu.hidden = true;
-      page.innerHTML = r.key === 'demo' ? PAGES.demo(r.l, r.sub) : PAGES[r.key](r.l);
+      try { page.innerHTML = r.key === 'demo' ? PAGES.demo(r.l, r.sub) : PAGES[r.key](r.l); }
+      catch (err) {
+        console.error('[página] no se pudo generar', r.key, err);
+        page.innerHTML = '<section class="page-head"><div class="wrap"><p class="mono">' + (r.l === 'es' ? 'Esta página no pudo cargarse.' : 'This page could not load.') + '</p><p style="margin-top:16px"><a class="link-mono" href="#/' + r.l + '/">' + (r.l === 'es' ? 'Ir al inicio' : 'Go home') + ' →</a></p></div></section>';
+      }
       if (r.key === 'demo') {
-        var dRoot = document.getElementById('demoRoot'), dm = DEMOS[r.sub] || DEMOS.dental;
-        if (dRoot && dm) {
-          var offDemo = dm.mount(dRoot, r.l) || null;
-          var offBg = DSBG.mount(dRoot, r.sub in DEMOS ? r.sub : 'dental', function () { return motionOn; });
-          demoCleanup = function () { if (offDemo) offDemo(); if (offBg) offBg(); };
+        var sid = Object.prototype.hasOwnProperty.call(DEMOS, r.sub) ? r.sub : 'dental';
+        var dRoot = document.getElementById('demoRoot'), dm = DEMOS[sid], offDemo = null, offBg = null;
+        if (dRoot && dm && typeof dm.mount === 'function') {
+          try { offDemo = dm.mount(dRoot, r.l) || null; }
+          catch (err) {
+            console.error('[demo] no se pudo montar', sid, err);
+            dRoot.className = '';
+            dRoot.innerHTML = '<div style="padding:120px 24px;text-align:center"><p class="mono">' + (r.l === 'es' ? 'La demo no pudo cargarse.' : 'The demo could not load.') + '</p><p style="margin-top:16px"><a class="link-mono" href="' + href(r.l, 'home') + '">' + (r.l === 'es' ? 'Volver al portafolio' : 'Back to portfolio') + ' →</a></p></div>';
+          }
+          if (dRoot.classList.contains('ds') || dRoot.querySelector('.ds')) {
+            try { offBg = DSBG.mount(dRoot, sid, function () { return motionOn; }); }
+            catch (err) { console.error('[demo] fondo animado desactivado', err); }
+          }
+          demoCleanup = function () { if (typeof offDemo === 'function') offDemo(); if (typeof offBg === 'function') offBg(); };
         }
       }
       document.title = 'José M. Sánchez · ' + T[r.l].titles[r.key];
@@ -186,6 +199,7 @@
   });
 
   MOTION.init({
+    hdr: hdr,
     stage: stage,
     scroller: scroller,
     isOn: function () { return motionOn; },

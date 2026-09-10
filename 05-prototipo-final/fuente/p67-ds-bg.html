@@ -173,7 +173,7 @@ var DSBG = (function () {
 
   function mount(root, id, isOn) {
     var sc = SCENES[id];
-    if (!sc || !root) return null;
+    if (!Object.prototype.hasOwnProperty.call(SCENES, id) || !root) return null;
     var cv = document.createElement('canvas');
     cv.className = 'ds-bgfx'; cv.setAttribute('aria-hidden', 'true');
     root.insertBefore(cv, root.firstChild);

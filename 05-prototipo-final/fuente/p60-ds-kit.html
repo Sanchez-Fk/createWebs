@@ -52,6 +52,12 @@ var DS = (function () {
     return prefix + '-' + s;
   }
 
+  /* validación de lo que llega desde botones y almacenamiento: nunca confiar en data-v */
+  function idx(v, len) { var n = typeof v === 'number' ? v : /^\d+$/.test(String(v)) ? parseInt(v, 10) : -1; return n >= 0 && n < len ? n : null; }
+  function has(o, k) { return o != null && typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
+  function arr(v) { return Array.isArray(v) ? v : []; }
+  function obj(v) { return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
+
   /* memoria local por demo: solo en este navegador, con fallback silencioso */
   function store(ns) {
     return {
@@ -81,7 +87,7 @@ var DS = (function () {
 
   function photo(key, alt) {
     if (!IMG[key]) return '';
-    return '<img src="' + IMG[key] + '" alt="' + esc(alt) + '" decoding="async" loading="lazy">' +
+    return '<img src="' + IMG[key] + '" alt="' + esc(alt) + '" decoding="async">' +
       (CREDITS[key] ? '<span class="ds-credit">' + esc(CREDITS[key]) + ' · Unsplash</span>' : '');
   }
 
@@ -228,7 +234,7 @@ var DS = (function () {
     esc: esc, money: money, seeded: seeded, lang: lang, days: days, isToday: isToday, dayShort: dayShort, dayLong: dayLong,
     hm: hm, minutes: minutes, past: past, range: range, code: code, store: store, ok: ok, status: status, photo: photo,
     header: header, section: section, features: features, prices: prices, gallery: gallery, reviews: reviews, visit: visit, faq: faq, footer: footer,
-    toast: toast, go: go, chrome: chrome, field: field, setErr: setErr, progress: progress, daysStrip: daysStrip, actions: actions, WA_ICON: WA_ICON
+    idx: idx, has: has, arr: arr, obj: obj, toast: toast, go: go, chrome: chrome, field: field, setErr: setErr, progress: progress, daysStrip: daysStrip, actions: actions, WA_ICON: WA_ICON
   };
 })();
 </script>

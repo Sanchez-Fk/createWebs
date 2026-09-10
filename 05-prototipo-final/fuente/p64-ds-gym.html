@@ -35,7 +35,7 @@ DEMOS.gimnasio = {
       });
     }
     function when(c) { var p = c.t.split(':'), x = new Date(DAYS[c.di]); x.setHours(+p[0], +p[1], 0, 0); return x; }
-    function mine() { return db.get('clases', {}); }
+    function mine() { return DS.obj(db.get('clases', {})); }
     function left(c) { return c.cap - c.taken - (mine()[c.key] ? 1 : 0); }
     function nextClass() {
       var now = Date.now();
@@ -100,7 +100,7 @@ DEMOS.gimnasio = {
 
     function drawTypes() {
       typesEl.innerHTML = [{ id: 'all', n: L('Todas', 'All') }].concat(TYPES).map(function (t) {
-        var pic = t.img && IMG[t.img] ? '<span style="display:block;height:88px;margin:-14px -16px 12px;overflow:hidden;border-radius:var(--c-rad) var(--c-rad) 0 0"><img src="' + IMG[t.img] + '" alt="' + esc(t.alt) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy"></span>' : '';
+        var pic = t.img && IMG[t.img] ? '<span style="display:block;height:88px;margin:-14px -16px 12px;overflow:hidden;border-radius:var(--c-rad) var(--c-rad) 0 0"><img src="' + IMG[t.img] + '" alt="' + esc(t.alt) + '" style="width:100%;height:100%;object-fit:cover"></span>' : '';
         return '<button class="ds-choice" type="button" data-act="type" data-v="' + t.id + '" aria-pressed="' + (S.f === t.id) + '" style="flex-direction:column;align-items:stretch;overflow:hidden' + (t.id === 'all' ? ';justify-content:flex-end;min-height:132px' : '') + '">' + pic + '<strong>' + t.n + '</strong>' + (t.min ? '<small>' + t.min + ' min</small>' : '<small>' + L('Todo el horario', 'Full timetable') + '</small>') + '</button>';
       }).join('');
       typesEl.style.gridTemplateColumns = '';
@@ -170,15 +170,17 @@ DEMOS.gimnasio = {
     }
 
     DS.actions(root, function (act, v) {
-      if (act === 'type') { S.f = v; drawTypes(); return drawList(); }
-      if (act === 'day') { S.d = +v; drawDays(); return drawList(); }
+      var i;
+      if (act === 'type') { if (v !== 'all' && !TYPES.some(function (t) { return t.id === v; })) return; S.f = v; drawTypes(); return drawList(); }
+      if (act === 'day') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.d = i; drawDays(); return drawList(); }
       if (act === 'book') {
+        if (typeof v !== 'string' || v.indexOf('|') === -1) return;
         var m = mine();
-        if (m[v]) { var nm = m[v].n; delete m[v]; db.set('clases', m); DS.toast(root, L('Cupo liberado · ', 'Spot released · ') + nm); }
+        if (DS.has(m, v)) { var nm = m[v] && m[v].n; delete m[v]; db.set('clases', m); DS.toast(root, L('Cupo liberado · ', 'Spot released · ') + (nm || '')); }
         else {
           var c = null;
           for (var di = 0; di < DAYS.length && !c; di++) c = classesFor(di).filter(function (x) { return x.key === v; })[0] || null;
-          if (!c) return;
+          if (!c || when(c).getTime() < Date.now()) return;
           var sameDay = Object.keys(m).filter(function (k) { return k.split('|')[0] === v.split('|')[0]; }).length;
           if (sameDay >= 2) return DS.toast(root, L('Máximo dos clases por día.', 'Two classes a day max.'));
           if (left(c) <= 0) return DS.toast(root, L('La clase se llenó.', 'The class just filled up.'));
@@ -187,19 +189,23 @@ DEMOS.gimnasio = {
         }
         drawList(); drawMine(); return tick();
       }
-      if (act === 'term') { S.term = v; return drawPlans(); }
-      if (act === 'plan') { S.trial.plan = v; S.trialDone = null; drawTrial(); return DS.go(root, 'prueba'); }
-      if (act === 'goal') { S.trial.goal = v; return drawTrial(); }
-      if (act === 'ttype') { S.trial.type = v; return drawTrial(); }
-      if (act === 'tday') { S.trial.d = +v; return drawTrial(); }
+      if (act === 'term') { if (!TERMS.some(function (t) { return t[0] === v; })) return; S.term = v; return drawPlans(); }
+      if (act === 'plan') { if (!PLANS.some(function (p) { return p.id === v; })) return; S.trial.plan = v; S.trialDone = null; drawTrial(); return DS.go(root, 'prueba'); }
+      if (act === 'goal') { if (!GOALS.some(function (g) { return g[0] === v; })) return; S.trial.goal = v; return drawTrial(); }
+      if (act === 'ttype') { if (!TYPES.some(function (t) { return t.id === v; })) return; S.trial.type = v; return drawTrial(); }
+      if (act === 'tday') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.trial.d = i; return drawTrial(); }
       if (act === 'trial') {
+        if (S.trialDone) return;
         var T = S.trial, a = DS.ok.name(T.name), b = DS.ok.phone(T.phone);
         DS.setErr(trialSide, 'fjName', a ? '' : L('Escribe tu nombre.', 'Enter your name.'));
         DS.setErr(trialSide, 'fjPhone', b ? '' : L('Celular de 10 dígitos que empiece por 3.', '10-digit mobile starting with 3.'));
         if (!(a && b)) { var bad = trialSide.querySelector('[aria-invalid="true"]'); if (bad) bad.focus(); return; }
-        var key = trialSide.querySelector('#fjSlot').value, cl = classesFor(T.d).filter(function (x) { return x.key === key; })[0];
-        var goal = GOALS.filter(function (g) { return g[0] === T.goal; })[0][1], w = (DS.isToday(DAYS[T.d]) ? L('Hoy', 'Today') : DS.dayLong(DAYS[T.d], l)) + ' · ' + DS.hm(cl.t, l), code = DS.code('FJ');
-        S.trialDone = { code: code, when: w, detail: cl.ty.n + ' · ' + cl.coach + ' · ' + L('objetivo: ', 'goal: ') + goal.toLowerCase(),
+        var sel = trialSide.querySelector('#fjSlot'), key = sel ? sel.value : '';
+        var cl = classesFor(T.d).filter(function (x) { return x.key === key; })[0];
+        var g = GOALS.filter(function (x) { return x[0] === T.goal; })[0];
+        if (!cl || !g) return;
+        var w = (DS.isToday(DAYS[T.d]) ? L('Hoy', 'Today') : DS.dayLong(DAYS[T.d], l)) + ' · ' + DS.hm(cl.t, l), code = DS.code('FJ');
+        S.trialDone = { code: code, when: w, detail: cl.ty.n + ' · ' + cl.coach + ' · ' + L('objetivo: ', 'goal: ') + g[1].toLowerCase(),
           msg: L('Hola ', 'Hi ') + T.name.trim().split(/\s+/)[0] + L(', tu clase de prueba en Forja está agendada:\n', ', your Forja trial class is booked:\n') + cl.ty.n + ' — ' + w + L('\nEntrenador: ', '\nCoach: ') + cl.coach + L('\nLlega 15 minutos antes para la valoración.\nCódigo: ', '\nArrive 15 minutes early for the assessment.\nCode: ') + code };
         DS.toast(root, L('Clase de prueba agendada · ', 'Trial class booked · ') + code);
         return drawTrial();

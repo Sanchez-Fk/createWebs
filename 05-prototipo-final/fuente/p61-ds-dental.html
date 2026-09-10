@@ -101,7 +101,7 @@ DEMOS.dental = {
     var main = root.querySelector('#dxMain'), side = root.querySelector('#dxSide');
 
     function T() { return S.t === null ? null : TREAT[S.t]; }
-    function mine() { return db.get('citas', []); }
+    function mine() { return DS.arr(db.get('citas', [])).filter(function (c) { return c && typeof c === 'object'; }); }
 
     function drawSide() {
       var t = T(), pro = S.p, when = S.s ? DS.dayLong(DAYS[S.d], l) + ' · ' + DS.hm(S.s, l) : '—';
@@ -175,13 +175,20 @@ DEMOS.dental = {
     }
 
     DS.actions(root, function (act, v) {
-      if (act === 'treat') { S.t = +v; return draw(); }
-      if (act === 'pro') { S.p = +v; S.s = null; return draw(); }
-      if (act === 'day') { S.d = +v; S.s = null; return draw(); }
-      if (act === 'slot') { S.s = v; return draw(); }
-      if (act === 'next') { S.step++; draw(); main.querySelector('.ds-step-h').setAttribute('tabindex', '-1'); main.querySelector('.ds-step-h').focus(); return; }
-      if (act === 'back') { S.step--; return draw(); }
+      var i;
+      if (act === 'treat') { if ((i = DS.idx(v, TREAT.length)) === null) return; S.t = i; return draw(); }
+      if (act === 'pro') { if ((i = DS.idx(v, PROS.length)) === null) return; S.p = i; S.s = null; return draw(); }
+      if (act === 'day') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.d = i; S.s = null; return draw(); }
+      if (act === 'slot') { if (slotsFor(DAYS[S.d]).indexOf(v) === -1 || freePro(DAYS[S.d], v, S.p) < 0) return; S.s = v; return draw(); }
+      if (act === 'next') {
+        if (S.done || S.step >= 3 || (S.step === 0 && S.t === null) || (S.step === 2 && !S.s)) return;
+        S.step++; draw();
+        var h = main.querySelector('.ds-step-h'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+        return;
+      }
+      if (act === 'back') { if (S.done || S.step <= 0) return; S.step--; return draw(); }
       if (act === 'confirm') {
+        if (S.done || S.step !== 3 || !T() || !S.s) return;
         if (!validate()) return;
         var who = freePro(DAYS[S.d], S.s, S.p), t = T();
         S.done = { code: DS.code('AUR'), treat: t.n, pro: PROS[who > 0 ? who : 1].n, when: DS.dayLong(DAYS[S.d], l) + ' · ' + DS.hm(S.s, l) };
@@ -190,7 +197,12 @@ DEMOS.dental = {
         return draw();
       }
       if (act === 'again') { S = { step: 0, t: null, p: 0, d: 0, s: null, name: S.name, phone: S.phone, email: S.email, first: false, note: '', consent: S.consent, done: null }; return draw(); }
-      if (act === 'cancel') { var ls = mine(), c = ls.splice(+v, 1)[0]; db.set('citas', ls); DS.toast(root, L('Cita cancelada · ', 'Appointment cancelled · ') + (c ? c.code : '')); return drawSide(); }
+      if (act === 'cancel') {
+        var ls = mine(); if ((i = DS.idx(v, ls.length)) === null) return;
+        var c = ls.splice(i, 1)[0]; db.set('citas', ls);
+        DS.toast(root, L('Cita cancelada · ', 'Appointment cancelled · ') + (c && c.code ? c.code : ''));
+        return drawSide();
+      }
     });
     root.addEventListener('input', function (e) {
       var id = e.target.id;

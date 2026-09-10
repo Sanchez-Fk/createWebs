@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Prototipo Portafolio JMS</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
@@ -585,7 +586,7 @@ p{ margin:0; }
 .ds-dish .pic img{ width:100%; height:100%; object-fit:cover; }
 .ds-dish h4{ margin:0; font-family:var(--c-head); font-weight:var(--c-hw); font-size:17px; }
 .ds-dish p{ font-size:14px; color:var(--c-muted); margin-top:2px; }
-.ds-dish .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; }
+.ds-dish__row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; }
 .ds-qty{ display:inline-flex; align-items:center; border:1px solid var(--c-line); border-radius:999px; overflow:hidden; }
 .ds-qty button{ width:34px; height:34px; background:transparent; border:0; font-size:18px; }
 .ds-qty span{ min-width:22px; text-align:center; font-variant-numeric:tabular-nums; font-weight:600; }
@@ -724,9 +725,10 @@ p{ margin:0; }
 .m .rv-card[data-sector="gimnasio"].is-pre .shot{ clip-path:inset(50% 50% 50% 50%); }
 
 /* parallax de fotos: translate va con el scroll (sin transición), scale con transición */
-.m .shot img,
+.m .shot img{ transform:none; translate:0 var(--py, 0px); scale:var(--sc, 1.12); transition:scale 1.5s var(--ease-slow); will-change:translate; }
+/* portadas de las demos: solo el zoom de asentamiento; nada ligado al scroll que las haga saltar */
 .m .ds-hero__img img,
-.m .ds-cover__img img{ transform:none; translate:0 var(--py, 0px); scale:var(--sc, 1.12); transition:scale 1.5s var(--ease-slow); will-change:translate; }
+.m .ds-cover__img img{ scale:var(--sc, 1); transition:scale 1.4s var(--ease-slow); }
 .m .card:hover .shot img,
 .m .card:focus-within .shot img{ transform:none; --sc:1.16; }
 .m .rv-card.is-pre .shot img,
@@ -804,7 +806,7 @@ p{ margin:0; }
 
 .m .rv-rsm{ transition:filter 2.4s var(--ease) var(--d, 0ms); }
 .m .rv-rsm.is-pre{ filter:brightness(.15) saturate(.4); }
-.m .ds-rest .ds-cover__img img{ animation:rsKen 26s ease-in-out infinite alternate; }
+.m .ds-rest .ds-cover__img img{ animation:rsKen 26s ease-in-out infinite alternate; will-change:transform; }
 @keyframes rsKen{ from{ transform:scale(1) translate3d(0, 0, 0); } to{ transform:scale(1.1) translate3d(-2%, -1.5%, 0); } }
 
 .m .rv-rsb{ transition:opacity 1.6s var(--ease), transform 1.8s var(--ease-slow), filter 1.8s var(--ease); transition-delay:var(--d, 0ms); }
@@ -1314,6 +1316,12 @@ var DS = (function () {
     return prefix + '-' + s;
   }
 
+  /* validación de lo que llega desde botones y almacenamiento: nunca confiar en data-v */
+  function idx(v, len) { var n = typeof v === 'number' ? v : /^\d+$/.test(String(v)) ? parseInt(v, 10) : -1; return n >= 0 && n < len ? n : null; }
+  function has(o, k) { return o != null && typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
+  function arr(v) { return Array.isArray(v) ? v : []; }
+  function obj(v) { return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
+
   /* memoria local por demo: solo en este navegador, con fallback silencioso */
   function store(ns) {
     return {
@@ -1343,7 +1351,7 @@ var DS = (function () {
 
   function photo(key, alt) {
     if (!IMG[key]) return '';
-    return '<img src="' + IMG[key] + '" alt="' + esc(alt) + '" decoding="async" loading="lazy">' +
+    return '<img src="' + IMG[key] + '" alt="' + esc(alt) + '" decoding="async">' +
       (CREDITS[key] ? '<span class="ds-credit">' + esc(CREDITS[key]) + ' · Unsplash</span>' : '');
   }
 
@@ -1490,7 +1498,7 @@ var DS = (function () {
     esc: esc, money: money, seeded: seeded, lang: lang, days: days, isToday: isToday, dayShort: dayShort, dayLong: dayLong,
     hm: hm, minutes: minutes, past: past, range: range, code: code, store: store, ok: ok, status: status, photo: photo,
     header: header, section: section, features: features, prices: prices, gallery: gallery, reviews: reviews, visit: visit, faq: faq, footer: footer,
-    toast: toast, go: go, chrome: chrome, field: field, setErr: setErr, progress: progress, daysStrip: daysStrip, actions: actions, WA_ICON: WA_ICON
+    idx: idx, has: has, arr: arr, obj: obj, toast: toast, go: go, chrome: chrome, field: field, setErr: setErr, progress: progress, daysStrip: daysStrip, actions: actions, WA_ICON: WA_ICON
   };
 })();
 </script>
@@ -1597,7 +1605,7 @@ DEMOS.dental = {
     var main = root.querySelector('#dxMain'), side = root.querySelector('#dxSide');
 
     function T() { return S.t === null ? null : TREAT[S.t]; }
-    function mine() { return db.get('citas', []); }
+    function mine() { return DS.arr(db.get('citas', [])).filter(function (c) { return c && typeof c === 'object'; }); }
 
     function drawSide() {
       var t = T(), pro = S.p, when = S.s ? DS.dayLong(DAYS[S.d], l) + ' · ' + DS.hm(S.s, l) : '—';
@@ -1671,13 +1679,20 @@ DEMOS.dental = {
     }
 
     DS.actions(root, function (act, v) {
-      if (act === 'treat') { S.t = +v; return draw(); }
-      if (act === 'pro') { S.p = +v; S.s = null; return draw(); }
-      if (act === 'day') { S.d = +v; S.s = null; return draw(); }
-      if (act === 'slot') { S.s = v; return draw(); }
-      if (act === 'next') { S.step++; draw(); main.querySelector('.ds-step-h').setAttribute('tabindex', '-1'); main.querySelector('.ds-step-h').focus(); return; }
-      if (act === 'back') { S.step--; return draw(); }
+      var i;
+      if (act === 'treat') { if ((i = DS.idx(v, TREAT.length)) === null) return; S.t = i; return draw(); }
+      if (act === 'pro') { if ((i = DS.idx(v, PROS.length)) === null) return; S.p = i; S.s = null; return draw(); }
+      if (act === 'day') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.d = i; S.s = null; return draw(); }
+      if (act === 'slot') { if (slotsFor(DAYS[S.d]).indexOf(v) === -1 || freePro(DAYS[S.d], v, S.p) < 0) return; S.s = v; return draw(); }
+      if (act === 'next') {
+        if (S.done || S.step >= 3 || (S.step === 0 && S.t === null) || (S.step === 2 && !S.s)) return;
+        S.step++; draw();
+        var h = main.querySelector('.ds-step-h'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+        return;
+      }
+      if (act === 'back') { if (S.done || S.step <= 0) return; S.step--; return draw(); }
       if (act === 'confirm') {
+        if (S.done || S.step !== 3 || !T() || !S.s) return;
         if (!validate()) return;
         var who = freePro(DAYS[S.d], S.s, S.p), t = T();
         S.done = { code: DS.code('AUR'), treat: t.n, pro: PROS[who > 0 ? who : 1].n, when: DS.dayLong(DAYS[S.d], l) + ' · ' + DS.hm(S.s, l) };
@@ -1686,7 +1701,12 @@ DEMOS.dental = {
         return draw();
       }
       if (act === 'again') { S = { step: 0, t: null, p: 0, d: 0, s: null, name: S.name, phone: S.phone, email: S.email, first: false, note: '', consent: S.consent, done: null }; return draw(); }
-      if (act === 'cancel') { var ls = mine(), c = ls.splice(+v, 1)[0]; db.set('citas', ls); DS.toast(root, L('Cita cancelada · ', 'Appointment cancelled · ') + (c ? c.code : '')); return drawSide(); }
+      if (act === 'cancel') {
+        var ls = mine(); if ((i = DS.idx(v, ls.length)) === null) return;
+        var c = ls.splice(i, 1)[0]; db.set('citas', ls);
+        DS.toast(root, L('Cita cancelada · ', 'Appointment cancelled · ') + (c && c.code ? c.code : ''));
+        return drawSide();
+      }
     });
     root.addEventListener('input', function (e) {
       var id = e.target.id;
@@ -1741,8 +1761,15 @@ DEMOS.restaurante = {
     var HOURS = [['12:00', '17:00'], null, ['12:00', '22:00'], ['12:00', '22:00'], ['12:00', '22:00'], ['12:00', '23:00'], ['12:00', '23:00']];
     var DAYS = DS.days(10, [1]);
 
+    function cleanCart(c) {
+      var out = {};
+      c = DS.obj(c);
+      Object.keys(c).forEach(function (k) { var n = parseInt(c[k], 10); if (DS.has(BY, k) && n > 0 && n < 100) out[k] = n; });
+      return out;
+    }
+
     var S = {
-      cat: 'pasta', q: '', diet: '', cart: db.get('cart', {}), mode: 'dom', name: '', phone: '', addr: '', notes: '', order: null,
+      cat: 'pasta', q: '', diet: '', cart: cleanCart(db.get('cart', {})), mode: 'dom', name: '', phone: '', addr: '', notes: '', order: null,
       people: 2, d: 0, time: null, zone: 'salon', occ: '', rname: '', rphone: '', res: null
     };
 
@@ -1806,6 +1833,17 @@ DEMOS.restaurante = {
     function save() { db.set('cart', S.cart); }
     function status() { var st = DS.status(HOURS, l), el = root.querySelector('[data-status]'); if (el) el.innerHTML = '<span class="ds-dot' + (st.open ? '' : ' ds-dot--off') + '"></span><span>' + st.text + '</span>'; }
 
+    function dishCtl(m) {
+      var n = S.cart[m.id] || 0;
+      return '<span class="ds-mono">' + money(m.p) + '</span>' +
+        (n ? '<span class="ds-qty"><button type="button" data-act="dec" data-v="' + m.id + '" aria-label="' + L('Quitar uno de ', 'Remove one ') + esc(m.n) + '">−</button><span>' + n + '</span><button type="button" data-act="inc" data-v="' + m.id + '" aria-label="' + L('Añadir otro ', 'Add another ') + esc(m.n) + '">+</button></span>'
+           : '<button class="ds-btn ds-btn--sm" type="button" data-act="inc" data-v="' + m.id + '">' + L('Añadir', 'Add') + '</button>');
+    }
+    /* al añadir o quitar solo cambia el control de ese plato: las fotos no se vuelven a dibujar */
+    function refreshDish(id) {
+      var row = menuEl.querySelector('[data-dish="' + id + '"] .ds-dish__row');
+      if (row) row.innerHTML = dishCtl(BY[id]); else drawMenu();
+    }
     function drawMenu() {
       tabs.innerHTML = CATS.map(function (c) { return '<button class="ds-tab" type="button" role="tab" data-act="cat" data-v="' + c[0] + '" aria-selected="' + (S.cat === c[0] && !S.q) + '">' + c[1] + '</button>'; }).join('');
       dietEl.innerHTML = [['', L('Todo', 'All')], [V, TAGS[V]], [G, TAGS[G]]].map(function (d) { return '<button type="button" data-act="diet" data-v="' + d[0] + '" aria-pressed="' + (S.diet === d[0]) + '">' + d[1] + '</button>'; }).join('');
@@ -1815,12 +1853,9 @@ DEMOS.restaurante = {
         return m.c === S.cat && (!S.diet || m.t.indexOf(S.diet) !== -1);
       });
       menuEl.innerHTML = list.length ? list.map(function (m) {
-        var n = S.cart[m.id] || 0;
-        return '<article class="ds-dish"><div class="pic">' + (m.img && IMG[m.img] ? '<img src="' + IMG[m.img] + '" alt="' + esc(m.n) + '" loading="lazy" decoding="async">' : '<span aria-hidden="true">' + m.n.charAt(0) + '</span>') + '</div>' +
+        return '<article class="ds-dish" data-dish="' + m.id + '"><div class="pic">' + (m.img && IMG[m.img] ? '<img src="' + IMG[m.img] + '" alt="' + esc(m.n) + '" decoding="async">' : '<span aria-hidden="true">' + m.n.charAt(0) + '</span>') + '</div>' +
           '<div><h4>' + m.n + '</h4><p>' + m.d + '</p><div>' + m.t.map(function (t) { return '<span class="ds-tag">' + TAGS[t] + '</span>'; }).join('') + '</div>' +
-          '<div class="row"><span class="ds-mono">' + money(m.p) + '</span>' +
-          (n ? '<span class="ds-qty"><button type="button" data-act="dec" data-v="' + m.id + '" aria-label="' + L('Quitar uno de ', 'Remove one ') + esc(m.n) + '">−</button><span>' + n + '</span><button type="button" data-act="inc" data-v="' + m.id + '" aria-label="' + L('Añadir otro ', 'Add another ') + esc(m.n) + '">+</button></span>'
-             : '<button class="ds-btn ds-btn--sm" type="button" data-act="inc" data-v="' + m.id + '">' + L('Añadir', 'Add') + '</button>') + '</div></div></article>';
+          '<div class="ds-dish__row">' + dishCtl(m) + '</div></div></article>';
       }).join('') : '<p class="ds-hint">' + L('No hay platos con ese filtro.', 'No dishes match that filter.') + '</p>';
     }
 
@@ -1879,18 +1914,20 @@ DEMOS.restaurante = {
     function need(el, id, cond, msg) { DS.setErr(el, id, cond ? '' : msg); return cond; }
 
     DS.actions(root, function (act, v) {
-      if (act === 'cat') { S.cat = v; S.q = ''; root.querySelector('#rtQ').value = ''; return drawMenu(); }
-      if (act === 'diet') { S.diet = v; return drawMenu(); }
-      if (act === 'inc') { S.cart[v] = (S.cart[v] || 0) + 1; save(); DS.toast(root, BY[v].n + L(' añadido · ', ' added · ') + qty() + L(' en el pedido', ' in order')); drawMenu(); return drawOrder(); }
-      if (act === 'dec') { S.cart[v]--; if (S.cart[v] <= 0) delete S.cart[v]; save(); drawMenu(); return drawOrder(); }
-      if (act === 'mode') { S.mode = v; return drawOrder(); }
+      var i;
+      if (act === 'cat') { if (!CATS.some(function (c) { return c[0] === v; })) return; S.cat = v; S.q = ''; var qi = root.querySelector('#rtQ'); if (qi) qi.value = ''; return drawMenu(); }
+      if (act === 'diet') { var dv = v == null ? '' : v; if (['', V, G].indexOf(dv) === -1) return; S.diet = dv; return drawMenu(); }
+      if (act === 'inc') { if (!DS.has(BY, v) || (S.cart[v] || 0) >= 99) return; S.cart[v] = (S.cart[v] || 0) + 1; save(); DS.toast(root, BY[v].n + L(' añadido · ', ' added · ') + qty() + L(' en el pedido', ' in order')); refreshDish(v); return drawOrder(); }
+      if (act === 'dec') { if (!DS.has(BY, v) || !S.cart[v]) return; S.cart[v]--; if (S.cart[v] <= 0) delete S.cart[v]; save(); refreshDish(v); return drawOrder(); }
+      if (act === 'mode') { if (v !== 'dom' && v !== 'rec') return; S.mode = v; return drawOrder(); }
       if (act === 'checkout') {
+        if (S.order || !qty()) return;
         var okN = need(orderEl, 'rtName', DS.ok.name(S.name), L('Escribe tu nombre.', 'Enter your name.'));
         var okP = need(orderEl, 'rtPhone', DS.ok.phone(S.phone), L('Celular de 10 dígitos que empiece por 3.', '10-digit mobile starting with 3.'));
         var okA = S.mode !== 'dom' || need(orderEl, 'rtAddr', S.addr.trim().length >= 6, L('Necesitamos la dirección completa.', 'We need the full address.'));
         if (!(okN && okP && okA)) { var bad = orderEl.querySelector('[aria-invalid="true"]'); if (bad) bad.focus(); return; }
         var c = DS.code('TN'), sub = subtotal(), f = fee();
-        var lines = Object.keys(S.cart).map(function (k) { return S.cart[k] + '× ' + BY[k].n + ' — ' + money(BY[k].p * S.cart[k]); });
+        var lines = Object.keys(S.cart).filter(function (k) { return DS.has(BY, k); }).map(function (k) { return S.cart[k] + '× ' + BY[k].n + ' — ' + money(BY[k].p * S.cart[k]); });
         var msg = L('Hola Trattoria Nove, este es mi pedido ', 'Hi Trattoria Nove, here is my order ') + c + ' · ' + (S.mode === 'dom' ? L('Domicilio', 'Delivery') : L('Recoger', 'Pickup')) + '\n\n' + lines.join('\n') +
           '\n\nSubtotal: ' + money(sub) + (S.mode === 'dom' ? '\n' + L('Domicilio: ', 'Delivery: ') + (f ? money(f) : L('gratis', 'free')) : '') + '\nTotal: ' + money(sub + f) +
           '\n\n' + S.name.trim() + ' · ' + S.phone.trim() + (S.mode === 'dom' ? '\n' + S.addr.trim() : '') + (S.notes.trim() ? '\n' + L('Notas: ', 'Notes: ') + S.notes.trim() : '');
@@ -1899,15 +1936,17 @@ DEMOS.restaurante = {
         drawMenu(); return drawOrder();
       }
       if (act === 'neworder') { S.order = null; return drawOrder(); }
-      if (act === 'pp') { S.people = Math.max(1, Math.min(10, S.people + (+v))); return drawRes(); }
-      if (act === 'rday') { S.d = +v; S.time = null; return drawRes(); }
-      if (act === 'zone') { S.zone = v; return drawRes(); }
-      if (act === 'rtime') { S.time = v; return drawRes(); }
+      if (act === 'pp') { var dd = v === '1' ? 1 : v === '-1' ? -1 : 0; if (!dd) return; S.people = Math.max(1, Math.min(10, S.people + dd)); return drawRes(); }
+      if (act === 'rday') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.d = i; S.time = null; return drawRes(); }
+      if (act === 'zone') { if (v !== 'salon' && v !== 'terraza') return; S.zone = v; return drawRes(); }
+      if (act === 'rtime') { if (slotsR().indexOf(v) === -1 || fullR(v)) return; S.time = v; return drawRes(); }
       if (act === 'reserve') {
+        if (S.res || !S.time || fullR(S.time)) return;
         var n1 = need(rsSide, 'rsName', DS.ok.name(S.rname), L('Escribe tu nombre.', 'Enter your name.'));
         var n2 = need(rsSide, 'rsPhone', DS.ok.phone(S.rphone), L('Celular de 10 dígitos que empiece por 3.', '10-digit mobile starting with 3.'));
         if (!(n1 && n2)) { var b2 = rsSide.querySelector('[aria-invalid="true"]'); if (b2) b2.focus(); return; }
-        var occ = { cumple: L('cumpleaños', 'birthday'), aniv: L('aniversario', 'anniversary'), neg: L('comida de negocios', 'business meal') }[S.occ];
+        var OCC = { cumple: L('cumpleaños', 'birthday'), aniv: L('aniversario', 'anniversary'), neg: L('comida de negocios', 'business meal') };
+        var occ = DS.has(OCC, S.occ) ? OCC[S.occ] : '';
         var when = DS.dayLong(DAYS[S.d], l) + ' · ' + DS.hm(S.time, l), zone = S.zone === 'salon' ? L('salón', 'indoors') : L('terraza', 'terrace');
         var rc = DS.code('TN');
         S.res = { code: rc, when: when, detail: S.people + ' ' + L(S.people === 1 ? 'persona' : 'personas', S.people === 1 ? 'person' : 'people') + ' · ' + zone + (occ ? ' · ' + occ : ''),
@@ -1976,8 +2015,8 @@ DEMOS.barberia = {
       for (var i = 0; i < DAYS.length; i++) { var s = slots(DAYS[i]); for (var j = 0; j < s.length; j++) if (freeBarber(DAYS[i], j, bi) > 0) return { d: DAYS[i], t: s[j] }; }
       return null;
     }
-    function stamps() { return db.get('sellos', 2); }
-    function mine() { return db.get('reservas', []); }
+    function stamps() { var n = parseInt(db.get('sellos', 2), 10); return n >= 0 && n < 10000 ? n : 2; }
+    function mine() { return DS.arr(db.get('reservas', [])).filter(function (r) { return r && typeof r === 'object'; }); }
 
     var nx = nextFor(0);
     root.className = 'dm ds ds-barber';
@@ -2091,24 +2130,31 @@ DEMOS.barberia = {
     function keepTime() { if (S.t !== null && (dur() === 0 || freeBarber(DAYS[S.d], S.t, S.b) < 0)) S.t = null; }
 
     DS.actions(root, function (act, v) {
-      if (act === 'sv') { if (S.sv[v]) delete S.sv[v]; else S.sv[v] = true; keepTime(); return draw(); }
-      if (act === 'barber') { S.b = +v; keepTime(); return draw(); }
-      if (act === 'pick') { S.b = +v; S.done = null; keepTime(); draw(); return DS.go(root, 'reservar'); }
-      if (act === 'day') { S.d = +v; S.t = null; return draw(); }
-      if (act === 'time') { S.t = +v; return draw(); }
+      var i;
+      if (act === 'sv') { if (!SERV.some(function (x) { return x.id === v; })) return; if (S.sv[v]) delete S.sv[v]; else S.sv[v] = true; keepTime(); return draw(); }
+      if (act === 'barber') { if ((i = DS.idx(v, BARB.length)) === null) return; S.b = i; keepTime(); return draw(); }
+      if (act === 'pick') { if ((i = DS.idx(v, BARB.length)) === null) return; S.b = i; S.done = null; keepTime(); draw(); return DS.go(root, 'reservar'); }
+      if (act === 'day') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.d = i; S.t = null; return draw(); }
+      if (act === 'time') { if ((i = DS.idx(v, slots(DAYS[S.d]).length)) === null || dur() === 0 || freeBarber(DAYS[S.d], i, S.b) < 0) return; S.t = i; return draw(); }
       if (act === 'confirm') {
+        if (S.done || S.t === null || dur() === 0 || freeBarber(DAYS[S.d], S.t, S.b) < 0) return;
         var a = DS.ok.name(S.name), b = DS.ok.phone(S.phone);
         DS.setErr(side, 'bbName', a ? '' : L('Escribe tu nombre.', 'Enter your name.'));
         DS.setErr(side, 'bbPhone', b ? '' : L('Celular de 10 dígitos que empiece por 3.', '10-digit mobile starting with 3.'));
         if (!(a && b)) { var bad = side.querySelector('[aria-invalid="true"]'); if (bad) bad.focus(); return; }
-        var who = freeBarber(DAYS[S.d], S.t, S.b), names = SERV.filter(function (s) { return S.sv[s.id]; }).map(function (s) { return s.n; }).join(' + ');
+        var who = freeBarber(DAYS[S.d], S.t, S.b), names = SERV.filter(function (x) { return S.sv[x.id]; }).map(function (x) { return x.n; }).join(' + ');
         S.done = { code: DS.code('CN'), when: DS.dayLong(DAYS[S.d], l) + ' · ' + DS.hm(slots(DAYS[S.d])[S.t], l), detail: names + ' · ' + BARB[who].n + ' · ' + money(price()) };
         var r = mine(); r.unshift(S.done); db.set('reservas', r.slice(0, 6)); db.set('sellos', stamps() + 1);
         DS.toast(root, L('Silla reservada · ', 'Chair booked · ') + S.done.code);
         draw(); drawClub(); drawTeam(); return;
       }
       if (act === 'again') { S.done = null; S.t = null; return draw(); }
-      if (act === 'cancel') { var ls = mine(), c = ls.splice(+v, 1)[0]; db.set('reservas', ls); DS.toast(root, L('Reserva cancelada · ', 'Booking cancelled · ') + (c ? c.code : '')); return drawSide(); }
+      if (act === 'cancel') {
+        var ls = mine(); if ((i = DS.idx(v, ls.length)) === null) return;
+        var c = ls.splice(i, 1)[0]; db.set('reservas', ls);
+        DS.toast(root, L('Reserva cancelada · ', 'Booking cancelled · ') + (c && c.code ? c.code : ''));
+        return drawSide();
+      }
     });
     root.addEventListener('input', function (e) {
       if (e.target.id === 'bbName') S.name = e.target.value;
@@ -2159,7 +2205,7 @@ DEMOS.gimnasio = {
       });
     }
     function when(c) { var p = c.t.split(':'), x = new Date(DAYS[c.di]); x.setHours(+p[0], +p[1], 0, 0); return x; }
-    function mine() { return db.get('clases', {}); }
+    function mine() { return DS.obj(db.get('clases', {})); }
     function left(c) { return c.cap - c.taken - (mine()[c.key] ? 1 : 0); }
     function nextClass() {
       var now = Date.now();
@@ -2224,7 +2270,7 @@ DEMOS.gimnasio = {
 
     function drawTypes() {
       typesEl.innerHTML = [{ id: 'all', n: L('Todas', 'All') }].concat(TYPES).map(function (t) {
-        var pic = t.img && IMG[t.img] ? '<span style="display:block;height:88px;margin:-14px -16px 12px;overflow:hidden;border-radius:var(--c-rad) var(--c-rad) 0 0"><img src="' + IMG[t.img] + '" alt="' + esc(t.alt) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy"></span>' : '';
+        var pic = t.img && IMG[t.img] ? '<span style="display:block;height:88px;margin:-14px -16px 12px;overflow:hidden;border-radius:var(--c-rad) var(--c-rad) 0 0"><img src="' + IMG[t.img] + '" alt="' + esc(t.alt) + '" style="width:100%;height:100%;object-fit:cover"></span>' : '';
         return '<button class="ds-choice" type="button" data-act="type" data-v="' + t.id + '" aria-pressed="' + (S.f === t.id) + '" style="flex-direction:column;align-items:stretch;overflow:hidden' + (t.id === 'all' ? ';justify-content:flex-end;min-height:132px' : '') + '">' + pic + '<strong>' + t.n + '</strong>' + (t.min ? '<small>' + t.min + ' min</small>' : '<small>' + L('Todo el horario', 'Full timetable') + '</small>') + '</button>';
       }).join('');
       typesEl.style.gridTemplateColumns = '';
@@ -2294,15 +2340,17 @@ DEMOS.gimnasio = {
     }
 
     DS.actions(root, function (act, v) {
-      if (act === 'type') { S.f = v; drawTypes(); return drawList(); }
-      if (act === 'day') { S.d = +v; drawDays(); return drawList(); }
+      var i;
+      if (act === 'type') { if (v !== 'all' && !TYPES.some(function (t) { return t.id === v; })) return; S.f = v; drawTypes(); return drawList(); }
+      if (act === 'day') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.d = i; drawDays(); return drawList(); }
       if (act === 'book') {
+        if (typeof v !== 'string' || v.indexOf('|') === -1) return;
         var m = mine();
-        if (m[v]) { var nm = m[v].n; delete m[v]; db.set('clases', m); DS.toast(root, L('Cupo liberado · ', 'Spot released · ') + nm); }
+        if (DS.has(m, v)) { var nm = m[v] && m[v].n; delete m[v]; db.set('clases', m); DS.toast(root, L('Cupo liberado · ', 'Spot released · ') + (nm || '')); }
         else {
           var c = null;
           for (var di = 0; di < DAYS.length && !c; di++) c = classesFor(di).filter(function (x) { return x.key === v; })[0] || null;
-          if (!c) return;
+          if (!c || when(c).getTime() < Date.now()) return;
           var sameDay = Object.keys(m).filter(function (k) { return k.split('|')[0] === v.split('|')[0]; }).length;
           if (sameDay >= 2) return DS.toast(root, L('Máximo dos clases por día.', 'Two classes a day max.'));
           if (left(c) <= 0) return DS.toast(root, L('La clase se llenó.', 'The class just filled up.'));
@@ -2311,19 +2359,23 @@ DEMOS.gimnasio = {
         }
         drawList(); drawMine(); return tick();
       }
-      if (act === 'term') { S.term = v; return drawPlans(); }
-      if (act === 'plan') { S.trial.plan = v; S.trialDone = null; drawTrial(); return DS.go(root, 'prueba'); }
-      if (act === 'goal') { S.trial.goal = v; return drawTrial(); }
-      if (act === 'ttype') { S.trial.type = v; return drawTrial(); }
-      if (act === 'tday') { S.trial.d = +v; return drawTrial(); }
+      if (act === 'term') { if (!TERMS.some(function (t) { return t[0] === v; })) return; S.term = v; return drawPlans(); }
+      if (act === 'plan') { if (!PLANS.some(function (p) { return p.id === v; })) return; S.trial.plan = v; S.trialDone = null; drawTrial(); return DS.go(root, 'prueba'); }
+      if (act === 'goal') { if (!GOALS.some(function (g) { return g[0] === v; })) return; S.trial.goal = v; return drawTrial(); }
+      if (act === 'ttype') { if (!TYPES.some(function (t) { return t.id === v; })) return; S.trial.type = v; return drawTrial(); }
+      if (act === 'tday') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.trial.d = i; return drawTrial(); }
       if (act === 'trial') {
+        if (S.trialDone) return;
         var T = S.trial, a = DS.ok.name(T.name), b = DS.ok.phone(T.phone);
         DS.setErr(trialSide, 'fjName', a ? '' : L('Escribe tu nombre.', 'Enter your name.'));
         DS.setErr(trialSide, 'fjPhone', b ? '' : L('Celular de 10 dígitos que empiece por 3.', '10-digit mobile starting with 3.'));
         if (!(a && b)) { var bad = trialSide.querySelector('[aria-invalid="true"]'); if (bad) bad.focus(); return; }
-        var key = trialSide.querySelector('#fjSlot').value, cl = classesFor(T.d).filter(function (x) { return x.key === key; })[0];
-        var goal = GOALS.filter(function (g) { return g[0] === T.goal; })[0][1], w = (DS.isToday(DAYS[T.d]) ? L('Hoy', 'Today') : DS.dayLong(DAYS[T.d], l)) + ' · ' + DS.hm(cl.t, l), code = DS.code('FJ');
-        S.trialDone = { code: code, when: w, detail: cl.ty.n + ' · ' + cl.coach + ' · ' + L('objetivo: ', 'goal: ') + goal.toLowerCase(),
+        var sel = trialSide.querySelector('#fjSlot'), key = sel ? sel.value : '';
+        var cl = classesFor(T.d).filter(function (x) { return x.key === key; })[0];
+        var g = GOALS.filter(function (x) { return x[0] === T.goal; })[0];
+        if (!cl || !g) return;
+        var w = (DS.isToday(DAYS[T.d]) ? L('Hoy', 'Today') : DS.dayLong(DAYS[T.d], l)) + ' · ' + DS.hm(cl.t, l), code = DS.code('FJ');
+        S.trialDone = { code: code, when: w, detail: cl.ty.n + ' · ' + cl.coach + ' · ' + L('objetivo: ', 'goal: ') + g[1].toLowerCase(),
           msg: L('Hola ', 'Hi ') + T.name.trim().split(/\s+/)[0] + L(', tu clase de prueba en Forja está agendada:\n', ', your Forja trial class is booked:\n') + cl.ty.n + ' — ' + w + L('\nEntrenador: ', '\nCoach: ') + cl.coach + L('\nLlega 15 minutos antes para la valoración.\nCódigo: ', '\nArrive 15 minutes early for the assessment.\nCode: ') + code };
         DS.toast(root, L('Clase de prueba agendada · ', 'Trial class booked · ') + code);
         return drawTrial();
@@ -2568,20 +2620,44 @@ function HUD(o) {
    MOTION — revelados al hacer scroll, parallax, contadores, texto que se
    decodifica, botones magnéticos y barra de progreso. Un solo sistema para el
    portafolio y las cuatro demos. Todo se desactiva sin movimiento.
+
+   Detección de entrada por rectángulo, no por IntersectionObserver: los estados
+   previos usan clip-path y un elemento recortado a área cero nunca "intersecta"
+   para el observador, así que no se revelaría jamás (fallo de la barbería).
+   getBoundingClientRect ignora clip-path y transformaciones de opacidad.
+
+   Seguridad: cualquier excepción, un error global o un fallo del temporizador
+   revelan todo el contenido. Nada puede quedar oculto por culpa de la animación.
    =========================================================================== */
 var MOTION = (function () {
-  var o = null, io = null, pio = null, ticking = false, bar = null, heroWrap = null, mag = null;
-  var visible = [];
-  var demoRoot = null, demoKind = '', tracks = [], lastSt = 0, lastT = 0, skewT = 0;
-  var STEP = { card: 180, row: 70, soft: 70, clip: 90, words: 60, line: 0, scr: 40, count: 90, fade: 0, pulse: 0,
+  var o = null, bar = null, heroWrap = null, mag = null, currentRoot = null;
+  var pending = [], shots = [], tracks = [];
+  var demoRoot = null, demoKind = '', lastSt = 0, lastT = 0, skewT = 0, safety = 0, sweepT = 0, ticking = false;
+  var STEP = {
+    card: 180, row: 70, soft: 70, clip: 90, words: 60, line: 0, scr: 40, count: 90, fade: 0, pulse: 0,
     dxh: 0, dxe: 0, dxm: 0, dxb: 80, dxc: 90, dxp: 60,
     rsh: 0, rse: 0, rsm: 0, rsb: 140, rsg: 160, rsc: 120,
     bbh: 0, bbe: 0, bbm: 0, bbb: 50, bbc: 70, bbo: 60,
-    gyh: 0, gye: 0, gym: 0, gyb: 60, gyc: 70 };
+    gyh: 0, gye: 0, gym: 0, gyb: 60, gyc: 70
+  };
   var GLYPHS = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789/+<>·';
 
   function each(list, fn) { Array.prototype.forEach.call(list, fn); }
   function q(root, sel) { return root.querySelectorAll(sel); }
+
+  /* ---- fallo controlado: se registra y se muestra todo ---- */
+  function revealAll(root) {
+    pending = [];
+    if (!root) return;
+    each(q(root, '.is-pre'), function (el) { el.classList.remove('is-pre'); });
+    each(q(root, '[data-mk="count"]'), function (el) { if (el.getAttribute('data-count')) el.textContent = fmt(el, +el.getAttribute('data-count')); });
+    each(q(root, '[data-mk="bbo"]'), function (el) { var f = el.getAttribute('data-final'); if (f && el.firstChild && el.firstChild.nodeType === 3) el.firstChild.textContent = f; });
+  }
+  function fail(err) {
+    try { console.error('[motion] desactivado por un error; se muestra todo el contenido.', err); } catch (e) { /* sin consola */ }
+    revealAll(currentRoot);
+    if (currentRoot && o && o.hdr) revealAll(o.hdr);
+  }
 
   /* ---- titulares partidos en palabras (conserva <em>, <br> y spans) ---- */
   function splitWords(el) {
@@ -2635,9 +2711,10 @@ var MOTION = (function () {
   function odometer(el) {
     var tn = el.firstChild, final = el.getAttribute('data-final') || '';
     var m = final.match(/^(.*?\$)([\d.]+)(.*)$/);
-    if (!tn || tn.nodeType !== 3 || !m) return;
+    if (!tn || tn.nodeType !== 3 || !m) { if (tn && tn.nodeType === 3 && final) tn.textContent = final; return; }
     var target = +m[2].replace(/\./g, ''), steps = 14, i = 0;
     (function step() {
+      if (!el.isConnected) return;
       i++;
       var v = i >= steps ? target : Math.round(target * (i / steps) / 1000) * 1000;
       tn.textContent = m[1] + v.toLocaleString('es-CO') + m[3];
@@ -2647,17 +2724,17 @@ var MOTION = (function () {
 
   /* ---- texto que se decodifica de izquierda a derecha ---- */
   function scramble(el) {
-    var final = el.getAttribute('data-final') || '', t0 = performance.now(), dur = Math.min(900, 280 + final.length * 22);
-    function frame(now) {
-      var p = Math.min(1, (now - t0) / dur), done = Math.floor(p * final.length), out = '';
+    var final = el.getAttribute('data-final') || '', t0 = Date.now(), dur = Math.min(900, 280 + final.length * 22);
+    (function frame() {
+      if (!el.isConnected) return;
+      var p = Math.min(1, (Date.now() - t0) / dur), done = Math.floor(p * final.length), out = '';
       for (var i = 0; i < final.length; i++) {
         var ch = final.charAt(i);
         out += (i < done || /\s|·|\/|—/.test(ch)) ? ch : GLYPHS.charAt(Math.floor(Math.random() * GLYPHS.length));
       }
-      el.textContent = out;
-      if (p < 1) requestAnimationFrame(frame); else el.textContent = final;
-    }
-    requestAnimationFrame(frame);
+      el.textContent = p < 1 ? out : final;
+      if (p < 1) setTimeout(frame, 32);
+    })();
   }
 
   /* ---- contadores con desaceleración exponencial ---- */
@@ -2667,49 +2744,71 @@ var MOTION = (function () {
     return s + (el.getAttribute('data-suffix') || '');
   }
   function countUp(el) {
-    var to = +el.getAttribute('data-count'), t0 = performance.now(), dur = 1700;
-    function frame(now) {
-      var p = Math.min(1, (now - t0) / dur), e = p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
+    var to = +el.getAttribute('data-count'), t0 = Date.now(), dur = 1700;
+    (function frame() {
+      if (!el.isConnected) return;
+      var p = Math.min(1, (Date.now() - t0) / dur), e = p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
       el.textContent = fmt(el, Math.round(to * e));
-      if (p < 1) requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
+      if (p < 1) setTimeout(frame, 32);
+    })();
   }
 
   function mark(el, kind) {
-    if (el.getAttribute('data-mk')) return;
+    if (!el || el.getAttribute('data-mk')) return;
     el.setAttribute('data-mk', kind);
     if (kind === 'words' || kind === 'rsh' || kind === 'gyh') splitWords(el);
     if (kind === 'dxh') splitChars(el);
+    if (kind === 'scr') el.setAttribute('data-final', el.textContent);
     if (kind === 'bbo') {
       var tn = el.firstChild;
       if (tn && tn.nodeType === 3) { el.setAttribute('data-final', tn.textContent); tn.textContent = tn.textContent.replace(/[\d.]+/, '0'); }
     }
     if (kind === 'count') el.textContent = fmt(el, 0);
     else el.classList.add('rv-' + kind);
-    if (kind === 'scr') el.setAttribute('data-final', el.textContent);
     el.classList.add('is-pre');
-    io.observe(el);
+    pending.push(el);
   }
 
-  function onEnter(entries) {
-    var ent = entries.filter(function (e) { return e.isIntersecting; }).map(function (e) { return e.target; });
-    ent.sort(function (a, b) { var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return (ra.top - rb.top) || (ra.left - rb.left); });
+  function reveal(list) {
+    list.sort(function (a, b) { var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return (ra.top - rb.top) || (ra.left - rb.left); });
     var n = {};
-    ent.forEach(function (el) {
+    list.forEach(function (el) {
       var k = el.getAttribute('data-mk'), idx = n[k] = (n[k] === undefined ? 0 : n[k] + 1);
       var delay = Math.min((STEP[k] || 0) * idx, 720);
       el.style.setProperty('--d', delay + 'ms');
       el.classList.remove('is-pre');
       if (k === 'scr') setTimeout(function () { scramble(el); }, delay);
       if (k === 'count') setTimeout(function () { countUp(el); }, delay + 150);
-      if (k === 'pulse') setTimeout(function () { el.classList.add('go'); }, 900);
       if (k === 'bbo') setTimeout(function () { odometer(el); }, delay + 250);
-      io.unobserve(el);
+      if (k === 'pulse') setTimeout(function () { el.classList.add('go'); }, 900);
     });
   }
 
-  /* ---- hero: máscara por líneas con 80ms entre ellas (especificación) ---- */
+  /* entra si su caja toca el 92% superior del área visible del scroller */
+  function checkReveal(force) {
+    if (!pending.length) return;
+    var sr = o.scroller.getBoundingClientRect(), limit = sr.top + sr.height * (force ? 1 : 0.92), entering = [], rest = [];
+    /* contenedor sin tamaño (pestaña oculta, marco colapsado): en el barrido de seguridad se muestra todo */
+    if (sr.height < 2) {
+      if (!force) return;
+      entering = pending.filter(function (el) { return el.isConnected; });
+      pending = [];
+      if (entering.length) reveal(entering);
+      return;
+    }
+    for (var i = 0; i < pending.length; i++) {
+      var el = pending[i];
+      if (!el.isConnected) continue;
+      var r = el.getBoundingClientRect();
+      var inside = r.top < limit && r.bottom > sr.top;
+      var passed = force && r.bottom <= sr.top;          /* ya quedó por encima: se muestra igual */
+      if (inside || passed) entering.push(el); else rest.push(el);
+    }
+    pending = rest;
+    if (entering.length) reveal(entering);
+  }
+
+  /* ---- hero del portafolio: máscara por líneas con 80ms entre ellas ---- */
   function hero(root, hdr, fresh) {
     var masks = q(root, '.mask'), heroEls = q(root, '[data-rv="hero"]'), hdrIn = hdr.querySelector('[data-hdr]');
     each(heroEls, function (e) { e.classList.add('is-pre'); });
@@ -2717,52 +2816,57 @@ var MOTION = (function () {
     var played = false;
     function play() {
       if (played) return; played = true;
-      requestAnimationFrame(function () { requestAnimationFrame(function () {
+      setTimeout(function () {
         each(masks, function (m) { m.classList.remove('is-pre'); });
         each(heroEls, function (e) { e.classList.remove('is-pre'); });
         if (hdrIn) hdrIn.classList.remove('is-pre');
-      }); });
+      }, 30);
     }
-    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(play);
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(play, play);
     setTimeout(play, 1200);
   }
 
   /* ---- efectos ligados al scroll, un solo rAF ---- */
-  function tick() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+  function tick() { if (!ticking) { ticking = true; requestAnimationFrame(update); setTimeout(update, 120); } }
   function update() {
+    if (!ticking) return;
     ticking = false;
-    if (!o || !o.isOn()) return;
-    var sc = o.scroller, st = sc.scrollTop, max = sc.scrollHeight - sc.clientHeight, s = o.getScale();
-    bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, st / max) : 0).toFixed(4) + ')';
-    if (heroWrap) {
-      var k = Math.min(1, st / (sc.clientHeight * 0.9));
-      heroWrap.style.transform = 'translate3d(0,' + (st * 0.18).toFixed(1) + 'px,0)';
-      heroWrap.style.opacity = (1 - k * 0.85).toFixed(3);
-    }
-    if (visible.length) {
+    if (!o) return;
+    try {
+      if (!o.isOn()) return;
+      var sc = o.scroller, st = sc.scrollTop, max = sc.scrollHeight - sc.clientHeight;
+      bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, st / max) : 0).toFixed(4) + ')';
       var sr = sc.getBoundingClientRect(), mid = sr.top + sr.height / 2;
-      visible.forEach(function (box) {
-        var r = box.getBoundingClientRect(), norm = ((r.top + r.height / 2) - mid) / sr.height;
+
+      if (heroWrap && heroWrap.isConnected) {
+        var k = Math.min(1, st / (sc.clientHeight * 0.9));
+        heroWrap.style.transform = 'translate3d(0,' + (st * 0.18).toFixed(1) + 'px,0)';
+        heroWrap.style.opacity = (1 - k * 0.85).toFixed(3);
+      }
+
+      /* parallax solo en las capturas del portafolio; las portadas de las demos no se desplazan */
+      shots.forEach(function (box) {
+        var r = box.getBoundingClientRect();
+        if (r.bottom < sr.top || r.top > sr.bottom) return;
         var img = box.querySelector('img');
-        if (img) img.style.setProperty('--py', (Math.max(-1, Math.min(1, norm)) * -26 / 1).toFixed(1) + 'px');
+        if (img) img.style.setProperty('--py', (Math.max(-1, Math.min(1, ((r.top + r.height / 2) - mid) / sr.height)) * -26).toFixed(1) + 'px');
       });
-    }
-    if (demoRoot && demoKind === 'gy') {
-      var now = performance.now(), v = (st - lastSt) / Math.max(1, now - lastT);
-      lastSt = st; lastT = now;
-      demoRoot.style.setProperty('--vskew', Math.max(-5, Math.min(5, v * -2.2)).toFixed(2) + 'deg');
-      clearTimeout(skewT);
-      skewT = setTimeout(function () { if (demoRoot) demoRoot.style.setProperty('--vskew', '0deg'); }, 140);
-    }
-    if (tracks.length) {
-      var tr = sc.getBoundingClientRect();
+
+      if (demoRoot && demoKind === 'gy') {
+        var now = Date.now(), v = (st - lastSt) / Math.max(1, now - lastT);
+        lastSt = st; lastT = now;
+        demoRoot.style.setProperty('--vskew', Math.max(-5, Math.min(5, v * -2.2)).toFixed(2) + 'deg');
+        clearTimeout(skewT);
+        skewT = setTimeout(function () { if (demoRoot) demoRoot.style.setProperty('--vskew', '0deg'); }, 140);
+      }
       tracks.forEach(function (h) {
         var r = h.getBoundingClientRect();
-        if (r.bottom < tr.top || r.top > tr.bottom) return;
-        h.style.translate = ((((r.top + r.height / 2) - (tr.top + tr.height / 2)) / tr.height) * 46).toFixed(1) + 'px 0';
+        if (r.bottom < sr.top || r.top > sr.bottom) return;
+        h.style.translate = ((((r.top + r.height / 2) - mid) / sr.height) * 46).toFixed(1) + 'px 0';
       });
-    }
-    void s;
+
+      checkReveal(false);
+    } catch (err) { fail(err); }
   }
 
   function demoMotion(root) {
@@ -2798,10 +2902,9 @@ var MOTION = (function () {
   function release() { if (!mag) return; mag.classList.remove('is-mag'); mag.style.transform = ''; mag = null; }
 
   function reset() {
-    if (io) io.disconnect();
-    if (pio) pio.disconnect();
-    io = pio = null; visible = []; heroWrap = null; release();
-    clearTimeout(skewT); demoRoot = null; demoKind = ''; tracks = [];
+    clearInterval(safety); clearTimeout(sweepT); clearTimeout(skewT);
+    safety = 0; pending = []; shots = []; tracks = []; heroWrap = null; demoRoot = null; demoKind = ''; ticking = false;
+    release();
   }
 
   return {
@@ -2812,59 +2915,64 @@ var MOTION = (function () {
       o.stage.appendChild(bar);
       o.scroller.addEventListener('scroll', tick, { passive: true });
       window.addEventListener('resize', tick);
+      window.addEventListener('error', function () { fail('error global'); });
+      window.addEventListener('unhandledrejection', function () { fail('promesa rechazada'); });
       o.stage.addEventListener('pointermove', function (e) {
-        if (e.pointerType !== 'mouse' || !o.isOn()) return;
-        var el = e.target.closest ? e.target.closest('.magnet') : null;
-        if (mag && mag !== el) release();
-        if (!el) return;
-        mag = el; el.classList.add('is-mag');
-        var r = el.getBoundingClientRect(), sc = o.getScale();
-        var dx = (e.clientX - (r.left + r.width / 2)) / sc, dy = (e.clientY - (r.top + r.height / 2)) / sc;
-        el.style.transform = 'translate(' + Math.max(-10, Math.min(10, dx * 0.22)).toFixed(1) + 'px,' + Math.max(-7, Math.min(7, dy * 0.32)).toFixed(1) + 'px)';
+        try {
+          if (e.pointerType !== 'mouse' || !o.isOn()) return;
+          var el = e.target.closest ? e.target.closest('.magnet') : null;
+          if (mag && mag !== el) release();
+          if (!el) return;
+          mag = el; el.classList.add('is-mag');
+          var r = el.getBoundingClientRect(), s = o.getScale() || 1;
+          var dx = (e.clientX - (r.left + r.width / 2)) / s, dy = (e.clientY - (r.top + r.height / 2)) / s;
+          el.style.transform = 'translate(' + Math.max(-10, Math.min(10, dx * 0.22)).toFixed(1) + 'px,' + Math.max(-7, Math.min(7, dy * 0.32)).toFixed(1) + 'px)';
+        } catch (err) { release(); }
       });
       o.stage.addEventListener('pointerleave', release);
     },
 
     run: function (root, hdr, fresh) {
       reset();
-      if (!o.isOn()) {
-        each(q(root, '.mask'), function (m) { m.classList.remove('is-pre'); });
-        each(q(root, '[data-rv]'), function (e) { e.classList.remove('is-pre'); });
-        bar.style.transform = 'scaleX(0)';
-        return;
-      }
-      hero(root, hdr, fresh);
-      if (!('IntersectionObserver' in window)) return;
+      currentRoot = root;
+      try {
+        if (!o.isOn()) {
+          revealAll(root);
+          each(q(root, '.mask'), function (m) { m.classList.remove('is-pre'); });
+          bar.style.transform = 'scaleX(0)';
+          return;
+        }
+        hero(root, hdr, fresh);
 
-      io = new IntersectionObserver(onEnter, { root: o.scroller, threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
-      pio = new IntersectionObserver(function (es) {
-        es.forEach(function (e) {
-          var i = visible.indexOf(e.target);
-          if (e.isIntersecting && i === -1) visible.push(e.target);
-          if (!e.isIntersecting && i !== -1) visible.splice(i, 1);
-        });
+        /* portafolio */
+        each(q(root, '.h-page, .h-closing, .statement'), function (el) { mark(el, 'words'); });
+        each(q(root, '.sec-head .mono, .page-head .mono, .c-right > .mono'), function (el) { mark(el, 'scr'); });
+        each(q(root, '.sec-head'), function (el) { if (parseFloat(getComputedStyle(el).borderBottomWidth) > 0) mark(el, 'line'); });
+        each(q(root, '.sec-head p, .page-head .lede, .value .meta, .sec-foot, .facts > div, .form .field, .form .btn, .closing .meta, .ft-row, .ft-x > div, .stat'), function (el) { mark(el, 'soft'); });
+        each(q(root, '.card'), function (el) { mark(el, 'card'); });
+        each(q(root, '[data-rv="row"]'), function (el) { mark(el, 'row'); });
+        each(q(root, '[data-rv="fade"]'), function (el) { mark(el, 'fade'); });
+        each(q(root, '[data-count]'), function (el) { mark(el, 'count'); });
+        each(q(root, '.closing .btn-primary'), function (el) { mark(el, 'pulse'); });
+
+        /* demos: cada oficio con su propia coreografía */
+        demoMotion(root);
+
+        each(q(root, '.btn-primary, .ds-actions .ds-btn, .ds-head__cta .ds-btn'), function (el) { el.classList.add('magnet'); });
+        shots = Array.prototype.slice.call(q(root, '.shot'));
+        heroWrap = root.querySelector('.hero .wrap');
+
         tick();
-      }, { root: o.scroller });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(tick, tick);
+        /* red de seguridad: se revisa periódicamente y, pasados 5 s, se muestra
+           todo lo que ya debería haberse visto aunque no haya habido scroll */
+        safety = setInterval(function () { if (!pending.length) { clearInterval(safety); safety = 0; return; } tick(); }, 500);
+        sweepT = setTimeout(function () { try { checkReveal(true); } catch (err) { fail(err); } }, 5000);
+      } catch (err) { fail(err); }
+    },
 
-      /* portafolio */
-      each(q(root, '.h-page, .h-closing, .statement'), function (el) { mark(el, 'words'); });
-      each(q(root, '.sec-head .mono, .page-head .mono, .c-right > .mono'), function (el) { mark(el, 'scr'); });
-      each(q(root, '.sec-head'), function (el) { if (parseFloat(getComputedStyle(el).borderBottomWidth) > 0) mark(el, 'line'); });
-      each(q(root, '.sec-head p, .page-head .lede, .value .meta, .sec-foot, .facts > div, .form .field, .form .btn, .closing .meta, .ft-row, .ft-x > div, .stat'), function (el) { mark(el, 'soft'); });
-      each(q(root, '.card'), function (el) { mark(el, 'card'); });
-      each(q(root, '[data-rv="row"]'), function (el) { mark(el, 'row'); });
-      each(q(root, '[data-rv="fade"]'), function (el) { mark(el, 'fade'); });
-      each(q(root, '[data-count]'), function (el) { mark(el, 'count'); });
-      each(q(root, '.closing .btn-primary'), function (el) { mark(el, 'pulse'); });
-
-      /* demos: cada oficio con su propia coreografía */
-      demoMotion(root);
-
-      each(q(root, '.btn-primary, .ds-actions .ds-btn, .ds-head__cta .ds-btn'), function (el) { el.classList.add('magnet'); });
-      each(q(root, '.shot img, .ds-hero__img img, .ds-cover__img img'), function (img) { pio.observe(img.parentNode); });
-      heroWrap = root.querySelector('.hero .wrap');
-      tick();
-    }
+    /* para pruebas: cuántos elementos siguen esperando */
+    pendingCount: function () { return pending.length; }
   };
 })();
 </script>
@@ -3043,7 +3151,7 @@ var DSBG = (function () {
 
   function mount(root, id, isOn) {
     var sc = SCENES[id];
-    if (!sc || !root) return null;
+    if (!Object.prototype.hasOwnProperty.call(SCENES, id) || !root) return null;
     var cv = document.createElement('canvas');
     cv.className = 'ds-bgfx'; cv.setAttribute('aria-hidden', 'true');
     root.insertBefore(cv, root.firstChild);
@@ -3189,20 +3297,33 @@ var DSBG = (function () {
 
   function render(r, fresh) {
     var go = function () {
-      if (demoCleanup) { demoCleanup(); demoCleanup = null; }
+      if (demoCleanup) { try { demoCleanup(); } catch (err) { /* limpieza silenciosa */ } demoCleanup = null; }
       current = r;
       document.documentElement.lang = r.l;
       hdr.innerHTML = r.key === 'demo' ? DemoBar(r.l, r.sub) : Header(r.l, r.key, r.sub);
       hdr.classList.toggle('is-demo', r.key === 'demo');
       menu.innerHTML = r.key === 'demo' ? '' : Menu(r.l, r.key, r.sub);
       menu.hidden = true;
-      page.innerHTML = r.key === 'demo' ? PAGES.demo(r.l, r.sub) : PAGES[r.key](r.l);
+      try { page.innerHTML = r.key === 'demo' ? PAGES.demo(r.l, r.sub) : PAGES[r.key](r.l); }
+      catch (err) {
+        console.error('[página] no se pudo generar', r.key, err);
+        page.innerHTML = '<section class="page-head"><div class="wrap"><p class="mono">' + (r.l === 'es' ? 'Esta página no pudo cargarse.' : 'This page could not load.') + '</p><p style="margin-top:16px"><a class="link-mono" href="#/' + r.l + '/">' + (r.l === 'es' ? 'Ir al inicio' : 'Go home') + ' →</a></p></div></section>';
+      }
       if (r.key === 'demo') {
-        var dRoot = document.getElementById('demoRoot'), dm = DEMOS[r.sub] || DEMOS.dental;
-        if (dRoot && dm) {
-          var offDemo = dm.mount(dRoot, r.l) || null;
-          var offBg = DSBG.mount(dRoot, r.sub in DEMOS ? r.sub : 'dental', function () { return motionOn; });
-          demoCleanup = function () { if (offDemo) offDemo(); if (offBg) offBg(); };
+        var sid = Object.prototype.hasOwnProperty.call(DEMOS, r.sub) ? r.sub : 'dental';
+        var dRoot = document.getElementById('demoRoot'), dm = DEMOS[sid], offDemo = null, offBg = null;
+        if (dRoot && dm && typeof dm.mount === 'function') {
+          try { offDemo = dm.mount(dRoot, r.l) || null; }
+          catch (err) {
+            console.error('[demo] no se pudo montar', sid, err);
+            dRoot.className = '';
+            dRoot.innerHTML = '<div style="padding:120px 24px;text-align:center"><p class="mono">' + (r.l === 'es' ? 'La demo no pudo cargarse.' : 'The demo could not load.') + '</p><p style="margin-top:16px"><a class="link-mono" href="' + href(r.l, 'home') + '">' + (r.l === 'es' ? 'Volver al portafolio' : 'Back to portfolio') + ' →</a></p></div>';
+          }
+          if (dRoot.classList.contains('ds') || dRoot.querySelector('.ds')) {
+            try { offBg = DSBG.mount(dRoot, sid, function () { return motionOn; }); }
+            catch (err) { console.error('[demo] fondo animado desactivado', err); }
+          }
+          demoCleanup = function () { if (typeof offDemo === 'function') offDemo(); if (typeof offBg === 'function') offBg(); };
         }
       }
       document.title = 'José M. Sánchez · ' + T[r.l].titles[r.key];
@@ -3278,6 +3399,7 @@ var DSBG = (function () {
   });
 
   MOTION.init({
+    hdr: hdr,
     stage: stage,
     scroller: scroller,
     isOn: function () { return motionOn; },

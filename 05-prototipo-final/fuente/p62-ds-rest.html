@@ -33,8 +33,15 @@ DEMOS.restaurante = {
     var HOURS = [['12:00', '17:00'], null, ['12:00', '22:00'], ['12:00', '22:00'], ['12:00', '22:00'], ['12:00', '23:00'], ['12:00', '23:00']];
     var DAYS = DS.days(10, [1]);
 
+    function cleanCart(c) {
+      var out = {};
+      c = DS.obj(c);
+      Object.keys(c).forEach(function (k) { var n = parseInt(c[k], 10); if (DS.has(BY, k) && n > 0 && n < 100) out[k] = n; });
+      return out;
+    }
+
     var S = {
-      cat: 'pasta', q: '', diet: '', cart: db.get('cart', {}), mode: 'dom', name: '', phone: '', addr: '', notes: '', order: null,
+      cat: 'pasta', q: '', diet: '', cart: cleanCart(db.get('cart', {})), mode: 'dom', name: '', phone: '', addr: '', notes: '', order: null,
       people: 2, d: 0, time: null, zone: 'salon', occ: '', rname: '', rphone: '', res: null
     };
 
@@ -98,6 +105,17 @@ DEMOS.restaurante = {
     function save() { db.set('cart', S.cart); }
     function status() { var st = DS.status(HOURS, l), el = root.querySelector('[data-status]'); if (el) el.innerHTML = '<span class="ds-dot' + (st.open ? '' : ' ds-dot--off') + '"></span><span>' + st.text + '</span>'; }
 
+    function dishCtl(m) {
+      var n = S.cart[m.id] || 0;
+      return '<span class="ds-mono">' + money(m.p) + '</span>' +
+        (n ? '<span class="ds-qty"><button type="button" data-act="dec" data-v="' + m.id + '" aria-label="' + L('Quitar uno de ', 'Remove one ') + esc(m.n) + '">−</button><span>' + n + '</span><button type="button" data-act="inc" data-v="' + m.id + '" aria-label="' + L('Añadir otro ', 'Add another ') + esc(m.n) + '">+</button></span>'
+           : '<button class="ds-btn ds-btn--sm" type="button" data-act="inc" data-v="' + m.id + '">' + L('Añadir', 'Add') + '</button>');
+    }
+    /* al añadir o quitar solo cambia el control de ese plato: las fotos no se vuelven a dibujar */
+    function refreshDish(id) {
+      var row = menuEl.querySelector('[data-dish="' + id + '"] .ds-dish__row');
+      if (row) row.innerHTML = dishCtl(BY[id]); else drawMenu();
+    }
     function drawMenu() {
       tabs.innerHTML = CATS.map(function (c) { return '<button class="ds-tab" type="button" role="tab" data-act="cat" data-v="' + c[0] + '" aria-selected="' + (S.cat === c[0] && !S.q) + '">' + c[1] + '</button>'; }).join('');
       dietEl.innerHTML = [['', L('Todo', 'All')], [V, TAGS[V]], [G, TAGS[G]]].map(function (d) { return '<button type="button" data-act="diet" data-v="' + d[0] + '" aria-pressed="' + (S.diet === d[0]) + '">' + d[1] + '</button>'; }).join('');
@@ -107,12 +125,9 @@ DEMOS.restaurante = {
         return m.c === S.cat && (!S.diet || m.t.indexOf(S.diet) !== -1);
       });
       menuEl.innerHTML = list.length ? list.map(function (m) {
-        var n = S.cart[m.id] || 0;
-        return '<article class="ds-dish"><div class="pic">' + (m.img && IMG[m.img] ? '<img src="' + IMG[m.img] + '" alt="' + esc(m.n) + '" loading="lazy" decoding="async">' : '<span aria-hidden="true">' + m.n.charAt(0) + '</span>') + '</div>' +
+        return '<article class="ds-dish" data-dish="' + m.id + '"><div class="pic">' + (m.img && IMG[m.img] ? '<img src="' + IMG[m.img] + '" alt="' + esc(m.n) + '" decoding="async">' : '<span aria-hidden="true">' + m.n.charAt(0) + '</span>') + '</div>' +
           '<div><h4>' + m.n + '</h4><p>' + m.d + '</p><div>' + m.t.map(function (t) { return '<span class="ds-tag">' + TAGS[t] + '</span>'; }).join('') + '</div>' +
-          '<div class="row"><span class="ds-mono">' + money(m.p) + '</span>' +
-          (n ? '<span class="ds-qty"><button type="button" data-act="dec" data-v="' + m.id + '" aria-label="' + L('Quitar uno de ', 'Remove one ') + esc(m.n) + '">−</button><span>' + n + '</span><button type="button" data-act="inc" data-v="' + m.id + '" aria-label="' + L('Añadir otro ', 'Add another ') + esc(m.n) + '">+</button></span>'
-             : '<button class="ds-btn ds-btn--sm" type="button" data-act="inc" data-v="' + m.id + '">' + L('Añadir', 'Add') + '</button>') + '</div></div></article>';
+          '<div class="ds-dish__row">' + dishCtl(m) + '</div></div></article>';
       }).join('') : '<p class="ds-hint">' + L('No hay platos con ese filtro.', 'No dishes match that filter.') + '</p>';
     }
 
@@ -171,18 +186,20 @@ DEMOS.restaurante = {
     function need(el, id, cond, msg) { DS.setErr(el, id, cond ? '' : msg); return cond; }
 
     DS.actions(root, function (act, v) {
-      if (act === 'cat') { S.cat = v; S.q = ''; root.querySelector('#rtQ').value = ''; return drawMenu(); }
-      if (act === 'diet') { S.diet = v; return drawMenu(); }
-      if (act === 'inc') { S.cart[v] = (S.cart[v] || 0) + 1; save(); DS.toast(root, BY[v].n + L(' añadido · ', ' added · ') + qty() + L(' en el pedido', ' in order')); drawMenu(); return drawOrder(); }
-      if (act === 'dec') { S.cart[v]--; if (S.cart[v] <= 0) delete S.cart[v]; save(); drawMenu(); return drawOrder(); }
-      if (act === 'mode') { S.mode = v; return drawOrder(); }
+      var i;
+      if (act === 'cat') { if (!CATS.some(function (c) { return c[0] === v; })) return; S.cat = v; S.q = ''; var qi = root.querySelector('#rtQ'); if (qi) qi.value = ''; return drawMenu(); }
+      if (act === 'diet') { var dv = v == null ? '' : v; if (['', V, G].indexOf(dv) === -1) return; S.diet = dv; return drawMenu(); }
+      if (act === 'inc') { if (!DS.has(BY, v) || (S.cart[v] || 0) >= 99) return; S.cart[v] = (S.cart[v] || 0) + 1; save(); DS.toast(root, BY[v].n + L(' añadido · ', ' added · ') + qty() + L(' en el pedido', ' in order')); refreshDish(v); return drawOrder(); }
+      if (act === 'dec') { if (!DS.has(BY, v) || !S.cart[v]) return; S.cart[v]--; if (S.cart[v] <= 0) delete S.cart[v]; save(); refreshDish(v); return drawOrder(); }
+      if (act === 'mode') { if (v !== 'dom' && v !== 'rec') return; S.mode = v; return drawOrder(); }
       if (act === 'checkout') {
+        if (S.order || !qty()) return;
         var okN = need(orderEl, 'rtName', DS.ok.name(S.name), L('Escribe tu nombre.', 'Enter your name.'));
         var okP = need(orderEl, 'rtPhone', DS.ok.phone(S.phone), L('Celular de 10 dígitos que empiece por 3.', '10-digit mobile starting with 3.'));
         var okA = S.mode !== 'dom' || need(orderEl, 'rtAddr', S.addr.trim().length >= 6, L('Necesitamos la dirección completa.', 'We need the full address.'));
         if (!(okN && okP && okA)) { var bad = orderEl.querySelector('[aria-invalid="true"]'); if (bad) bad.focus(); return; }
         var c = DS.code('TN'), sub = subtotal(), f = fee();
-        var lines = Object.keys(S.cart).map(function (k) { return S.cart[k] + '× ' + BY[k].n + ' — ' + money(BY[k].p * S.cart[k]); });
+        var lines = Object.keys(S.cart).filter(function (k) { return DS.has(BY, k); }).map(function (k) { return S.cart[k] + '× ' + BY[k].n + ' — ' + money(BY[k].p * S.cart[k]); });
         var msg = L('Hola Trattoria Nove, este es mi pedido ', 'Hi Trattoria Nove, here is my order ') + c + ' · ' + (S.mode === 'dom' ? L('Domicilio', 'Delivery') : L('Recoger', 'Pickup')) + '\n\n' + lines.join('\n') +
           '\n\nSubtotal: ' + money(sub) + (S.mode === 'dom' ? '\n' + L('Domicilio: ', 'Delivery: ') + (f ? money(f) : L('gratis', 'free')) : '') + '\nTotal: ' + money(sub + f) +
           '\n\n' + S.name.trim() + ' · ' + S.phone.trim() + (S.mode === 'dom' ? '\n' + S.addr.trim() : '') + (S.notes.trim() ? '\n' + L('Notas: ', 'Notes: ') + S.notes.trim() : '');
@@ -191,15 +208,17 @@ DEMOS.restaurante = {
         drawMenu(); return drawOrder();
       }
       if (act === 'neworder') { S.order = null; return drawOrder(); }
-      if (act === 'pp') { S.people = Math.max(1, Math.min(10, S.people + (+v))); return drawRes(); }
-      if (act === 'rday') { S.d = +v; S.time = null; return drawRes(); }
-      if (act === 'zone') { S.zone = v; return drawRes(); }
-      if (act === 'rtime') { S.time = v; return drawRes(); }
+      if (act === 'pp') { var dd = v === '1' ? 1 : v === '-1' ? -1 : 0; if (!dd) return; S.people = Math.max(1, Math.min(10, S.people + dd)); return drawRes(); }
+      if (act === 'rday') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.d = i; S.time = null; return drawRes(); }
+      if (act === 'zone') { if (v !== 'salon' && v !== 'terraza') return; S.zone = v; return drawRes(); }
+      if (act === 'rtime') { if (slotsR().indexOf(v) === -1 || fullR(v)) return; S.time = v; return drawRes(); }
       if (act === 'reserve') {
+        if (S.res || !S.time || fullR(S.time)) return;
         var n1 = need(rsSide, 'rsName', DS.ok.name(S.rname), L('Escribe tu nombre.', 'Enter your name.'));
         var n2 = need(rsSide, 'rsPhone', DS.ok.phone(S.rphone), L('Celular de 10 dígitos que empiece por 3.', '10-digit mobile starting with 3.'));
         if (!(n1 && n2)) { var b2 = rsSide.querySelector('[aria-invalid="true"]'); if (b2) b2.focus(); return; }
-        var occ = { cumple: L('cumpleaños', 'birthday'), aniv: L('aniversario', 'anniversary'), neg: L('comida de negocios', 'business meal') }[S.occ];
+        var OCC = { cumple: L('cumpleaños', 'birthday'), aniv: L('aniversario', 'anniversary'), neg: L('comida de negocios', 'business meal') };
+        var occ = DS.has(OCC, S.occ) ? OCC[S.occ] : '';
         var when = DS.dayLong(DAYS[S.d], l) + ' · ' + DS.hm(S.time, l), zone = S.zone === 'salon' ? L('salón', 'indoors') : L('terraza', 'terrace');
         var rc = DS.code('TN');
         S.res = { code: rc, when: when, detail: S.people + ' ' + L(S.people === 1 ? 'persona' : 'personas', S.people === 1 ? 'person' : 'people') + ' · ' + zone + (occ ? ' · ' + occ : ''),
