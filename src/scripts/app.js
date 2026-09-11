@@ -6,6 +6,7 @@
    =========================================================================== */
 import Lenis from 'lenis';
 import { HUD } from './hud.js';
+import { startIntro } from './intro.js';
 import { MOTION } from './motion.js';
 
 /* Movimiento siempre activo, por decisión del cliente: sin interruptor y sin
@@ -24,6 +25,7 @@ export async function boot() {
   const lang = document.documentElement.lang === 'en' ? 'en' : 'es';
   const isOn = () => MOTION_ON;
   const getScale = () => 1;
+  const intro = startIntro();
 
   try {
     const grid = HUD({ canvas, stage, isMotion: isOn, getScale, getScroll: () => scroller.scrollTop, getLang: () => lang });
@@ -55,20 +57,24 @@ export async function boot() {
     const demoRoot = $('demoRoot');
     if (demoRoot) await mountDemo(demoRoot, lang, isOn);
 
-    /* estados previos del hero antes de quitar is-booting: la máscara sube al entrar */
-    page.querySelectorAll('.mask').forEach((m) => m.classList.add('is-pre'));
-    MOTION.run(page, hdr, true);
-
     bindHeader(hdr, scroller);
     bindMenu(menu, lenis);
     bindForm();
     bindPlaceholders(stage, lang);
+
+    /* con pantalla de carga: el contador llega a 100, sube la cortina y entonces entra el hero */
+    await intro.handoff();
+
+    /* estados previos del hero antes de quitar is-booting: la máscara sube al entrar */
+    page.querySelectorAll('.mask').forEach((m) => m.classList.add('is-pre'));
+    MOTION.run(page, hdr, true);
   } catch (err) {
     console.error('[app] arranque incompleto; se muestra todo el contenido.', err);
     stage.querySelectorAll('.is-pre').forEach((el) => el.classList.remove('is-pre'));
   } finally {
     void stage.offsetHeight;             /* fija los estados previos antes de reactivar transiciones */
     stage.classList.remove('is-booting');
+    intro.leave();                       /* ante cualquier fallo, la cortina también se retira */
   }
 }
 

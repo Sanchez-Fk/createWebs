@@ -1,0 +1,30 @@
+---
+/* Pantalla de carga de la primera visita. La animan intro.js (progreso y salida)
+   y site.css (entrada, anillo y salvaguarda). Es decorativa: aria-hidden. */
+import { SITE } from '../data/site';
+import type { Lang } from '../lib/routes';
+
+interface Props {
+  lang: Lang;
+}
+
+const es = Astro.props.lang === 'es';
+---
+
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro-in">
+    <div class="intro-top"><span class="mono">{es ? 'Portafolio' : 'Portfolio'} · 2026</span><span class="mono">{es ? '06.24 N · 75.58 O' : '06.24 N · 75.58 W'}</span></div>
+    <div class="intro-mid">
+      <svg class="intro-ring" viewBox="0 0 200 200" focusable="false">
+        <circle class="intro-ring__ticks" cx="100" cy="100" r="96" pathLength="360"></circle>
+        <circle class="intro-ring__track" cx="100" cy="100" r="82"></circle>
+        <circle class="intro-ring__arc" cx="100" cy="100" r="82" pathLength="100" data-intro-arc></circle>
+      </svg>
+      <p class="intro-name"><span class="intro-mask"><span>{SITE.name}</span></span></p>
+      <p class="intro-role mono"><span class="intro-mask"><span>{es ? 'Desarrollador web' : 'Web developer'}</span></span></p>
+    </div>
+    <div class="intro-bot"><span class="intro-count" data-intro-count>000</span><span class="mono">{es ? 'Cargando portafolio' : 'Loading portfolio'}</span></div>
+    <div class="intro-bar"><i data-intro-bar></i></div>
+  </div>
+  <div class="grain"></div>
+</div>

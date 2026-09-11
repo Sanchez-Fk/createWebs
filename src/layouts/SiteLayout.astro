@@ -1,6 +1,7 @@
 ---
 /* Marco común: el sitio vive dentro de un escenario fijo (#stage) con su propio
-   scroll (#scroller), para que cabecera, menú, HUD y grano queden quietos. */
+   scroll (#scroller), para que cabecera, menú, HUD y grano queden quietos.
+   En la primera página de la sesión, la pantalla de carga lo cubre al entrar. */
 import '@fontsource/ibm-plex-sans/400.css';
 import '@fontsource/ibm-plex-sans/500.css';
 import '@fontsource/ibm-plex-sans/600.css';
@@ -10,6 +11,7 @@ import '@fontsource/ibm-plex-mono/500.css';
 import '../styles/global.css';
 import SeoHead from '../components/SeoHead.astro';
 import Header from '../components/Header.astro';
+import Intro from '../components/Intro.astro';
 import MobileMenu from '../components/MobileMenu.astro';
 import DemoBar from '../components/DemoBar.astro';
 import type { Lang, PageKey } from '../lib/routes';
@@ -27,9 +29,11 @@ const { lang, page, sector = '' } = Astro.props;
 <html lang={lang}>
   <head>
     <SeoHead lang={lang} page={page} sector={sector} />
-    <noscript><style>.stage.is-booting .page,.stage.is-booting .hdr{opacity:1;animation:none}</style></noscript>
+    <script is:inline src="/scripts/early.js"></script>
+    <noscript><style>.stage.is-booting .page,.stage.is-booting .hdr{opacity:1;animation:none}.intro{display:none}</style></noscript>
   </head>
   <body>
+    {page !== 'demo' && <Intro lang={lang} />}
     <div class="vp" id="vp">
       <div class="vp-box" id="box">
         <div class="stage is-booting" id="stage">

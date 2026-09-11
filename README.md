@@ -12,7 +12,7 @@ solo añade animaciones e interacción. Listo para publicar en [Vercel](https://
 | Framework | Astro 7 (salida estática) + TypeScript estricto |
 | Scroll | Lenis 1.3 (paquete npm, sin CDN) |
 | Tipografías | IBM Plex Sans / Mono, Fraunces, Oswald y Archivo, servidas desde el propio dominio (Fontsource) |
-| Pruebas | `node:test` — 39 pruebas de demos, seguridad, estilos y HTML generado |
+| Pruebas | `node:test` — 43 pruebas de demos, seguridad, estilos y HTML generado |
 | Despliegue | Vercel, con cabeceras de seguridad (CSP estricta) y caché inmutable de assets |
 | CI | GitHub Actions: tipos, pruebas y build en cada push |
 
@@ -28,7 +28,9 @@ solo añade animaciones e interacción. Listo para publicar en [Vercel](https://
 | `/es/contacto/` | `/en/contact/` | WhatsApp, datos y formulario |
 | `/es/demo/dental/` · `restaurante/` · `barberia/` · `gimnasio/` | `/en/demo/…` | Demo en vivo de cada sector |
 
-`/` redirige a `/es/`. Además se generan `sitemap.xml` (con `hreflang`), `robots.txt` y una página 404.
+`/` redirige a `/es/`. Además se generan `sitemap.xml` (con `hreflang`) y `robots.txt`.
+
+**Página 404 personalizada:** Vercel la sirve en cualquier URL que no existe. Detecta el idioma de la ruta (`/en/…` → inglés), muestra la ruta pedida y enlaza a las páginas que sí existen, sobre el mismo fondo HUD del sitio.
 
 ## Estructura
 
@@ -47,10 +49,12 @@ createWebs/
 │   ├── scripts/
 │   │   ├── app.js                arranque de cada página: Lenis, HUD, revelados, menú, formulario
 │   │   ├── motion.js             animaciones al hacer scroll, con red de seguridad
+│   │   ├── intro.js              pantalla de carga: progreso real y salida en cortina
 │   │   ├── hud.js                fondo interactivo con la mira sobre el cursor
+│   │   ├── not-found.js          página 404: ruta pedida, título por idioma y fondo HUD
 │   │   └── demos/                kit común, las 4 demos y sus fondos animados (se descargan solo en su página)
 │   └── styles/                   global.css y sus partes (portafolio, demos, movimiento, sitio)
-├── public/                       favicon e imágenes WebP
+├── public/                       favicon, imágenes WebP y scripts/early.js (se ejecuta antes de pintar)
 ├── tests/
 │   ├── unit/                     demos (XSS, fuzzing, datos corruptos), fondos, arranque, estilos, módulos
 │   └── build/                    HTML generado: rutas, SEO, enlaces, CSP, cabeceras, pesos
@@ -120,6 +124,9 @@ de Vercel en las vistas previas queda bloqueada, sin efecto sobre el sitio.
 - Paleta oscura premium (`#0F0F0F`, acento `#E0A200`), grano sutil, sin sombras ni negro puro.
 - Movimiento siempre activo: revelados al hacer scroll, contadores, botones magnéticos y una coreografía distinta en cada demo.
   Si algo falla, todo el contenido se muestra igualmente (red de seguridad en `motion.js`, `app.js` y CSS).
+- Pantalla de carga solo en la primera página de cada visita: el contador sigue la carga real, dura lo justo
+  para leerse (mínimo 1,4 s, máximo 4 s) y sale con una cortina que revela la portada. Las demos no la tienen.
+  Si el JavaScript falla, se retira sola; sin JavaScript no aparece.
 - Zoom siempre permitido, contraste AA verificado por pruebas y navegación por teclado con foco visible.
 
 ## Créditos de las fotos

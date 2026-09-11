@@ -27,6 +27,18 @@ test('el arranque siempre termina mostrando el contenido', () => {
   assert.match(read('src/layouts/SiteLayout.astro'), /<noscript><style>\.stage\.is-booting/, 'sin JavaScript el contenido quedaría oculto');
 });
 
+test('la pantalla de carga nunca retiene el sitio', () => {
+  const INTRO = read('src/scripts/intro.js');
+  const EARLY = read('public/scripts/early.js');
+  const maxWait = Number((INTRO.match(/const MAX_WAIT = (\d+);/) || [])[1]);
+  assert.ok(maxWait > 0 && maxWait <= 5000, 'MAX_WAIT debe existir y ser ≤ 5 s');
+  assert.match(INTRO, /setTimeout\(leave, MAX_WAIT\)/, 'sin tope de espera');
+  assert.match(INTRO, /Promise\.race\(\[full, wait\(\d+\)\]\)/, 'con la pestaña oculta esperaría fotogramas que no llegan');
+  assert.match(APP, /finally \{[\s\S]*?intro\.leave\(\)/, 'un fallo del arranque dejaría la cortina puesta');
+  assert.match(CSS, /\.intro\{[^}]*animation:intro-failsafe \.01s linear 6s forwards;/, 'sin salvaguarda CSS si intro.js no llega');
+  assert.match(EARLY, /try \{[\s\S]*?sessionStorage\.getItem\('jms:intro'\)[\s\S]*?\} catch \(err\) \{\s*root\.classList\.add\('intro-seen'\)/, 'early.js debe tolerar el almacenamiento bloqueado');
+});
+
 test('mostrar contenido no depende de IntersectionObserver', () => {
   assert.doesNotMatch(MO, /new IntersectionObserver/);
 });

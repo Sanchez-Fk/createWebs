@@ -1,29 +1,99 @@
 ---
+/* Página 404: Vercel la sirve en cualquier URL que no existe, sin cambiar la URL.
+   Trae los dos idiomas y early.js muestra el de la ruta pedida (/en/… → inglés). */
 import '@fontsource/ibm-plex-sans/400.css';
 import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/ibm-plex-sans/700.css';
+import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import '../styles/global.css';
+import { T } from '../data/content';
+import { SITE, whatsappHref } from '../data/site';
+import { LANGS, PAGE_KEYS, href } from '../lib/routes';
+
+const COPY = {
+  es: {
+    signal: 'Sin señal',
+    eyebrow: 'Error 404 · Ruta no encontrada',
+    title: 'Esta página se salió del mapa.',
+    lede: 'Puede que el enlace esté mal escrito o que la página ya no exista. El radar sigue buscando; mientras tanto, estas rutas sí llevan a algún sitio.',
+    path: 'Ruta pedida',
+    home: 'Volver al inicio',
+    suggest: 'Quizá buscabas',
+    desc: { home: 'Portada y trabajo seleccionado', work: 'Las cuatro demos de sector', services: 'Qué construyo y cómo trabajo', contact: 'WhatsApp, datos y formulario' },
+  },
+  en: {
+    signal: 'No signal',
+    eyebrow: 'Error 404 · Route not found',
+    title: 'This page went off the map.',
+    lede: 'The link may be mistyped or the page no longer exists. The radar keeps searching; meanwhile, these routes do lead somewhere.',
+    path: 'Requested path',
+    home: 'Back to home',
+    suggest: 'Maybe you were looking for',
+    desc: { home: 'Homepage and selected work', work: 'The four sector demos', services: 'What I build and how I work', contact: 'WhatsApp, details and form' },
+  },
+};
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es" data-detect-lang>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Página no encontrada · José M. Sánchez</title>
     <meta name="robots" content="noindex" />
     <meta name="theme-color" content="#0F0F0F" />
+    <meta name="color-scheme" content="dark" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline src="/scripts/early.js"></script>
   </head>
   <body class="nf">
-    <main class="nf-box">
-      <p class="mono">Error 404</p>
-      <h1 class="h-page">Esta página no existe.</h1>
-      <p class="lede" lang="en">This page doesn’t exist.</p>
-      <p class="nf-links">
-        <a class="btn btn-primary" href="/es/">Ir al inicio</a>
-        <a class="link-mono" href="/en/" lang="en">English site <span class="arw" aria-hidden="true">→</span></a>
-      </p>
-    </main>
+    <div class="nf-stage" id="stage">
+      <canvas id="grid" aria-hidden="true"></canvas>
+      <div class="nf-scroll">
+        {
+          LANGS.map((lang) => {
+            const c = COPY[lang];
+            return (
+              <div class="nf-lang" data-lang={lang} lang={lang}>
+                <header class="wrap nf-top nf-rise" style="--i:0">
+                  <a class="wordmark" href={href(lang, 'home')}>{SITE.name}</a>
+                  <span class="mono nf-signal"><i aria-hidden="true"></i>{c.signal}</span>
+                </header>
+                <main class="wrap nf-main">
+                  <div class="nf-grid">
+                    <div class="nf-copy">
+                      <p class="nf-code" aria-hidden="true"><span class="nf-code__line">404</span><span class="nf-code__fill">404</span></p>
+                      <p class="eyebrow nf-rise" style="--i:1">{c.eyebrow}</p>
+                      <h1 class="h-page nf-rise" style="--i:2">{c.title}</h1>
+                      <p class="lede nf-rise" style="--i:3">{c.lede}</p>
+                      <p class="meta nf-path nf-rise" style="--i:4"><span>{c.path}:</span><code data-nf-path>—</code></p>
+                      <div class="nf-acts nf-rise" style="--i:5">
+                        <a class="btn btn-primary" href={href(lang, 'home')}>{c.home}</a>
+                        <a class="link-arrow" href={whatsappHref(lang)} target="_blank" rel="noopener noreferrer">{T[lang].wa} <span class="arw" aria-hidden="true">→</span></a>
+                      </div>
+                    </div>
+                    <nav class="nf-links nf-rise" style="--i:6" aria-label={c.suggest}>
+                      <p class="mono">{c.suggest}</p>
+                      <ol class="svc">
+                        {PAGE_KEYS.map((k, i) => (
+                          <li><a class="row" href={href(lang, k)}><span class="num">0{i + 1}</span><span class="name">{T[lang][k]}</span><p class="desc">{c.desc[k]}</p><span class="arw" aria-hidden="true">→</span></a></li>
+                        ))}
+                      </ol>
+                    </nav>
+                  </div>
+                </main>
+                <footer class="wrap nf-foot nf-rise" style="--i:7"><span class="meta">{T[lang].copy}</span><a class="link-mono" href={href(lang === 'es' ? 'en' : 'es', 'home')}>{lang === 'es' ? 'English site' : 'Sitio en español'} <span class="arw" aria-hidden="true">→</span></a></footer>
+              </div>
+            );
+          })
+        }
+      </div>
+      <div class="grain" aria-hidden="true"></div>
+    </div>
+    <script>
+      import { bootNotFound } from '../scripts/not-found.js';
+      bootNotFound();
+    </script>
   </body>
 </html>

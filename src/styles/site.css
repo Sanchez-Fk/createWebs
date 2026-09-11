@@ -1,5 +1,6 @@
 /* ===========================================================================
-   SITIO PUBLICADO — arranque sin parpadeo, transición entre páginas y 404
+   SITIO PUBLICADO — arranque sin parpadeo, pantalla de carga, transición entre
+   páginas y 404
    =========================================================================== */
 
 /* Mientras app.js prepara los revelados, el contenido espera invisible y sin
@@ -12,14 +13,122 @@
 .stage.is-booting *::after{ transition:none !important; }
 @keyframes boot-failsafe{ to{ opacity:1; } }
 
-/* navegación entre páginas: fundido corto del documento, sin cortina ni loader */
+/* con pantalla de carga, la salvaguarda espera a que esta se retire sola */
+html:not(.intro-seen) body:has(> .intro) .stage.is-booting .page,
+html:not(.intro-seen) body:has(> .intro) .stage.is-booting .hdr{ animation-delay:6s; }
+
+/* navegación entre páginas: fundido corto del documento (la pantalla de carga solo sale al entrar) */
 @view-transition{ navigation:auto; }
 ::view-transition-old(root),
 ::view-transition-new(root){ animation-duration:.22s; animation-timing-function:var(--ease); }
 
-/* ---------- 404 ---------- */
-body.nf{ overflow:auto; background:var(--bg); }
-.nf-box{ min-height:100vh; display:grid; align-content:center; gap:20px; width:100%; max-width:760px; margin-inline:auto; padding:48px 20px; }
-.nf-box .h-page{ margin:0; }
-.nf-box .lede{ margin:0; }
-.nf-links{ display:flex; flex-wrap:wrap; align-items:center; gap:16px 28px; margin:12px 0 0; }
+/* ===========================================================================
+   PANTALLA DE CARGA — primera página de la sesión (early.js decide, intro.js
+   mueve el contador y levanta la cortina)
+   =========================================================================== */
+.intro{
+  position:fixed; inset:0; z-index:200; background:var(--bg); color:var(--fg);
+  clip-path:inset(0 0 0 0);
+  transition:clip-path .9s var(--ease-in-out) .15s;
+  animation:intro-failsafe .01s linear 6s forwards;          /* si intro.js no llega, se retira sola */
+}
+.intro-seen .intro{ display:none; }
+.intro.is-leaving{ clip-path:inset(0 0 100% 0); pointer-events:none; }
+@keyframes intro-failsafe{ to{ visibility:hidden; opacity:0; } }
+
+.intro-in{
+  position:relative; z-index:1; height:100%;
+  display:grid; grid-template-rows:auto minmax(0,1fr) auto; gap:24px;
+  padding:20px 20px 32px;
+  transition:opacity .45s var(--ease), transform .8s var(--ease-in-out);
+}
+.intro.is-leaving .intro-in{ opacity:0; transform:translateY(-6vh); }
+
+.intro-top{ display:flex; justify-content:space-between; gap:16px; animation:intro-fade .6s var(--ease) .1s both; }
+.intro-mid{ position:relative; display:grid; place-content:center; justify-items:center; text-align:center; }
+
+.intro-ring{ position:absolute; left:50%; top:50%; width:min(76vmin, 460px); height:auto; translate:-50% -50%; overflow:visible; animation:intro-ring 1.4s var(--ease-slow) both; }
+.intro-ring circle{ fill:none; }
+.intro-ring__ticks{ stroke:var(--line-hi); stroke-width:1; stroke-dasharray:1 5; vector-effect:non-scaling-stroke; transform-box:fill-box; transform-origin:center; animation:intro-spin 28s linear infinite; }
+.intro-ring__track{ stroke:var(--line); stroke-width:1; vector-effect:non-scaling-stroke; }
+.intro-ring__arc{ stroke:var(--accent); stroke-width:2; stroke-dasharray:100; stroke-dashoffset:100; vector-effect:non-scaling-stroke; transform-box:fill-box; transform-origin:center; transform:rotate(-90deg); }
+
+.intro-name{ position:relative; font-weight:700; letter-spacing:-.04em; line-height:.95; font-size:clamp(2.25rem, 1.2rem + 4.6vw, 5rem); }
+.intro-role{ position:relative; margin-top:18px; }
+.intro-mask{ display:block; overflow:hidden; padding-bottom:.14em; margin-bottom:-.14em; }
+.intro-mask > span{ display:block; animation:intro-up 1s var(--ease-slow) .15s both; }
+.intro-role .intro-mask > span{ animation-delay:.3s; }
+
+.intro-bot{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; animation:intro-fade .6s var(--ease) .2s both; }
+.intro-count{ font-family:var(--mono); font-weight:500; font-size:clamp(3rem, 1.6rem + 6vw, 7rem); line-height:.8; letter-spacing:-.05em; font-variant-numeric:tabular-nums; }
+.intro-count::after{ content:"%"; margin-left:.15em; font-size:.3em; letter-spacing:0; vertical-align:top; color:var(--fg-2); }
+.intro-bar{ position:absolute; left:0; right:0; bottom:0; height:2px; background:var(--line); }
+.intro-bar i{ display:block; height:100%; background:var(--accent); transform:scaleX(0); transform-origin:0 50%; }
+
+@keyframes intro-up{ from{ transform:translateY(105%); } }
+@keyframes intro-fade{ from{ opacity:0; } }
+@keyframes intro-ring{ from{ opacity:0; scale:.94; } }
+@keyframes intro-spin{ to{ transform:rotate(360deg); } }
+
+@media (min-width:768px){ .intro-in{ padding:28px 40px 44px; } }
+@media (min-width:1100px){ .intro-in{ padding:32px 64px 52px; } }
+
+/* ===========================================================================
+   404 — señal perdida: HUD de fondo, código escaneado y rutas que sí existen
+   =========================================================================== */
+html:not([lang="en"]) .nf [data-lang="en"],
+html[lang="en"] .nf [data-lang="es"]{ display:none !important; }
+
+body.nf{ background:var(--bg); }
+.nf-stage{ position:fixed; inset:0; container-type:inline-size; overflow:hidden; background:var(--bg); }
+.nf-scroll{ position:absolute; inset:0; z-index:1; overflow-y:auto; overflow-x:hidden; --gx:20px; }
+.nf-lang{ min-height:100%; display:flex; flex-direction:column; }
+
+.nf-top{ min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.nf-signal{ display:inline-flex; align-items:center; gap:10px; }
+.nf-signal i{ width:6px; height:6px; border-radius:50%; background:var(--accent); animation:nf-blink 1.6s steps(1, end) infinite; }
+
+.nf-main{ flex:1; display:flex; align-items:center; padding-block:32px 56px; }
+.nf-grid{ width:100%; display:grid; grid-template-columns:minmax(0,1fr); gap:64px; align-items:center; }
+
+.nf-code{ position:relative; display:inline-block; margin:0 0 32px; font-weight:700; line-height:.8; letter-spacing:-.06em; font-size:clamp(6.5rem, 3rem + 16cqi, 15rem); font-variant-numeric:tabular-nums; }
+.nf-code__line{ display:block; color:transparent; -webkit-text-stroke:1px var(--line-hi); }
+.nf-code__fill{ position:absolute; inset:0; color:var(--fg); clip-path:inset(0 0 0 0); animation:nf-fill 1.4s var(--ease-slow) .2s both; }
+.nf-code::after{
+  content:""; position:absolute; left:-4%; right:-4%; top:0; height:100%;
+  border-top:1px solid var(--accent); pointer-events:none;
+  animation:nf-scan 3.2s linear 1.6s infinite both;               /* barrido constante: lineal */
+}
+.nf-copy .eyebrow{ margin-bottom:18px; }
+.nf-copy .lede{ margin-top:24px; }
+.nf-path{ margin-top:24px; display:flex; flex-wrap:wrap; gap:4px 10px; }
+.nf-path code{ font-family:var(--mono); color:var(--fg); overflow-wrap:anywhere; }
+.nf-acts{ margin-top:36px; display:flex; flex-direction:column; align-items:stretch; gap:18px; }
+.nf-acts .link-arrow{ align-self:flex-start; }
+.nf-links > .mono{ display:block; margin-bottom:18px; }
+.nf-foot{ padding-block:24px 32px; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 24px; }
+
+.nf-rise{ animation:nf-rise .9s var(--ease-slow) calc(var(--i, 0) * 70ms + 250ms) both; }
+
+@keyframes nf-rise{ from{ opacity:0; transform:translateY(24px); } }
+@keyframes nf-fill{ from{ clip-path:inset(100% 0 0 0); } }
+@keyframes nf-scan{
+  0%{ transform:translateY(0); opacity:0; }
+  10%,85%{ opacity:.9; }
+  100%{ transform:translateY(100%); opacity:0; }
+}
+@keyframes nf-blink{ 50%{ opacity:.15; } }
+
+@container (min-width:768px){
+  .nf-scroll{ --gx:40px; }
+  .nf-top{ min-height:72px; }
+  .nf-acts{ flex-direction:row; align-items:center; gap:32px; }
+}
+@container (min-width:1100px){
+  .nf-scroll{ --gx:64px; }
+  .nf-grid{ grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:96px; }
+  .nf-links .row{ grid-template-columns:48px minmax(0,1fr) 24px; column-gap:20px; align-items:start; padding:22px 16px; margin-inline:-16px; }
+  .nf-links .row .num{ padding-top:6px; }
+  .nf-links .row .desc{ grid-column:2; grid-row:auto; font-size:15px; }
+  .nf-links .row .arw{ grid-column:3; grid-row:1; padding-top:6px; opacity:1; transform:none; color:var(--fg-2); }
+}

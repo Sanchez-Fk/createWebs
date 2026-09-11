@@ -96,7 +96,8 @@ test('compatible con la CSP: sin scripts en línea, manejadores ni recursos de t
   for (const p of PAGES) {
     const h = html(p.url);
     for (const tag of all(h, /(<script\b[^>]*>)/g)) {
-      assert.ok(/^<script type="module" src="\/_astro\/[^"]+\.js"><\/?/.test(tag + '</') || tag === '<script type="application/ld+json">', p.url + ': script no permitido ' + tag);
+      const allowed = /^<script type="module" src="\/_astro\/[^"]+\.js">$/.test(tag) || tag === '<script type="application/ld+json">' || tag === '<script src="/scripts/early.js">';
+      assert.ok(allowed, p.url + ': script no permitido ' + tag);
     }
     assert.doesNotMatch(h, /\son[a-z]+\s*=\s*["']/i, p.url + ': manejador de eventos en línea');
     assert.doesNotMatch(h, /<(?:script|img|iframe)\b[^>]*\ssrc="https?:/i, p.url + ': recurso de otro dominio');
@@ -191,8 +192,32 @@ test('redes: GitHub, LinkedIn e Instagram enlazan a los perfiles reales en todas
   assert.deepEqual(JSON.parse(ld[1]).sameAs, Object.values(PROFILES));
 });
 
-test('la página 404 no se indexa y enlaza a los dos idiomas', () => {
+test('pantalla de carga: en las 8 páginas del portafolio, nunca en las demos, decidida antes de pintar', () => {
+  for (const p of PAGES) {
+    const h = html(p.url);
+    const hasIntro = h.includes('<div class="intro" id="intro" aria-hidden="true">');
+    assert.equal(hasIntro, !p.demo, p.url + (p.demo ? ': una demo no debe tener pantalla de carga' : ': falta la pantalla de carga'));
+    const early = h.indexOf('<script src="/scripts/early.js"></script>');
+    assert.ok(early > 0 && early < h.indexOf('<body'), p.url + ': early.js debe ejecutarse en <head>, antes de pintar');
+    assert.match(h, /<noscript><style>[^<]*\.intro\{display:none\}/, p.url + ': sin JavaScript la pantalla de carga no debe verse');
+    if (hasIntro) {
+      assert.match(h, /data-intro-count>000</, p.url + ': contador');
+      assert.ok(h.indexOf('id="intro"') < h.indexOf('id="vp"'), p.url + ': la pantalla de carga debe ir antes del sitio');
+    }
+  }
+});
+
+test('la página 404 no se indexa, detecta el idioma y ofrece las rutas que sí existen', () => {
   const h = fs.readFileSync(path.join(DIST, '404.html'), 'utf8');
   assert.match(h, /<meta name="robots" content="noindex">/);
-  assert.ok(h.includes('href="/es/"') && h.includes('href="/en/"'));
+  assert.match(h, /<html lang="es" data-detect-lang>/, 'sin detección de idioma');
+  assert.ok(h.indexOf('<script src="/scripts/early.js"></script>') < h.indexOf('<body'), 'early.js debe ir en <head>');
+  for (const lang of ['es', 'en']) {
+    assert.match(h, new RegExp('<div class="nf-lang" data-lang="' + lang + '" lang="' + lang + '">'), 'falta el bloque ' + lang);
+    SLUGS[lang].forEach((slug) => assert.ok(h.includes('href="/' + lang + '/' + slug + '"'), 'falta el enlace /' + lang + '/' + slug));
+  }
+  assert.equal((h.match(/<h1\b/g) || []).length, 2, 'un h1 por idioma');
+  assert.equal((h.match(/data-nf-path/g) || []).length, 2, 'la ruta pedida se muestra en ambos idiomas');
+  assert.match(h, /href="https:\/\/wa\.me\/573052624583\?text=Hola/, 'sin WhatsApp');
+  assert.match(h, /<script type="module" src="\/_astro\/[^"]+\.js"><\/script>/, 'sin script del fondo animado');
 });
