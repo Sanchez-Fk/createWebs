@@ -1,6 +1,6 @@
 ---
 import { T } from '../data/content';
-import { LINKS, SITE } from '../data/site';
+import { SITE, whatsappHref } from '../data/site';
 import { type Lang, type PageKey, PAGE_KEYS, href } from '../lib/routes';
 import LangSwitch from './LangSwitch.astro';
 
@@ -18,6 +18,6 @@ const t = T[lang];
   {PAGE_KEYS.map((k) => <a href={href(lang, k)} aria-current={page === k ? 'page' : undefined}>{t[k]}<span>→</span></a>)}
 </nav>
 <div class="menu-foot">
-  <a class="btn btn-primary" href={LINKS.whatsapp}>{t.wa}</a>
+  <a class="btn btn-primary" href={whatsappHref(lang)} target="_blank" rel="noopener noreferrer">{t.wa}</a>
   <LangSwitch lang={lang} es={href('es', page)} en={href('en', page)} />
 </div>

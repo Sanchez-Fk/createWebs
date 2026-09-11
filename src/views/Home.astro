@@ -1,6 +1,6 @@
 ---
 import { SECTORS, T } from '../data/content';
-import { LINKS } from '../data/site';
+import { whatsappHref } from '../data/site';
 import { type Lang, href } from '../lib/routes';
 import ClosingBlock from '../components/ClosingBlock.astro';
 import Footer from '../components/Footer.astro';
@@ -21,7 +21,7 @@ const t = T[lang];
     <p class="eyebrow" data-rv="hero" style="--d:240ms">{t.heroEyebrow}</p>
     <h1 class="h-display" id="h-hero"><span class="mask" style="--d:0ms"><span>{t.heroL1}</span></span><span class="mask" style="--d:80ms"><span>{t.heroL2}</span></span></h1>
     <p class="lede" data-rv="hero" style="--d:300ms">{t.heroLede}</p>
-    <div class="hero-acts" data-rv="hero" style="--d:360ms"><a class="btn btn-primary" href={LINKS.whatsapp}>{t.wa}</a><a class="link-arrow" href={href(lang, 'work')}>{t.heroLink} <span class="arw" aria-hidden="true">→</span></a></div>
+    <div class="hero-acts" data-rv="hero" style="--d:360ms"><a class="btn btn-primary" href={whatsappHref(lang)} target="_blank" rel="noopener noreferrer">{t.wa}</a><a class="link-arrow" href={href(lang, 'work')}>{t.heroLink} <span class="arw" aria-hidden="true">→</span></a></div>
     <div class="scroll-ind" data-rv="hero" style="--d:420ms"><span class="scroll-line" aria-hidden="true"></span><span class="mono">{t.scroll}</span></div>
   </div>
 </section>

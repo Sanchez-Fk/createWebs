@@ -13,7 +13,7 @@ import { MOTION } from './motion.js';
 const MOTION_ON = true;
 
 /* enlaces de ejemplo (src/data/site.ts): un aviso breve en lugar de navegar */
-const PLACEHOLDERS = { '#wa': 'WhatsApp', '#mail': 'Email', '#gh': 'GitHub', '#li': 'LinkedIn', '#ig': 'Instagram' };
+const PLACEHOLDERS = { '#mail': 'Email', '#gh': 'GitHub', '#li': 'LinkedIn', '#ig': 'Instagram' };
 
 export async function boot() {
   const $ = (id) => document.getElementById(id);

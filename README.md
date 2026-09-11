@@ -12,7 +12,7 @@ solo añade animaciones e interacción. Listo para publicar en [Vercel](https://
 | Framework | Astro 7 (salida estática) + TypeScript estricto |
 | Scroll | Lenis 1.3 (paquete npm, sin CDN) |
 | Tipografías | IBM Plex Sans / Mono, Fraunces, Oswald y Archivo, servidas desde el propio dominio (Fontsource) |
-| Pruebas | `node:test` — 37 pruebas de demos, seguridad, estilos y HTML generado |
+| Pruebas | `node:test` — 38 pruebas de demos, seguridad, estilos y HTML generado |
 | Despliegue | Vercel, con cabeceras de seguridad (CSP estricta) y caché inmutable de assets |
 | CI | GitHub Actions: tipos, pruebas y build en cada push |
 
@@ -109,7 +109,8 @@ de Vercel en las vistas previas queda bloqueada, sin efecto sobre el sitio.
 
 | Qué | Dónde |
 |---|---|
-| Número de WhatsApp, email y redes (ahora son enlaces de ejemplo `#wa`, `#gh`…) | `src/data/site.ts` |
+| WhatsApp (activo: 305 262 4583, con mensaje inicial en cada idioma) | `whatsappHref()` en `src/data/site.ts` |
+| Email y redes (ahora son enlaces de ejemplo `#mail`, `#gh`…) | `LINKS` en `src/data/site.ts` |
 | Textos en español e inglés | `src/data/content.ts` |
 | Envío real del formulario de contacto (ahora muestra un aviso) | `bindForm()` en `src/scripts/app.js` |
 | Fotos: copia el `.webp` a `public/images/` y regístralo con su autor | `src/data/images.js` |

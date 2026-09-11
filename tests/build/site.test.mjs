@@ -154,6 +154,24 @@ test('pesos: el portafolio no descarga las demos y los scripts caben en su presu
   images.forEach((f) => assert.ok(fs.statSync(path.join(DIST, 'images', f)).size < 500 * 1024, f + ' pesa más de 500 KB'));
 });
 
+test('WhatsApp: todos los botones abren el chat con el número y el mensaje de su idioma', () => {
+  const expected = { es: 'Hola José', en: 'Hi José' };
+  let total = 0;
+  for (const p of PAGES) {
+    const h = html(p.url);
+    assert.ok(!h.includes('href="#wa"'), p.url + ': queda el enlace de ejemplo #wa');
+    for (const tag of all(h, /(<a\b[^>]*href="https:\/\/wa\.me\/[^"]*"[^>]*>)/g)) {
+      total++;
+      const url = new URL(tag.match(/href="([^"]+)"/)[1].replace(/&amp;/g, '&'));
+      assert.equal(url.pathname, '/573052624583', p.url + ': número incorrecto');
+      assert.ok(url.searchParams.get('text').startsWith(expected[p.lang]), p.url + ': mensaje en otro idioma');
+      assert.match(tag, /target="_blank"/, p.url + ': WhatsApp debe abrirse en otra pestaña');
+      assert.match(tag, /rel="noopener noreferrer"/, p.url + ': falta rel="noopener noreferrer"');
+    }
+  }
+  assert.ok(total >= 16, 'se esperaban botones de WhatsApp en todas las páginas del portafolio, hay ' + total);
+});
+
 test('la página 404 no se indexa y enlaza a los dos idiomas', () => {
   const h = fs.readFileSync(path.join(DIST, '404.html'), 'utf8');
   assert.match(h, /<meta name="robots" content="noindex">/);

@@ -1,19 +1,20 @@
 ---
 import { T } from '../data/content';
-import { LINKS } from '../data/site';
+import { whatsappHref } from '../data/site';
 import type { Lang } from '../lib/routes';
 
 interface Props {
   lang: Lang;
 }
 
-const t = T[Astro.props.lang];
+const { lang } = Astro.props;
+const t = T[lang];
 ---
 
 <section class="sec closing" aria-labelledby="h-close">
   <div class="wrap" data-rv="fade" style="--y:0px">
     <h2 class="h-closing" id="h-close"><span>{t.closeL1}</span><span>{t.closeL2}</span></h2>
-    <a class="btn btn-primary btn-lg" href={LINKS.whatsapp}>{t.wa} <span class="arw" aria-hidden="true">→</span></a>
+    <a class="btn btn-primary btn-lg" href={whatsappHref(lang)} target="_blank" rel="noopener noreferrer">{t.wa} <span class="arw" aria-hidden="true">→</span></a>
     <span class="meta">{t.closeMeta}</span>
   </div>
 </section>
