@@ -1,0 +1,237 @@
+/* ===========================================================================
+   KIT DE DEMOS — piezas comunes a los cuatro sitios (cabecera, portada,
+   precios, galería, reseñas, horario con "abierto ahora", mapa, FAQ, pie,
+   WhatsApp flotante, avisos, validación y memoria local).
+   Cada demo solo aporta su marca, su contenido y su flujo de reserva.
+   =========================================================================== */
+var IMG = window.IMG || {};
+var CREDITS = window.CREDITS || {};
+var DEMOS = {};
+
+var DS = (function () {
+  var WD_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  var WD_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function money(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
+  function seeded(a, b) { var x = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return x - Math.floor(x); }
+  function lang(l) { return function (es, en) { return l === 'es' ? es : en; }; }
+
+  function days(n, closed) {
+    var out = [], d = new Date(); d.setHours(0, 0, 0, 0);
+    for (var i = 0; out.length < n && i < 40; i++) {
+      if (!closed || closed.indexOf(d.getDay()) === -1) out.push(new Date(d));
+      d.setDate(d.getDate() + 1);
+    }
+    return out;
+  }
+  function isToday(d) { return d.toDateString() === new Date().toDateString(); }
+  function dayShort(d, l) { return d.toLocaleDateString(l === 'es' ? 'es-CO' : 'en-US', { weekday: 'short' }).replace('.', ''); }
+  function dayLong(d, l) { return d.toLocaleDateString(l === 'es' ? 'es-CO' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' }); }
+  function hm(t, l) {
+    var p = t.split(':'), h = +p[0], m = p[1];
+    if (l === 'es') return (h % 12 || 12) + ':' + m + (h < 12 ? ' a. m.' : ' p. m.');
+    return (h % 12 || 12) + ':' + m + (h < 12 ? ' AM' : ' PM');
+  }
+  function minutes(t) { var p = t.split(':'); return +p[0] * 60 + +p[1]; }
+  function past(d, t, marginMin) {
+    if (!isToday(d)) return false;
+    var now = new Date();
+    return minutes(t) < now.getHours() * 60 + now.getMinutes() + (marginMin || 0);
+  }
+  function range(from, to, step) {
+    var out = [];
+    for (var m = minutes(from); m < minutes(to); m += step) out.push(('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2));
+    return out;
+  }
+  function code(prefix) {
+    var a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = '';
+    for (var i = 0; i < 4; i++) s += a.charAt(Math.floor(Math.random() * a.length));
+    return prefix + '-' + s;
+  }
+
+  /* validación de lo que llega desde botones y almacenamiento: nunca confiar en data-v */
+  function idx(v, len) { var n = typeof v === 'number' ? v : /^\d+$/.test(String(v)) ? parseInt(v, 10) : -1; return n >= 0 && n < len ? n : null; }
+  function has(o, k) { return o != null && typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
+  function arr(v) { return Array.isArray(v) ? v : []; }
+  function obj(v) { return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
+
+  /* memoria local por demo: solo en este navegador, con fallback silencioso */
+  function store(ns) {
+    return {
+      get: function (k, def) { try { var v = localStorage.getItem('demo.' + ns + '.' + k); return v ? JSON.parse(v) : def; } catch (e) { return def; } },
+      set: function (k, v) { try { localStorage.setItem('demo.' + ns + '.' + k, JSON.stringify(v)); } catch (e) { /* sin almacenamiento */ } }
+    };
+  }
+
+  var ok = {
+    name: function (s) { return /\p{L}{2,}.*\p{L}/u.test(String(s).trim()); },
+    phone: function (s) { var d = String(s).replace(/\D/g, ''); return /^3\d{9}$/.test(d) || (/^\+/.test(String(s).trim()) && d.length >= 8 && d.length <= 15); },
+    email: function (s) { return !String(s).trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(s).trim()); }
+  };
+
+  /* hours: 7 entradas indexadas por getDay(); cada una [abre, cierra] o null */
+  function status(hours, l) {
+    var L = lang(l), now = new Date(), wd = now.getDay(), cur = now.getHours() * 60 + now.getMinutes(), h = hours[wd];
+    if (h && cur >= minutes(h[0]) && cur < minutes(h[1])) return { open: true, text: L('Abierto ahora · cierra a las ', 'Open now · closes at ') + hm(h[1], l) };
+    for (var i = 0; i < 7; i++) {
+      var dd = (wd + i) % 7, x = hours[dd];
+      if (!x || (i === 0 && cur >= minutes(x[0]))) continue;
+      var when = i === 0 ? L('hoy', 'today') : i === 1 ? L('mañana', 'tomorrow') : L('el ', 'on ') + (l === 'es' ? WD_ES[dd].toLowerCase() : WD_EN[dd]);
+      return { open: false, text: L('Cerrado · abre ', 'Closed · opens ') + when + L(' a las ', ' at ') + hm(x[0], l) };
+    }
+    return { open: false, text: L('Cerrado', 'Closed') };
+  }
+
+  function photo(key, alt) {
+    if (!IMG[key]) return '';
+    return '<img src="' + IMG[key] + '" alt="' + esc(alt) + '" decoding="async">' +
+      (CREDITS[key] ? '<span class="ds-credit">' + esc(CREDITS[key]) + ' · Unsplash</span>' : '');
+  }
+
+  var WA_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2a8.8 8.8 0 0 0-7.6 13.2L3.2 20.8l4.5-1.2A8.8 8.8 0 1 0 12 3.2z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 8.6c.3-.6.6-.6.9-.6h.5c.2 0 .4.1.5.4l.7 1.6c.1.2 0 .5-.1.6l-.5.6c.4.8 1.2 1.6 2.1 2.1l.6-.5c.2-.1.4-.2.6-.1l1.6.7c.3.1.4.3.4.5v.5c0 .3 0 .6-.6.9-.6.3-1.6.4-3.3-.6-1.6-1-2.7-2.3-3.3-3.6-.5-1.2-.4-2 0-2.5z" fill="currentColor"/></svg>';
+
+  /* ---------------- piezas de página ---------------- */
+  function header(c) {
+    return '<header class="ds-head"><div class="ds-wrap">' +
+      '<a class="ds-logo" href="#" data-go="top"><span class="ds-mark" aria-hidden="true">' + c.mark + '</span>' + c.brand + '</a>' +
+      '<nav class="ds-nav" aria-label="' + esc(c.brand) + '">' + c.nav.map(function (n) { return '<a href="#' + n[0] + '" data-go="' + n[0] + '">' + n[1] + '</a>'; }).join('') + '</nav>' +
+      '<div class="ds-head__cta"><a class="ds-btn ds-btn--wa ds-btn--sm" href="#" data-ext="wa">' + WA_ICON.replace('<svg', '<svg width="18" height="18"') + ' WhatsApp</a>' +
+      '<a class="ds-btn ds-btn--sm" href="#' + c.ctaTo + '" data-go="' + c.ctaTo + '">' + c.cta + '</a>' +
+      '<button class="ds-burger" type="button" data-burger aria-expanded="false" aria-label="Menú"><span></span></button></div></div>' +
+      '<nav class="ds-drawer" data-drawer hidden>' + c.nav.map(function (n) { return '<a href="#' + n[0] + '" data-go="' + n[0] + '">' + n[1] + '</a>'; }).join('') + '</nav></header>';
+  }
+  function section(id, eyebrow, title, lede, inner, alt) {
+    return '<section class="ds-sec' + (alt ? ' ds-sec--alt' : '') + '" id="ds-' + id + '"><div class="ds-wrap">' +
+      '<div class="ds-intro"><span class="ds-eyebrow">' + eyebrow + '</span><h2 class="ds-h2">' + title + '</h2>' + (lede ? '<p class="ds-lede">' + lede + '</p>' : '') + '</div>' +
+      inner + '</div></section>';
+  }
+  function features(items) {
+    return '<div class="ds-grid ds-grid--3">' + items.map(function (f, i) {
+      return '<div class="ds-card ds-feature"><span class="num">0' + (i + 1) + '</span><h3 class="ds-h3">' + f[0] + '</h3><p>' + f[1] + '</p></div>';
+    }).join('') + '</div>';
+  }
+  function prices(items) {
+    return '<ul class="ds-prices">' + items.map(function (p) {
+      return '<li><strong>' + p[0] + '</strong><small>' + p[1] + '</small><span class="p">' + p[3] + (p[2] ? '<span>' + p[2] + '</span>' : '') + '</span></li>';
+    }).join('') + '</ul>';
+  }
+  function gallery(items) {
+    return '<div class="ds-gallery">' + items.filter(function (g) { return IMG[g[0]]; }).map(function (g) {
+      return '<figure>' + photo(g[0], g[2]) + '<figcaption>' + g[1] + '</figcaption></figure>';
+    }).join('') + '</div>';
+  }
+  function reviews(items) {
+    return '<div class="ds-grid ds-grid--3">' + items.map(function (r) {
+      return '<figure class="ds-card ds-review" style="margin:0"><div class="stars" aria-label="' + r[0] + ' / 5">' + '★★★★★'.slice(0, r[0]) + '<span style="opacity:.3">' + '★★★★★'.slice(r[0]) + '</span></div>' +
+        '<blockquote>“' + r[1] + '”</blockquote><footer>' + r[2] + ' · ' + r[3] + '</footer></figure>';
+    }).join('') + '</div>';
+  }
+  function visit(c, l) {
+    var L = lang(l), names = l === 'es' ? WD_ES : WD_EN, today = new Date().getDay(), st = status(c.hours, l);
+    var order = [1, 2, 3, 4, 5, 6, 0];
+    return '<div class="ds-visit"><div>' +
+      '<div class="ds-status" data-status><span class="ds-dot' + (st.open ? '' : ' ds-dot--off') + '"></span><span>' + st.text + '</span></div>' +
+      '<table class="ds-hours"><tbody>' + order.map(function (d) {
+        var h = c.hours[d];
+        return '<tr' + (d === today ? ' class="today"' : '') + '><td>' + names[d] + (d === today ? L(' · hoy', ' · today') : '') + '</td><td>' + (h ? hm(h[0], l) + ' – ' + hm(h[1], l) : L('Cerrado', 'Closed')) + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<p class="ds-hint" style="margin-top:14px">' + c.note + '</p></div>' +
+      '<div class="ds-map" role="img" aria-label="' + esc(L('Mapa de ubicación de ejemplo', 'Sample location map')) + '">' +
+        '<svg viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice"><g stroke="currentColor" stroke-width="10" fill="none" stroke-linecap="round">' +
+        '<path d="M-10 60 L420 110"/><path d="M-10 190 L420 170"/><path d="M90 -10 L130 280"/><path d="M290 -10 L250 280"/></g>' +
+        '<g stroke="currentColor" stroke-width="3" fill="none" opacity=".7"><path d="M-10 128 L420 140"/><path d="M190 -10 L200 280"/><path d="M-10 20 L180 40"/><path d="M320 200 L420 250"/></g>' +
+        '<path d="M-10 238 C120 210 260 250 420 216" stroke="var(--c-soft)" stroke-width="18" fill="none"/>' +
+        '<g transform="translate(196 118)"><circle r="26" fill="var(--c-acc-t)" opacity=".18"/><path d="M0-22c-9 0-15 7-15 15 0 11 15 25 15 25s15-14 15-25c0-8-6-15-15-15z" fill="var(--c-acc)"/><circle cy="-7" r="5" fill="var(--c-bg)"/></g></svg>' +
+        '<div class="addr"><div><strong>' + c.address + '</strong><div class="ds-hint">' + c.area + ' · ' + L('dirección de ejemplo', 'sample address') + '</div></div>' +
+        '<a class="ds-btn ds-btn--sm ds-btn--ghost" href="#" data-ext="maps">' + L('Cómo llegar', 'Directions') + '</a></div></div></div>';
+  }
+  function faq(items) {
+    return '<div class="ds-faq">' + items.map(function (q) { return '<details><summary>' + q[0] + '</summary><p>' + q[1] + '</p></details>'; }).join('') + '</div>';
+  }
+  function footer(c, l) {
+    var L = lang(l);
+    return '<footer class="ds-foot"><div class="ds-wrap"><div class="ds-foot__grid">' +
+      '<div><a class="ds-logo" href="#" data-go="top"><span class="ds-mark" aria-hidden="true">' + c.mark + '</span>' + c.brand + '</a><p class="ds-muted" style="margin-top:12px;max-width:34ch">' + c.tagline + '</p></div>' +
+      c.cols.map(function (col) { return '<div><h4>' + col[0] + '</h4><ul>' + col[1].map(function (it) { return '<li><a href="#" ' + (it[1] ? 'data-go="' + it[1] + '"' : 'data-ext="' + (it[2] || 'link') + '"') + '>' + it[0] + '</a></li>'; }).join('') + '</ul></div>'; }).join('') +
+      '</div><div class="ds-foot__bottom"><span>© 2026 ' + c.brand + ' · ' + L('Sitio de demostración con datos de ejemplo', 'Demo site with sample data') + '</span><span>' + L('Diseño y desarrollo: José M. Sánchez', 'Design & build: José M. Sánchez') + '</span></div></div></footer>' +
+      '<a class="ds-wa" href="#" data-ext="wa" aria-label="WhatsApp">' + WA_ICON + '</a><div class="ds-toast" role="status" aria-live="polite" data-toast></div>';
+  }
+
+  /* ---------------- comportamiento común ---------------- */
+  function toast(root, msg) {
+    var t = root.querySelector('[data-toast]');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.classList.remove('on'); }, 2800);
+  }
+  function go(root, id) {
+    var el = id === 'top' ? root : root.querySelector('#ds-' + id);
+    if (!el) return;
+    if (window.__scrollToEl) window.__scrollToEl(el, id === 'top' ? -16 : 64);
+    else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function chrome(root, l, extMsg) {
+    var L = lang(l);
+    root.addEventListener('click', function (e) {
+      var a = e.target.closest('a,[data-burger]');
+      if (!a || !root.contains(a)) return;
+      if (a.hasAttribute('data-burger')) {
+        var dr = root.querySelector('[data-drawer]'), open = dr.hidden;
+        dr.hidden = !open; a.setAttribute('aria-expanded', open ? 'true' : 'false');
+        return;
+      }
+      if (a.hasAttribute('data-go')) {
+        e.preventDefault();
+        var drw = root.querySelector('[data-drawer]');
+        if (drw && !drw.hidden) { drw.hidden = true; root.querySelector('[data-burger]').setAttribute('aria-expanded', 'false'); }
+        go(root, a.getAttribute('data-go'));
+        return;
+      }
+      if (a.hasAttribute('data-ext')) {
+        e.preventDefault();
+        var k = a.getAttribute('data-ext');
+        toast(root, k === 'wa' ? (extMsg || L('En el sitio real se abre WhatsApp con el mensaje listo.', 'On the live site this opens WhatsApp with the message ready.'))
+          : k === 'maps' ? L('En el sitio real se abre Google Maps con la ruta.', 'On the live site this opens Google Maps with directions.')
+          : L('Enlace de ejemplo en esta demo.', 'Sample link in this demo.'));
+      }
+    });
+  }
+  function field(id, label, opts) {
+    opts = opts || {};
+    var input = opts.textarea ? '<textarea id="' + id + '" name="' + id + '"' + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + '>' + esc(opts.value || '') + '</textarea>'
+      : '<input id="' + id + '" name="' + id + '" type="' + (opts.type || 'text') + '"' + (opts.auto ? ' autocomplete="' + opts.auto + '"' : '') + (opts.mode ? ' inputmode="' + opts.mode + '"' : '') + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + ' value="' + esc(opts.value || '') + '" aria-describedby="' + id + '-e">';
+    return '<div class="ds-field' + (opts.full ? ' full' : '') + '"><label for="' + id + '">' + label + '</label>' + input + '<span class="ds-err" id="' + id + '-e"></span></div>';
+  }
+  function setErr(root, id, msg) {
+    var inp = root.querySelector('#' + id); if (!inp) return;
+    inp.parentNode.classList.toggle('bad', !!msg);
+    inp.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    root.querySelector('#' + id + '-e').textContent = msg || '';
+  }
+  function progress(labels, on) {
+    return '<ol class="ds-progress">' + labels.map(function (s, i) {
+      return '<li class="' + (i < on ? 'done' : i === on ? 'on' : '') + '"' + (i === on ? ' aria-current="step"' : '') + '><i></i><span>' + (i + 1) + '. ' + s + '</span></li>';
+    }).join('') + '</ol>';
+  }
+  function daysStrip(list, sel, l, act) {
+    return '<div class="ds-days" role="group">' + list.map(function (d, i) {
+      return '<button class="ds-day" type="button" data-act="' + act + '" data-v="' + i + '" aria-pressed="' + (sel === i) + '" aria-label="' + esc(dayLong(d, l)) + '"><small>' + (isToday(d) ? (l === 'es' ? 'Hoy' : 'Today') : dayShort(d, l)) + '</small><strong>' + d.getDate() + '</strong></button>';
+    }).join('') + '</div>';
+  }
+  function actions(root, fn) {
+    root.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-act]');
+      if (b && root.contains(b) && !b.disabled) fn(b.getAttribute('data-act'), b.getAttribute('data-v'), b, e);
+    });
+  }
+
+  return {
+    esc: esc, money: money, seeded: seeded, lang: lang, days: days, isToday: isToday, dayShort: dayShort, dayLong: dayLong,
+    hm: hm, minutes: minutes, past: past, range: range, code: code, store: store, ok: ok, status: status, photo: photo,
+    header: header, section: section, features: features, prices: prices, gallery: gallery, reviews: reviews, visit: visit, faq: faq, footer: footer,
+    idx: idx, has: has, arr: arr, obj: obj, toast: toast, go: go, chrome: chrome, field: field, setErr: setErr, progress: progress, daysStrip: daysStrip, actions: actions, WA_ICON: WA_ICON
+  };
+})();

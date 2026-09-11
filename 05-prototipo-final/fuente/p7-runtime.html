@@ -3,7 +3,6 @@
 (function () {
   'use strict';
 
-  var vp = document.getElementById('vp');
   var box = document.getElementById('box');
   var stage = document.getElementById('stage');
   var scroller = document.getElementById('scroller');
@@ -11,40 +10,25 @@
   var page = document.getElementById('page');
   var hdr = document.getElementById('hdr');
   var menu = document.getElementById('menu');
-  var motionBtn = document.getElementById('motionBtn');
-  var routeLabel = document.getElementById('routeLabel');
 
-  var systemReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var motionOn = !systemReduced;
-  var mode = 'fit';
+  /* Movimiento siempre activo, por decisión del cliente: el prototipo ya no tiene
+     conmutador y no se apaga con prefers-reduced-motion. */
+  var motionOn = true;
   var scale = 1;
   var lenis = null;
-  var io = null;
   var current = null;
-  var routeText = '/es/';
   var demoCleanup = null;
 
   /* ---------------------------------------------------------------------------
-     ANCHO DE VISTA — el stage se escala para caber; las consultas de contenedor
-     siguen viendo el ancho real de diseño (1440 / 768 / 390)
+     VISTA — siempre ajustada a la ventana; las consultas de contenedor ven el
+     ancho real, así que 390 / 768 / 1440 responden igual que en un sitio normal
      --------------------------------------------------------------------------- */
   function layout() {
-    var aw = window.innerWidth, ah = window.innerHeight - 64, W, H;
-    if (mode === 'fit') {
-      W = aw; H = ah; scale = 1;
-      vp.classList.remove('framed');
-      box.style.width = aw + 'px'; box.style.height = ah + 'px';
-    } else {
-      W = +mode;
-      var availH = ah - 24;
-      scale = Math.min(1, (aw - 32) / W);
-      H = availH / scale;
-      vp.classList.add('framed');
-      box.style.width = (W * scale) + 'px'; box.style.height = availH + 'px';
-    }
+    var W = window.innerWidth, H = window.innerHeight;
+    box.style.width = W + 'px'; box.style.height = H + 'px';
     stage.style.width = W + 'px';
     stage.style.height = H + 'px';
-    stage.style.transform = scale === 1 ? 'none' : 'scale(' + scale + ')';
+    stage.style.transform = 'none';
     stage.style.setProperty('--vh', H + 'px');
     grid.resize();
     if (lenis) lenis.resize();
@@ -66,15 +50,12 @@
   }
   window.__scrollToEl = function (el, extra) {
     var top = scroller.scrollTop + (el.getBoundingClientRect().top - scroller.getBoundingClientRect().top) / scale - hdr.offsetHeight - 16 - (extra || 0);
-    if (lenis) lenis.scrollTo(top); else scroller.scrollTo({ top: top, behavior: motionOn ? 'smooth' : 'auto' });
+    if (lenis) lenis.scrollTo(top); else scroller.scrollTo({ top: top, behavior: 'smooth' });
   };
-  function stopLenis() { if (lenis) { lenis.destroy(); lenis = null; } }
 
   function applyMotion() {
-    stage.classList.toggle('m', motionOn);
-    motionBtn.setAttribute('aria-pressed', motionOn ? 'true' : 'false');
-    motionBtn.textContent = motionOn ? 'Activo' : (systemReduced ? 'Reducido · sistema' : 'Reducido');
-    if (motionOn) startLenis(); else stopLenis();
+    stage.classList.add('m');
+    startLenis();
     grid.draw();
   }
 
@@ -127,8 +108,6 @@
         }
       }
       document.title = 'José M. Sánchez · ' + T[r.l].titles[r.key];
-      routeText = '/' + r.l + '/' + (ROUTES[r.l][r.key] || '') + (r.sub ? '/' + r.sub : '');
-      routeLabel.textContent = routeText;
       if (lenis) { lenis.start(); lenis.scrollTo(0, { immediate: true, force: true }); }
       scroller.scrollTop = 0;
       onScroll();
@@ -137,7 +116,7 @@
       page.classList.remove('is-out');
       if (!fresh) page.focus({ preventScroll: true });
     };
-    if (fresh || !motionOn) { go(); return; }
+    if (fresh) { go(); return; }
     page.classList.add('is-out');               /* fundido corto: sin cortina ni loader */
     setTimeout(go, 170);
   }
@@ -145,9 +124,7 @@
   /* ---------------------------------------------------------------------------
      REVELADOS
      · Hero: máscara hacia arriba, 80ms entre líneas; el resto sube 24px después
-     · Tarjetas: 100ms de escalonado, 32px, al 20% de visibilidad
-     · Filas: escalonadas 80ms · Propuesta y CTA final: solo fundido
-     Sin movimiento: nada se oculta nunca.
+     · Tarjetas, filas y bloques: coreografías de MOTION al entrar en pantalla
      --------------------------------------------------------------------------- */
   function reveals(fresh) { MOTION.run(page, hdr, fresh); }
 
@@ -173,6 +150,12 @@
   }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
 
+  /* enlaces de ejemplo (#wa, #gh…): un aviso breve en lugar de navegar */
+  var note = document.createElement('div');
+  note.className = 'proto-note';
+  note.setAttribute('role', 'status');
+  note.setAttribute('aria-live', 'polite');
+  stage.appendChild(note);
   var flashT;
   stage.addEventListener('click', function (e) {
     var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
@@ -181,9 +164,10 @@
     if (h.indexOf('#/') === 0 || a.closest('.ds')) return;
     e.preventDefault();
     var names = { '#wa': 'WhatsApp', '#mail': 'Email', '#gh': 'GitHub', '#li': 'LinkedIn', '#ig': 'Instagram' };
-    routeLabel.textContent = (current && current.l === 'en' ? 'External link in production: ' : 'Enlace externo en producción: ') + (names[h] || h);
+    note.textContent = (current && current.l === 'en' ? 'External link in production: ' : 'Enlace externo en producción: ') + (names[h] || h);
+    note.classList.add('on');
     clearTimeout(flashT);
-    flashT = setTimeout(function () { routeLabel.textContent = routeText; }, 2400);
+    flashT = setTimeout(function () { note.classList.remove('on'); }, 2400);
   });
 
   /* ---------------------------------------------------------------------------
@@ -204,26 +188,6 @@
     scroller: scroller,
     isOn: function () { return motionOn; },
     getScale: function () { return scale; }
-  });
-
-  /* ---------------------------------------------------------------------------
-     CONTROLES DEL PROTOTIPO
-     --------------------------------------------------------------------------- */
-  Array.prototype.forEach.call(document.querySelectorAll('[data-vw]'), function (b, _, all) {
-    b.addEventListener('click', function () {
-      mode = b.getAttribute('data-vw');
-      Array.prototype.forEach.call(document.querySelectorAll('[data-vw]'), function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
-      layout();
-    });
-  });
-  motionBtn.addEventListener('click', function () { motionOn = !motionOn; applyMotion(); if (current) render(current, true); });
-  Array.prototype.forEach.call(document.querySelectorAll('[data-accent]'), function (b) {
-    b.addEventListener('click', function () {
-      var hex = b.getAttribute('data-accent');
-      stage.style.setProperty('--accent', hex);
-      Array.prototype.forEach.call(document.querySelectorAll('[data-accent]'), function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
-      grid.accent(hex);
-    });
   });
 
   var rT;

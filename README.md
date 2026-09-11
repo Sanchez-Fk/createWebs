@@ -43,9 +43,9 @@ Vistas en vivo: [Proyectos](https://claude.ai/code/artifact/60a096ac-d551-4181-a
 
 [`05-prototipo-final/prototipo.html`](05-prototipo-final/prototipo.html) — [vista en vivo](https://claude.ai/code/artifact/722189f2-9b6d-4f62-9e6b-6602c3316f10)
 
-- Cuatro páginas con rutas separadas ES / EN (`#/es/proyectos` ⇄ `#/en/work`) y vista a 390, 768 y 1440.
+- Cuatro páginas con rutas separadas ES / EN (`#/es/proyectos` ⇄ `#/en/work`), adaptadas a móvil (390), tablet (768) y escritorio (1440).
 - Fondo HUD interactivo con la mira pegada al cursor.
-- Animaciones al hacer scroll, parallax, contadores y botones magnéticos; todo se apaga con *prefers-reduced-motion*.
+- Animaciones al hacer scroll, parallax, contadores y botones magnéticos; el movimiento está siempre activo.
 - Cuatro demos de sector completas (clínica dental, restaurante, barbería y gimnasio) con reserva o pedido
   funcionando, fondo animado propio y **una coreografía de movimiento distinta en cada una**:
   - Dental — respira: letras que se enfocan, foto que se abre en círculo, tarjetas que se inflan.

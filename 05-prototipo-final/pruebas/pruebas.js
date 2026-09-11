@@ -298,6 +298,13 @@ test('generar una página y montar una demo están protegidos con try/catch', ()
   ok(/dRoot\.classList\.contains\('ds'\)/.test(RT), 'el fondo vivo no reconoce la raíz de la demo (.ds es el propio #demoRoot)');
 });
 test('mostrar contenido no depende de IntersectionObserver', () => ok(!/new IntersectionObserver/.test(MO), 'aún usa IntersectionObserver para revelar'));
+test('sin barra de controles: vista siempre ajustada y movimiento siempre activo', () => {
+  ok(!/role="toolbar"|data-vw=|id="motionBtn"|data-accent=|id="routeLabel"/.test(HTML), 'queda la barra de controles en el HTML');
+  ok(!/motionBtn|routeLabel|data-vw|data-accent/.test(RT), 'el runtime aún usa los controles');
+  ok(/var motionOn = true;/.test(RT), 'el movimiento no está fijado como activo');
+  ok(!/matchMedia\('\(prefers-reduced-motion/.test(RT), 'el runtime aún se apaga con prefers-reduced-motion');
+  ok(!/@media\s*\(prefers-reduced-motion:\s*reduce\)/.test(HTML), 'una regla CSS anula las animaciones con prefers-reduced-motion');
+});
 test('el movimiento revela todo ante un error, y a los 5 s pase lo que pase', () => {
   ok(/function revealAll/.test(MO), 'falta revealAll');
   ok(/addEventListener\('error'/.test(MO), 'no escucha errores globales');

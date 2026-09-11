@@ -32,28 +32,17 @@ a{ color:inherit; }
 /* ===========================================================================
    CHROME DEL PROTOTIPO — fuera del sitio
    =========================================================================== */
-.vp{ position:fixed; left:0; right:0; top:0; bottom:64px; display:grid; place-items:start center; overflow:hidden; }
+.vp{ position:fixed; inset:0; display:grid; place-items:start center; overflow:hidden; }
 .vp-box{ position:relative; overflow:hidden; }
-.vp.framed .vp-box{ margin-top:12px; outline:1px solid var(--line); border-radius:var(--r); }
 
-.bar{
-  position:fixed; left:0; right:0; bottom:0; height:64px; z-index:100;
-  display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;
-  padding:0 16px; border-top:1px solid var(--line); background:var(--s1);
-  font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--fg-2);
+/* aviso breve al pulsar un enlace de ejemplo (WhatsApp, redes) */
+.proto-note{
+  position:absolute; left:50%; bottom:20px; z-index:60; transform:translate(-50%, 12px);
+  max-width:calc(100% - 32px); padding:10px 14px; border:1px solid var(--line); border-radius:var(--r);
+  background:var(--s1); color:var(--fg); font-family:var(--mono); font-size:12px; letter-spacing:.06em;
+  opacity:0; pointer-events:none; transition:opacity .25s var(--ease), transform .25s var(--ease);
 }
-.bar-g{ display:flex; align-items:center; gap:4px; }
-.bar-g > span{ margin-right:6px; }
-.bar button{
-  font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
-  background:none; border:1px solid var(--line); border-radius:var(--r); color:var(--fg-2);
-  padding:6px 9px; cursor:pointer;
-}
-.bar button[aria-pressed="true"]{ color:var(--fg); background:var(--s2); border-color:var(--line-hi); }
-.bar .sw{ width:20px; height:20px; padding:0; background:var(--c); }
-.bar .sw[aria-pressed="true"]{ outline:1px solid var(--fg); outline-offset:1px; }
-.bar-route{ color:var(--fg); letter-spacing:.06em; text-transform:none; }
-@media (max-width:760px){ .bar-route{ display:none; } .bar{ gap:10px; } }
+.proto-note.on{ opacity:1; transform:translate(-50%, 0); }
 
 /* ===========================================================================
    STAGE — contenedor de consultas. El scroll vive en un hijo (.scroller)
@@ -66,8 +55,6 @@ a{ color:inherit; }
   --gx:20px; --hdr:64px;
 }
 .scroller{ position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; z-index:1; }
-.vp.framed .scroller{ scrollbar-width:none; }
-.vp.framed .scroller::-webkit-scrollbar{ display:none; }
 
 #grid{ position:absolute; inset:0; z-index:0; pointer-events:none; display:block; width:100%; height:100%; }
 .grain{
