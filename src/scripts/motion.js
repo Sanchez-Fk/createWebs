@@ -351,10 +351,7 @@ var MOTION = (function () {
         safety = setInterval(function () { if (!pending.length) { clearInterval(safety); safety = 0; return; } tick(); }, 500);
         sweepT = setTimeout(function () { try { checkReveal(true); } catch (err) { fail(err); } }, 5000);
       } catch (err) { fail(err); }
-    },
-
-    /* para pruebas: cuántos elementos siguen esperando */
-    pendingCount: function () { return pending.length; }
+    }
   };
 })();
 

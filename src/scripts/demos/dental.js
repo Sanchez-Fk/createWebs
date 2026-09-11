@@ -128,7 +128,7 @@ export const dental = {
           '<div class="ds-nav-row"><button class="ds-btn ds-btn--ghost" type="button" data-act="again">' + L('Reservar otra cita', 'Book another') + '</button><a class="ds-btn ds-btn--wa" href="#" data-ext="wa">WhatsApp</a></div></div>';
         return;
       }
-      var html = DS.progress(STEPS, S.step), t = T();
+      var html = DS.progress(STEPS, S.step);
       if (S.step === 0) {
         html += '<h3 class="ds-step-h">' + L('¿Qué necesitas?', 'What do you need?') + '</h3><div class="ds-choices">' + TREAT.map(function (x, i) {
           return '<button class="ds-choice" type="button" data-act="treat" data-v="' + i + '" aria-pressed="' + (S.t === i) + '"><span class="ds-check">✓</span><span class="txt"><strong>' + x.n + '</strong><small>' + x.d + ' · ' + x.min + ' min</small></span><span class="p">' + (x.p ? money(x.p) : L('Gratis', 'Free')) + '</span></button>';

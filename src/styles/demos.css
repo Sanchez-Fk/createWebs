@@ -9,7 +9,6 @@
 .ds button{ font:inherit; color:inherit; cursor:pointer; }
 .ds img{ display:block; max-width:100%; }
 .ds :focus-visible{ outline:2px solid var(--c-acc-t); outline-offset:3px; border-radius:4px; }
-.ds-sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
 .ds-dental{ --c-bg:#F6FAFC; --c-fg:#10263A; --c-muted:#56708A; --c-line:#DCE6EE; --c-surf:#FFFFFF; --c-surf2:#EAF2F8; --c-acc:#1F6FA8; --c-acc-ink:#FFFFFF; --c-acc-t:#1F6FA8; --c-soft:#E1EEF7; --c-rad:14px; --c-head:'IBM Plex Sans',system-ui,sans-serif; --c-hw:700; --c-case:none; --c-hls:-.025em; }
 .ds-rest{ --c-bg:#14100D; --c-fg:#F3E9D7; --c-muted:#BCA98C; --c-line:#33271F; --c-surf:#1C1612; --c-surf2:#211A15; --c-acc:#A8431F; --c-acc-ink:#F6EADA; --c-acc-t:#E8845C; --c-soft:#2A1D16; --c-rad:4px; --c-head:'Fraunces',Georgia,serif; --c-hw:600; --c-case:none; --c-hls:-.01em; }
@@ -244,12 +243,10 @@
 .ds-toast{ position:fixed; left:50%; bottom:22px; transform:translate(-50%, 20px); z-index:26; max-width:calc(100% - 32px); padding:12px 16px; border-radius:10px; background:#111; color:#fff; font-size:14px; opacity:0; pointer-events:none; transition:opacity .25s var(--ease), transform .25s var(--ease); }
 .ds-toast.on{ opacity:1; transform:translate(-50%, 0); }
 
-.ds-sticky{ position:sticky; top:132px; }
-
-/* ---------- responsive (consulta de contenedor: responde también al marco de 390/768) ---------- */
+/* ---------- responsive (consulta de contenedor: responde al ancho real de la ventana) ---------- */
 @container (min-width:600px){
   .ds-wrap{ padding-inline:32px; }
-  .ds-grid--2,.ds-grid--3,.ds-grid--4{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .ds-grid--3,.ds-grid--4{ grid-template-columns:repeat(2,minmax(0,1fr)); }
   .ds-choices--2{ grid-template-columns:repeat(2,minmax(0,1fr)); }
   .ds-form--2{ grid-template-columns:repeat(2,minmax(0,1fr)); }
   .ds-form--2 .full{ grid-column:1 / -1; }

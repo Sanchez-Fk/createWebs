@@ -1,4 +1,4 @@
-# dependencias y resultados de build
+# dependencias y resultados de build (se regeneran con npm install / npm run build)
 node_modules/
 dist/
 .astro/
@@ -9,10 +9,10 @@ dist/
 .env.*
 !.env.example
 
-# sistema y editores
+# sistema, editores y asistentes (configuración personal de cada equipo)
 .DS_Store
 Thumbs.db
 *.log
-
-# ajustes personales de Claude Code en cada máquina
-.claude/settings.local.json
+.vscode/
+.idea/
+.claude/

@@ -5,7 +5,6 @@
    con su autor en CREDITS; las pruebas comprueban que el archivo existe.
    =========================================================================== */
 export const IMG = {
-  barberChair: '/images/barberChair.webp',
   barberHero: '/images/barberHero.webp',
   dentalHero: '/images/dentalHero.webp',
   dishAntipasto: '/images/dishAntipasto.webp',
@@ -29,7 +28,6 @@ export const IMG_SRCSET = {
 };
 
 export const CREDITS = {
-  barberChair: 'Adam Winger',
   barberHero: 'František Čaník',
   dentalHero: 'Kari Bjorn Photography',
   dishAntipasto: 'Jay Wennington',

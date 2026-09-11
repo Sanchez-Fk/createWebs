@@ -33,7 +33,7 @@ export const T = {
     fNote: 'Prototipo: aquí se conecta el endpoint del formulario.',
     ftTag: 'Sitios rápidos y claros para pequeños negocios. Hechos a mano, sin maquetadores.',
     ftNav: 'Navegación', ftContact: 'Contacto', ftSocial: 'Redes', copy: '© 2026 José Manuel Sánchez · Medellín',
-    demoBack: 'Volver', demoLabel: 'Demo en vivo', demoLive: 'Interactiva · datos de ejemplo', demoOthers: 'Otras demos', demoNote: 'Todo lo que pulses funciona con datos de ejemplo. En producción, cada demo vive en su propia URL.',
+    demoLabel: 'Demo en vivo', demoOthers: 'Otras demos',
     titles: { home: 'Inicio', work: 'Proyectos', services: 'Servicios', contact: 'Contacto', demo: 'Demo' }
   },
   en: {
@@ -61,7 +61,7 @@ export const T = {
     fNote: 'Prototype: the form endpoint connects here.',
     ftTag: 'Fast, clear websites for small businesses. Built by hand, no page builders.',
     ftNav: 'Navigation', ftContact: 'Contact', ftSocial: 'Social', copy: '© 2026 José Manuel Sánchez · Medellín',
-    demoBack: 'Back', demoLabel: 'Live demo', demoLive: 'Interactive · sample data', demoOthers: 'Other demos', demoNote: 'Everything you tap works with sample data. In production, each demo lives at its own URL.',
+    demoLabel: 'Live demo', demoOthers: 'Other demos',
     titles: { home: 'Home', work: 'Work', services: 'Services', contact: 'Contact', demo: 'Demo' }
   }
 };

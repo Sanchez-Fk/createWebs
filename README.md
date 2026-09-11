@@ -54,9 +54,10 @@ createWebs/
 ├── tests/
 │   ├── unit/                     demos (XSS, fuzzing, datos corruptos), fondos, arranque, estilos, módulos
 │   └── build/                    HTML generado: rutas, SEO, enlaces, CSP, cabeceras, pesos
-├── prototipos/                   historial de diseño y prototipos anteriores (no se publica)
-├── astro.config.mjs · tsconfig.json · vercel.json · package.json
-└── .github/workflows/ci.yml
+├── .github/workflows/ci.yml      verificación automática en cada push
+├── astro.config.mjs · tsconfig.json · vercel.json
+├── package.json · package-lock.json · .nvmrc
+└── .gitignore · .gitattributes
 ```
 
 ## Desarrollo local
@@ -77,6 +78,8 @@ npm run dev          # http://localhost:4321/es/
 | `npm test` | Pruebas unitarias (no necesitan build) |
 | `npm run test:build` | Pruebas sobre el HTML generado (ejecuta antes `npm run build`) |
 | `npm run verify` | Todo lo anterior en orden; es lo que ejecuta Vercel al desplegar |
+
+`node_modules/`, `dist/` y `.astro/` no se suben a GitHub: se regeneran con `npm install` y `npm run build`.
 
 ## Publicar en Vercel
 
@@ -117,6 +120,23 @@ de Vercel en las vistas previas queda bloqueada, sin efecto sobre el sitio.
 - Movimiento siempre activo: revelados al hacer scroll, contadores, botones magnéticos y una coreografía distinta en cada demo.
   Si algo falla, todo el contenido se muestra igualmente (red de seguridad en `motion.js`, `app.js` y CSS).
 - Zoom siempre permitido, contraste AA verificado por pruebas y navegación por teclado con foco visible.
-- Fotos de [Unsplash](https://unsplash.com); los autores aparecen en cada demo y en `public/images/creditos.txt`.
 
-El historial de diseño (sistema de diseño, secciones sueltas, fondos y prototipos) está en [`prototipos/`](prototipos/README.md).
+## Créditos de las fotos
+
+Fotografías de [Unsplash](https://unsplash.com/license) (uso libre, sin atribución obligatoria; igualmente se acreditan en cada demo).
+
+| Archivo | Autor | Original |
+|---|---|---|
+| `dentalHero.webp` | Kari Bjorn Photography | [Fdku_oMrDvk](https://unsplash.com/photos/Fdku_oMrDvk) |
+| `restHero.webp` | Liubov Ilchuk | [_qZOwG2oaj4](https://unsplash.com/photos/_qZOwG2oaj4) |
+| `dishSpaghetti.webp` | Mae Mu | [Pvclb-iHHYY](https://unsplash.com/photos/Pvclb-iHHYY) |
+| `dishPizza.webp` | Ivan Torres | [MQUqbmszGGM](https://unsplash.com/photos/MQUqbmszGGM) |
+| `dishPesto.webp` | Eaters Collective | [12eHC6FxPyg](https://unsplash.com/photos/12eHC6FxPyg) |
+| `dishAntipasto.webp` | Jay Wennington | [N_Y88TWmGwA](https://unsplash.com/photos/N_Y88TWmGwA) |
+| `dishTiramisu.webp` | Olga Petnyunene | [n3GkbNzur3s](https://unsplash.com/photos/n3GkbNzur3s) |
+| `barberHero.webp` | František Čaník | [htm5bLLW2GY](https://unsplash.com/photos/htm5bLLW2GY) |
+| `gymHero.webp` | Samuel Girven | [fqMu99l8sqo](https://unsplash.com/photos/fqMu99l8sqo) |
+| `gymStrength.webp` | autor sin confirmar | [VJ2s0c20qCo](https://unsplash.com/photos/VJ2s0c20qCo) |
+| `gymSpin.webp` | Humphrey M | [LOA2mTj1vhc](https://unsplash.com/photos/LOA2mTj1vhc) |
+| `gymFunctional.webp` | Meghan Holmes | [wy_L8W0zcpI](https://unsplash.com/photos/wy_L8W0zcpI) |
+| `gymYoga.webp` | bruce mars | [gJtDg6WfMlQ](https://unsplash.com/photos/gJtDg6WfMlQ) |

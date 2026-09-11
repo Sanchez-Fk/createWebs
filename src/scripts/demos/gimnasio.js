@@ -220,7 +220,6 @@ export const gimnasio = {
     });
 
     drawTypes(); drawDays(); drawList(); drawMine(); drawPlans(); drawTrial(); tick();
-    var st = root.querySelector('[data-status]');
     var timer = setInterval(tick, 1000);
     var slow = setInterval(function () { drawList(); var s = DS.status(HOURS, l), el = root.querySelector('[data-status]'); if (el) el.innerHTML = '<span class="ds-dot' + (s.open ? '' : ' ds-dot--off') + '"></span><span>' + s.text + '</span>'; }, 60000);
     return function () { clearInterval(timer); clearInterval(slow); };

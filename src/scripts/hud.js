@@ -209,8 +209,7 @@ function HUD(o) {
 
   return {
     resize: resize,
-    draw: function () { if (live()) kick(); else draw(performance.now()); },
-    accent: function (hex) { acc = [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)]; if (!live()) draw(performance.now()); }
+    draw: function () { if (live()) kick(); else draw(performance.now()); }
   };
 }
 
