@@ -172,6 +172,25 @@ test('WhatsApp: todos los botones abren el chat con el número y el mensaje de s
   assert.ok(total >= 16, 'se esperaban botones de WhatsApp en todas las páginas del portafolio, hay ' + total);
 });
 
+test('redes: GitHub, LinkedIn e Instagram enlazan a los perfiles reales en todas las páginas', () => {
+  const PROFILES = {
+    GitHub: 'https://github.com/Sanchez-Fk',
+    LinkedIn: 'https://www.linkedin.com/in/jos%C3%A9-manuel-sanchez-2195b0366/',
+    Instagram: 'https://www.instagram.com/sanchez_bkr_/',
+  };
+  for (const p of PAGES.filter((x) => !x.demo)) {
+    const h = html(p.url);
+    assert.ok(!/href="#(gh|li|ig)"/.test(h), p.url + ': quedan enlaces de ejemplo de redes');
+    for (const [name, url] of Object.entries(PROFILES)) {
+      const tag = new RegExp('<a href="' + url.replace(/[.?/]/g, '\\$&') + '" target="_blank" rel="noopener noreferrer me">' + name + '</a>');
+      assert.match(h, tag, p.url + ': enlace de ' + name);
+    }
+  }
+  const ld = html('/es/').match(/<script type="application\/ld\+json">([^<]+)<\/script>/);
+  assert.ok(ld, 'la portada no tiene datos estructurados');
+  assert.deepEqual(JSON.parse(ld[1]).sameAs, Object.values(PROFILES));
+});
+
 test('la página 404 no se indexa y enlaza a los dos idiomas', () => {
   const h = fs.readFileSync(path.join(DIST, '404.html'), 'utf8');
   assert.match(h, /<meta name="robots" content="noindex">/);

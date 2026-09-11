@@ -26,7 +26,10 @@ export function whatsappHref(lang: Lang): string {
 
 export const LINKS = {
   email: '#mail',
-  github: '#gh',
-  linkedin: '#li',
-  instagram: '#ig',
+  github: 'https://github.com/Sanchez-Fk',
+  linkedin: 'https://www.linkedin.com/in/jos%C3%A9-manuel-sanchez-2195b0366/',
+  instagram: 'https://www.instagram.com/sanchez_bkr_/',
 } as const;
+
+/* perfiles públicos: los usan el pie de página y los datos estructurados (sameAs) */
+export const PROFILES = [LINKS.github, LINKS.linkedin, LINKS.instagram];

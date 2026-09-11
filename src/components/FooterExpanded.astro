@@ -19,7 +19,7 @@ const t = T[lang];
       <div class="ft-brand"><a class="wordmark" href={href(lang, 'home')}>{SITE.name}</a><p>{t.ftTag}</p></div>
       <div class="ft-col"><span class="mono">{t.ftNav}</span>{PAGE_KEYS.map((k) => <a href={href(lang, k)}>{t[k]}</a>)}</div>
       <div class="ft-col"><span class="mono">{t.ftContact}</span><a href={whatsappHref(lang)} target="_blank" rel="noopener noreferrer">WhatsApp</a><a href={LINKS.email}>Email</a></div>
-      <div class="ft-col"><span class="mono">{t.ftSocial}</span><a href={LINKS.github}>GitHub</a><a href={LINKS.linkedin}>LinkedIn</a><a href={LINKS.instagram}>Instagram</a></div>
+      <div class="ft-col"><span class="mono">{t.ftSocial}</span><a href={LINKS.github} target="_blank" rel="noopener noreferrer me">GitHub</a><a href={LINKS.linkedin} target="_blank" rel="noopener noreferrer me">LinkedIn</a><a href={LINKS.instagram} target="_blank" rel="noopener noreferrer me">Instagram</a></div>
     </div>
     <div class="ft-row">
       <span class="meta">{t.copy}</span>

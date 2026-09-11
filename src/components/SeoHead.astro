@@ -1,7 +1,7 @@
 ---
 /* Metadatos de cada página: título, descripción, canonical, hreflang,
    Open Graph y datos estructurados en la portada. */
-import { SITE } from '../data/site';
+import { PROFILES, SITE } from '../data/site';
 import { IMG } from '../data/images.js';
 import { LANGS, type Lang, type PageKey, href, pageDescription, pageTitle, sectorById } from '../lib/routes';
 
@@ -30,6 +30,7 @@ const person =
         jobTitle: lang === 'es' ? 'Desarrollador web' : 'Web developer',
         url: canonical,
         knowsLanguage: ['es', 'en'],
+        sameAs: PROFILES,
         address: { '@type': 'PostalAddress', addressLocality: SITE.city, addressCountry: SITE.country },
       }
     : null;
