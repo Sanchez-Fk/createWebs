@@ -1,0 +1,10 @@
+/* ===========================================================================
+   HOJA GLOBAL — el orden importa: base del portafolio, demos, movimiento,
+   coreografías de cada demo, fondos vivos y ajustes del sitio publicado.
+   =========================================================================== */
+@import './portfolio.css';
+@import './demos.css';
+@import './motion.css';
+@import './demos-motion.css';
+@import './demos-backgrounds.css';
+@import './site.css';

@@ -1,0 +1,25 @@
+---
+/* Barra superior de las demos: volver al portafolio, demo actual, otras demos e idioma. */
+import { SECTORS, T } from '../data/content';
+import { type Lang, href, sectorById } from '../lib/routes';
+import LangSwitch from './LangSwitch.astro';
+
+interface Props {
+  lang: Lang;
+  sector: string;
+}
+
+const { lang, sector } = Astro.props;
+const t = T[lang];
+const s = sectorById(sector);
+const others = SECTORS.filter((x) => x.id !== s.id);
+---
+
+<div class="dbar">
+  <a class="link-mono" href={href(lang, 'home')}><span aria-hidden="true">←</span> {lang === 'es' ? 'Portafolio' : 'Portfolio'}</a>
+  <span class="dbar-title">{t.demoLabel} · <b>{s[lang].title}</b></span>
+  <span style="display:flex;align-items:center;gap:18px">
+    <nav class="dbar-others" aria-label={t.demoOthers}>{others.map((o) => <a href={href(lang, 'demo', o.id)}>{o[lang].sector}</a>)}</nav>
+    <LangSwitch as="span" lang={lang} es={href('es', 'demo', s.id)} en={href('en', 'demo', s.id)} />
+  </span>
+</div>

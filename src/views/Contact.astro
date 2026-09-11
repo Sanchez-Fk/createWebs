@@ -1,0 +1,40 @@
+---
+import { T } from '../data/content';
+import { LINKS } from '../data/site';
+import type { Lang } from '../lib/routes';
+import FooterExpanded from '../components/FooterExpanded.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = T[lang];
+---
+
+<section class="sec contact">
+  <div class="wrap contact-grid">
+    <div class="c-left" data-rv="hero">
+      <h1 class="h-page"><span style="display:block">{t.cH1}</span><span style="display:block;color:var(--fg-2)">{t.cH2}</span></h1>
+      <p class="lede">{t.cLede}</p>
+      <a class="btn btn-primary btn-lg" href={LINKS.whatsapp}>WhatsApp <span class="arw" aria-hidden="true">→</span></a>
+      <dl class="facts">
+        <div><dt>{t.fResp}</dt><dd>{t.fRespV}</dd></div>
+        <div><dt>{t.fTz}</dt><dd>{t.fTzV}</dd></div>
+        <div><dt>{t.fLang}</dt><dd>{t.fLangV}</dd></div>
+      </dl>
+    </div>
+    <div class="c-right" data-rv="hero" style="--d:120ms">
+      <h2 class="mono" style="margin:0">{t.formLabel}</h2>
+      <form class="form" id="form" novalidate>
+        <div class="field"><label for="f-name">{t.fName}</label><input id="f-name" name="name" autocomplete="name" /></div>
+        <div class="field"><label for="f-mail">{t.fMail}</label><input id="f-mail" name="email" type="email" autocomplete="email" /></div>
+        <div class="field"><label for="f-biz">{t.fBiz}</label><textarea id="f-biz" name="business" placeholder={t.fBizPh}></textarea></div>
+        <button class="btn btn-secondary" type="submit">{t.fSend}</button>
+        <p class="form-note" id="formNote" hidden role="status">{t.fNote}</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<FooterExpanded lang={lang} />

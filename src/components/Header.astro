@@ -1,0 +1,26 @@
+---
+import { T } from '../data/content';
+import { SITE } from '../data/site';
+import { type Lang, type PageKey, href } from '../lib/routes';
+
+interface Props {
+  lang: Lang;
+  page: PageKey;
+}
+
+const { lang, page } = Astro.props;
+const t = T[lang];
+const nav: PageKey[] = ['work', 'services', 'contact'];
+---
+
+<div class="hdr-in" data-hdr>
+  <a class="wordmark" href={href(lang, 'home')}>{SITE.name}</a>
+  <div class="hdr-r">
+    <nav class="nav" aria-label={t.navLabel}>
+      {nav.map((k) => <a href={href(lang, k)} aria-current={page === k ? 'page' : undefined}>{t[k]}</a>)}
+    </nav>
+    <span class="hdr-div" aria-hidden="true"></span>
+    <div class="lang"><a href={href('es', page)} hreflang="es" lang="es" aria-current={lang === 'es' ? 'true' : undefined} aria-label={lang === 'es' ? undefined : t.langTo}>ES</a><span aria-hidden="true">/</span><a href={href('en', page)} hreflang="en" lang="en" aria-current={lang === 'en' ? 'true' : undefined} aria-label={lang === 'en' ? undefined : t.langTo}>EN</a></div>
+    <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="menu">{t.menu}</button>
+  </div>
+</div>

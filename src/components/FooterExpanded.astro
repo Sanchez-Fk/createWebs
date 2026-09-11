@@ -1,0 +1,29 @@
+---
+/* Pie ampliado de la página de contacto: marca, navegación, contacto y redes. */
+import { T } from '../data/content';
+import { LINKS, SITE } from '../data/site';
+import { type Lang, PAGE_KEYS, href } from '../lib/routes';
+import LangSwitch from './LangSwitch.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = T[lang];
+---
+
+<footer class="ft">
+  <div class="wrap">
+    <div class="ft-x">
+      <div class="ft-brand"><a class="wordmark" href={href(lang, 'home')}>{SITE.name}</a><p>{t.ftTag}</p></div>
+      <div class="ft-col"><span class="mono">{t.ftNav}</span>{PAGE_KEYS.map((k) => <a href={href(lang, k)}>{t[k]}</a>)}</div>
+      <div class="ft-col"><span class="mono">{t.ftContact}</span><a href={LINKS.whatsapp}>WhatsApp</a><a href={LINKS.email}>Email</a></div>
+      <div class="ft-col"><span class="mono">{t.ftSocial}</span><a href={LINKS.github}>GitHub</a><a href={LINKS.linkedin}>LinkedIn</a><a href={LINKS.instagram}>Instagram</a></div>
+    </div>
+    <div class="ft-row">
+      <span class="meta">{t.copy}</span>
+      <LangSwitch lang={lang} es={href('es', 'contact')} en={href('en', 'contact')} />
+    </div>
+  </div>
+</footer>

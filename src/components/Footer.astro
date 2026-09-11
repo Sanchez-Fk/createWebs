@@ -1,0 +1,27 @@
+---
+import { T } from '../data/content';
+import { LINKS, SITE } from '../data/site';
+import { type Lang, type PageKey, href } from '../lib/routes';
+import LangSwitch from './LangSwitch.astro';
+
+interface Props {
+  lang: Lang;
+  page: PageKey;
+}
+
+const { lang, page } = Astro.props;
+const t = T[lang];
+---
+
+<footer class="ft">
+  <div class="wrap">
+    <div class="ft-row">
+      <a class="wordmark" href={href(lang, 'home')}>{SITE.name}</a>
+      <nav class="social" aria-label={t.ftSocial}><a href={LINKS.github}>GitHub</a><a href={LINKS.linkedin}>LinkedIn</a><a href={LINKS.instagram}>Instagram</a></nav>
+    </div>
+    <div class="ft-row">
+      <span class="meta">{t.copy}</span>
+      <LangSwitch lang={lang} es={href('es', page)} en={href('en', page)} />
+    </div>
+  </div>
+</footer>

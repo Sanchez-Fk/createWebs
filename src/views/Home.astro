@@ -1,0 +1,54 @@
+---
+import { SECTORS, T } from '../data/content';
+import { LINKS } from '../data/site';
+import { type Lang, href } from '../lib/routes';
+import ClosingBlock from '../components/ClosingBlock.astro';
+import Footer from '../components/Footer.astro';
+import ServiceList from '../components/ServiceList.astro';
+import Stats from '../components/Stats.astro';
+import WorkCard from '../components/WorkCard.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = T[lang];
+---
+
+<section class="hero" aria-labelledby="h-hero">
+  <div class="wrap">
+    <p class="eyebrow" data-rv="hero" style="--d:240ms">{t.heroEyebrow}</p>
+    <h1 class="h-display" id="h-hero"><span class="mask" style="--d:0ms"><span>{t.heroL1}</span></span><span class="mask" style="--d:80ms"><span>{t.heroL2}</span></span></h1>
+    <p class="lede" data-rv="hero" style="--d:300ms">{t.heroLede}</p>
+    <div class="hero-acts" data-rv="hero" style="--d:360ms"><a class="btn btn-primary" href={LINKS.whatsapp}>{t.wa}</a><a class="link-arrow" href={href(lang, 'work')}>{t.heroLink} <span class="arw" aria-hidden="true">→</span></a></div>
+    <div class="scroll-ind" data-rv="hero" style="--d:420ms"><span class="scroll-line" aria-hidden="true"></span><span class="mono">{t.scroll}</span></div>
+  </div>
+</section>
+
+<section class="value" aria-label={lang === 'es' ? 'Propuesta de valor' : 'Value proposition'}>
+  <div class="wrap" data-rv="fade" style="--y:0px">
+    <p class="statement" set:html={t.value} />
+    <span class="meta">{t.valueMeta}</span>
+    <Stats lang={lang} />
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="h-work" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head"><h2 class="mono" id="h-work" style="margin:0">{t.workLabel}</h2><p>{t.workNote}</p></div>
+    <div class="work-grid">{SECTORS.map((s) => <WorkCard lang={lang} sector={s} />)}</div>
+    <div class="sec-foot"><a class="link-mono" href={href(lang, 'work')}>{t.workAll} <span class="arw" aria-hidden="true">→</span></a></div>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="h-svc">
+  <div class="wrap">
+    <div class="sec-head" style="border-bottom:0;padding-bottom:0"><h2 class="mono" id="h-svc" style="margin:0">{t.svcLabel}</h2><p>{t.svcNote}</p></div>
+    <ServiceList lang={lang} target="services" />
+    <div class="sec-foot"><a class="link-mono" href={href(lang, 'services')}>{t.svcAll} <span class="arw" aria-hidden="true">→</span></a></div>
+  </div>
+</section>
+
+<ClosingBlock lang={lang} />
+<Footer lang={lang} page="home" />

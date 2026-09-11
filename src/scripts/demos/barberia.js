@@ -1,0 +1,196 @@
+import { DS } from './kit.js';
+
+/* ===========================================================================
+   DEMO 03 · CORTE & NAVAJA — silla reservada en una sola pantalla + club
+   =========================================================================== */
+export const barberia = {
+  mount: function (root, l) {
+    var L = DS.lang(l), money = DS.money, esc = DS.esc;
+    var db = DS.store('navaja');
+
+    var SERV = [
+      { id: 'corte', n: L('Corte clásico', 'Classic cut'), d: L('Tijera y máquina, lavado y peinado', 'Scissors and clippers, wash and style'), min: 40, p: 35000 },
+      { id: 'fade', n: L('Degradado', 'Skin fade'), d: L('Fade a navaja con diseño de línea', 'Razor fade with line-up'), min: 45, p: 40000 },
+      { id: 'barba', n: L('Barba con toalla caliente', 'Hot-towel beard'), d: L('Perfilado a navaja, aceite y bálsamo', 'Razor shaping, oil and balm'), min: 30, p: 28000 },
+      { id: 'cejas', n: L('Perfilado de cejas', 'Eyebrow trim'), d: L('Con navaja o cera', 'Razor or wax'), min: 10, p: 12000 },
+      { id: 'nino', n: L('Corte niño', 'Kids cut'), d: L('Hasta 12 años', 'Up to 12 years'), min: 30, p: 28000 }
+    ];
+    var BARB = [
+      { n: L('Cualquiera', 'Anyone'), d: L('El primero con la silla libre', 'Whoever has the chair free'), ini: '∗' },
+      { n: 'Andrés', d: L('Degradados y diseños · 8 años', 'Fades and designs · 8 years'), ini: 'A' },
+      { n: 'Mateo', d: L('Barba clásica · 11 años', 'Classic beard · 11 years'), ini: 'M' },
+      { n: 'Julián', d: L('Tijera y cabello largo · 6 años', 'Scissor cuts and long hair · 6 years'), ini: 'J' }
+    ];
+    var HOURS = [['10:00', '15:00'], ['10:00', '20:00'], ['10:00', '20:00'], ['10:00', '20:00'], ['10:00', '20:00'], ['10:00', '20:00'], ['09:00', '20:00']];
+    var DAYS = DS.days(7);
+
+    var S = { sv: { corte: true }, b: 0, d: 0, t: null, name: '', phone: '', done: null };
+
+    function dur() { return SERV.reduce(function (a, s) { return a + (S.sv[s.id] ? s.min : 0); }, 0); }
+    function price() { return SERV.reduce(function (a, s) { return a + (S.sv[s.id] ? s.p : 0); }, 0); }
+    function slots(d) { var h = HOURS[d.getDay()]; return DS.range(h[0], h[1], 30); }
+    function busy(bi, d, t) { return DS.seeded(d.getDate() * 7 + bi, DS.minutes(t) / 30) < 0.32; }
+    function freeBarber(d, ti, bi) {
+      var list = slots(d), need = Math.max(1, Math.ceil(dur() / 30));
+      if (ti + need > list.length || DS.past(d, list[ti], 20)) return -1;
+      function fits(b) { for (var k = 0; k < need; k++) if (busy(b, d, list[ti + k])) return false; return true; }
+      if (bi > 0) return fits(bi) ? bi : -1;
+      for (var b = 1; b < BARB.length; b++) if (fits(b)) return b;
+      return -1;
+    }
+    function nextFor(bi) {
+      for (var i = 0; i < DAYS.length; i++) { var s = slots(DAYS[i]); for (var j = 0; j < s.length; j++) if (freeBarber(DAYS[i], j, bi) > 0) return { d: DAYS[i], t: s[j] }; }
+      return null;
+    }
+    function stamps() { var n = parseInt(db.get('sellos', 2), 10); return n >= 0 && n < 10000 ? n : 2; }
+    function mine() { return DS.arr(db.get('reservas', [])).filter(function (r) { return r && typeof r === 'object'; }); }
+
+    var nx = nextFor(0);
+    root.className = 'dm ds ds-barber';
+    root.innerHTML =
+      DS.header({ brand: 'Corte &amp; Navaja', mark: 'CN', ctaTo: 'reservar', cta: L('Reservar silla', 'Book a chair'), nav: [['servicios', L('Servicios', 'Services')], ['reservar', L('Reservar', 'Book')], ['barberos', L('Barberos', 'Barbers')], ['club', 'Club'], ['ubicacion', L('Ubicación', 'Location')]] }) +
+
+      '<section class="ds-hero"><div class="ds-wrap ds-hero__grid"><div>' +
+        '<span class="ds-eyebrow">' + L('Barbería clásica · Envigado desde 2014', 'Classic barbershop · Envigado since 2014') + '</span>' +
+        '<h1 class="ds-h1" style="margin-top:14px;font-size:clamp(2.8rem,1.6rem + 5.4cqi,5.4rem);line-height:.92">' + L('Corte fino.<br>Sin esperar turno.', 'A sharp cut.<br>No waiting in line.') + '</h1>' +
+        '<p class="ds-lede">' + L('Eliges servicio, barbero y hora desde el celular. Llegas, te sientas y listo: el café va por la casa.', 'Pick service, barber and time from your phone. Walk in, sit down, done: coffee is on the house.') + '</p>' +
+        '<div class="ds-actions"><a class="ds-btn" href="#ds-reservar" data-go="reservar">' + L('Reservar silla', 'Book a chair') + '</a><a class="ds-btn ds-btn--ghost" href="#ds-servicios" data-go="servicios">' + L('Ver precios', 'See prices') + '</a></div>' +
+        '<div class="ds-badges"><div><strong>4,8 ★</strong><span>' + L('860 reseñas', '860 reviews') + '</span></div><div><strong>3</strong><span>' + L('barberos', 'barbers') + '</span></div><div><strong>' + L('Club', 'Club') + '</strong><span>' + L('el 7.º corte, gratis', '7th cut free') + '</span></div></div>' +
+      '</div><div class="ds-hero__img">' + DS.photo('barberHero', L('Barbería con pared de ladrillo y sillones', 'Barbershop with brick wall and chairs')) +
+        (nx ? '<div class="ds-float"><span class="ds-dot"></span><span>' + L('Silla libre: ', 'Free chair: ') + '<strong>' + (DS.isToday(nx.d) ? L('hoy', 'today') : DS.dayLong(nx.d, l)) + ' · ' + DS.hm(nx.t, l) + '</strong></span></div>' : '') +
+      '</div></div></section>' +
+
+      DS.section('servicios', L('Servicios', 'Services'), L('Precios en la pared y en la web.', 'Prices on the wall and online.'), L('Todos incluyen lavado, productos y bebida. Pagas en la barbería: efectivo, tarjeta o Nequi.', 'All include wash, products and a drink. Pay at the shop: cash, card or Nequi.'),
+        '<div class="ds-split"><div>' + DS.prices(SERV.map(function (s) { return [s.n, s.d, s.min + ' min', money(s.p)]; }).concat([[L('Corte + barba', 'Cut + beard'), L('El combo de siempre, con toalla caliente', 'The usual combo, with hot towel'), '70 min', money(60000)]])) + '</div>' +
+        '<div>' + DS.features([
+          [L('Toalla caliente de verdad', 'A real hot towel'), L('Vapor y toalla antes de cada afeitado. No es un extra: es como se hace.', 'Steam and towel before every shave. Not an extra, it’s how it’s done.')],
+          [L('Tu barbero, tu historial', 'Your barber, your history'), L('Guardamos cómo te gusta el corte para que no tengas que explicarlo cada vez.', 'We note how you like your cut so you don’t explain it every time.')],
+          [L('Puntualidad', 'On time'), L('Reservas con el tiempo real de cada servicio. Si hay retraso, te avisamos por WhatsApp antes de salir.', 'Bookings use each service’s real duration. If we’re running late, we WhatsApp you before you leave.')]
+        ]).replace('ds-grid--3', '') + '</div></div>', true) +
+
+      DS.section('reservar', L('Reserva', 'Booking'), L('Tu silla en una sola pantalla.', 'Your chair on a single screen.'), '',
+        '<div class="ds-book"><div class="ds-book__main" id="bbMain"></div><aside class="ds-book__side" id="bbSide"></aside></div>', false) +
+
+      DS.section('barberos', L('Barberos', 'Barbers'), L('Tres manos, tres estilos.', 'Three hands, three styles.'), '', '<div class="ds-grid ds-grid--3" id="bbTeam"></div>', true) +
+
+      DS.section('club', 'Club Navaja', L('Cada seis cortes, el séptimo es gratis.', 'Every six cuts, the seventh is free.'), L('Los sellos se suman solos al reservar desde la web con tu celular.', 'Stamps add up automatically when you book online with your mobile.'),
+        '<div class="ds-card" id="bbClub"></div>', false) +
+
+      DS.section('opiniones', L('Opiniones', 'Reviews'), L('Clientes de silla fija.', 'Regulars in the chair.'), L('Reseñas de ejemplo para esta demo.', 'Sample reviews for this demo.'),
+        DS.reviews([
+          [5, L('Reservé a las 7 a. m. para las 10 y a las 10 en punto estaba en la silla. Así sí.', 'Booked at 7 am for 10 and at 10 sharp I was in the chair. That’s how it should be.'), 'Felipe', 'Envigado'],
+          [5, L('Mateo hace la mejor barba del sur del valle. La toalla caliente vale cada peso.', 'Mateo does the best beard in the south of the valley. The hot towel is worth every peso.'), 'Camilo', 'Sabaneta'],
+          [4, L('Llevo a mi hijo y ya ni pregunto el precio: está en la web y no cambia.', 'I bring my son and don’t even ask the price: it’s on the site and it doesn’t change.'), 'Diego', 'La Magnolia']
+        ]), true) +
+
+      DS.section('ubicacion', L('Horario y ubicación', 'Hours & location'), L('Frente al parque de Envigado.', 'Across from Envigado park.'), '',
+        DS.visit({ hours: HOURS, address: 'Cl. 38 Sur #43-20', area: 'Envigado, Antioquia', note: L('Sin cita atendemos solo si hay silla libre. Con reserva, nunca esperas.', 'Walk-ins only when a chair is free. With a booking, you never wait.') }, l), false) +
+
+      DS.section('faq', L('Preguntas frecuentes', 'FAQ'), L('Lo que suelen preguntar.', 'What people usually ask.'), '',
+        DS.faq([
+          [L('¿Atienden sin cita?', 'Do you take walk-ins?'), L('Sí, si hay una silla libre. La web muestra la disponibilidad en tiempo real, así que conviene mirar antes de venir.', 'Yes, if a chair is free. The site shows availability live, so it’s worth checking before you come.')],
+          [L('¿Con cuánto tiempo puedo cancelar?', 'How late can I cancel?'), L('Hasta dos horas antes, sin costo. Desde “Mis reservas” o respondiendo el recordatorio.', 'Up to two hours before, free. From “My bookings” or by replying to the reminder.')],
+          [L('¿Cómo funciona el club?', 'How does the club work?'), L('Cada reserva completada suma un sello a tu celular. Al llegar a seis, el siguiente corte es gratis.', 'Each completed booking adds a stamp to your mobile. At six, your next cut is free.')],
+          [L('¿Cortan a niños?', 'Do you cut kids’ hair?'), L('Sí, hasta los 12 años con el servicio de corte niño. Tenemos silla alta.', 'Yes, up to 12 years with the kids cut. We have a booster seat.')]
+        ]), true) +
+
+      DS.footer({ brand: 'Corte &amp; Navaja', mark: 'CN', tagline: L('Barbería clásica en Envigado. Toalla caliente, café y puntualidad.', 'Classic barbershop in Envigado. Hot towel, coffee and punctuality.'),
+        cols: [[L('Barbería', 'Shop'), [[L('Servicios', 'Services'), 'servicios'], [L('Barberos', 'Barbers'), 'barberos'], ['Club', 'club']]],
+               [L('Contacto', 'Contact'), [['WhatsApp', null, 'wa'], ['@corteynavaja', null, 'ig'], ['+57 604 000 0000', null, 'tel']]],
+               [L('Legal', 'Legal'), [[L('Tratamiento de datos', 'Data policy'), null], [L('Términos del club', 'Club terms'), null]]]] }, l);
+
+    DS.chrome(root, l);
+    var main = root.querySelector('#bbMain'), side = root.querySelector('#bbSide'), team = root.querySelector('#bbTeam'), club = root.querySelector('#bbClub');
+
+    function drawTeam() {
+      team.innerHTML = BARB.slice(1).map(function (b, i) {
+        var n = nextFor(i + 1);
+        return '<div class="ds-card"><div class="ds-avatar" style="width:60px;height:60px;font-size:22px;border-radius:0">' + b.ini + '</div><h3 class="ds-h3" style="margin-top:14px">' + b.n + '</h3><p class="ds-muted" style="margin-top:4px">' + b.d + '</p>' +
+          '<p class="ds-small" style="margin-top:14px"><span class="ds-dot" style="display:inline-block;margin-right:8px"></span>' + (n ? L('Próximo hueco: ', 'Next slot: ') + (DS.isToday(n.d) ? L('hoy', 'today') : DS.dayLong(n.d, l)) + ' · ' + DS.hm(n.t, l) : L('Agenda llena esta semana', 'Fully booked this week')) + '</p>' +
+          '<button class="ds-btn ds-btn--ghost ds-btn--sm" style="margin-top:14px" type="button" data-act="pick" data-v="' + (i + 1) + '">' + L('Reservar con ', 'Book with ') + b.n + '</button></div>';
+      }).join('');
+    }
+    function drawClub() {
+      var n = stamps(), c = n % 7;
+      club.innerHTML = '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center"><div><strong>' + L('Tu tarjeta', 'Your card') + '</strong><p class="ds-muted ds-small">' + (c >= 6 ? L('¡Tu próximo corte es gratis!', 'Your next cut is free!') : L('Te faltan ', '') + (6 - c) + L(' cortes para el gratis.', ' more cuts to a free one.')) + '</p></div>' +
+        '<div class="ds-loyal" aria-label="' + c + ' / 6">' + [1, 2, 3, 4, 5, 6].map(function (k) { return '<i class="' + (k <= c ? 'on' : '') + '">' + (k <= c ? '✓' : k) + '</i>'; }).join('') + '<i class="' + (c >= 6 ? 'on' : '') + '" style="border-style:dashed">' + L('7', '7') + '</i></div></div>' +
+        '<p class="ds-hint" style="margin-top:14px">' + L('Demo: la tarjeta empieza con 2 sellos y suma uno por cada reserva que confirmes aquí.', 'Demo: the card starts with 2 stamps and adds one for each booking you confirm here.') + '</p>';
+    }
+
+    function drawMain() {
+      if (S.done) {
+        main.innerHTML = '<div class="ds-done"><div class="ds-okmark" aria-hidden="true">✓</div><h3 class="ds-step-h">' + L('Silla reservada', 'Chair booked') + '</h3>' +
+          '<p><strong>' + esc(S.done.when) + '</strong><br>' + esc(S.done.detail) + '</p><span class="code">' + S.done.code + '</span>' +
+          '<p class="ds-muted" style="margin-top:14px">' + L('Te llega un recordatorio por WhatsApp una hora antes. Sumaste un sello al Club Navaja.', 'You’ll get a WhatsApp reminder an hour before. You earned a Club Navaja stamp.') + '</p>' +
+          '<div class="ds-nav-row"><button class="ds-btn ds-btn--ghost" type="button" data-act="again">' + L('Hacer otra reserva', 'Make another booking') + '</button><a class="ds-btn" href="#ds-club" data-go="club">' + L('Ver mi tarjeta', 'See my card') + '</a></div></div>';
+        return;
+      }
+      var d = DAYS[S.d], list = slots(d), free = 0;
+      var slotHtml = list.map(function (t, i) { var ok = dur() > 0 && freeBarber(d, i, S.b) > 0; if (ok) free++; return '<button class="ds-slot" type="button" data-act="time" data-v="' + i + '" aria-pressed="' + (S.t === i) + '"' + (ok ? '' : ' disabled aria-label="' + DS.hm(t, l) + ' ' + L('no disponible', 'unavailable') + '"') + '>' + DS.hm(t, l) + '</button>'; }).join('');
+      main.innerHTML =
+        '<h3 class="ds-step-h">1 · ' + L('¿Qué te hacemos?', 'What are we doing?') + '</h3><div class="ds-choices ds-choices--2">' + SERV.map(function (s) {
+          return '<button class="ds-choice" type="button" data-act="sv" data-v="' + s.id + '" aria-pressed="' + !!S.sv[s.id] + '"><span class="ds-check">✓</span><span class="txt"><strong>' + s.n + '</strong><small>' + s.min + ' min</small></span><span class="p">' + money(s.p) + '</span></button>';
+        }).join('') + '</div>' +
+        '<h3 class="ds-step-h" style="margin-top:26px">2 · ' + L('¿Con quién?', 'With whom?') + '</h3><div class="ds-choices ds-choices--2">' + BARB.map(function (b, i) {
+          return '<button class="ds-choice" type="button" data-act="barber" data-v="' + i + '" aria-pressed="' + (S.b === i) + '"><span class="ds-avatar" style="border-radius:0">' + b.ini + '</span><span class="txt"><strong>' + b.n + '</strong><small>' + b.d + '</small></span></button>';
+        }).join('') + '</div>' +
+        '<h3 class="ds-step-h" style="margin-top:26px">3 · ' + L('¿Cuándo?', 'When?') + '</h3>' + DS.daysStrip(DAYS, S.d, l, 'day') +
+        '<p class="ds-hint" style="margin-top:12px">' + (dur() ? free + L(' horas donde caben tus ', ' times that fit your ') + dur() + ' min' : L('Elige al menos un servicio.', 'Pick at least one service.')) + '</p>' +
+        '<div class="ds-slots">' + slotHtml + '</div>';
+    }
+    function drawSide() {
+      var ready = S.t !== null && dur() > 0 && freeBarber(DAYS[S.d], S.t, S.b) > 0, who = ready ? freeBarber(DAYS[S.d], S.t, S.b) : S.b, res = mine();
+      side.innerHTML = (S.done ? '' :
+        '<div class="ds-sum"><h3 class="ds-step-h" style="font-size:1rem">' + L('Tu reserva', 'Your booking') + '</h3><dl>' +
+        SERV.filter(function (s) { return S.sv[s.id]; }).map(function (s) { return '<dt>' + s.n + '</dt><dd class="ds-mono">' + money(s.p) + '</dd>'; }).join('') +
+        '<dt>' + L('Duración', 'Duration') + '</dt><dd>' + dur() + ' min</dd><dt>' + L('Barbero', 'Barber') + '</dt><dd>' + (who > 0 ? BARB[who].n : BARB[0].n) + '</dd>' +
+        '<dt>' + L('Cuándo', 'When') + '</dt><dd>' + (ready ? DS.dayLong(DAYS[S.d], l) + ' · ' + DS.hm(slots(DAYS[S.d])[S.t], l) : '—') + '</dd></dl>' +
+        '<div class="total"><span>Total</span><span>' + money(price()) + '</span></div></div>' +
+        '<div class="ds-form" style="margin-top:16px">' + DS.field('bbName', L('Nombre', 'Name'), { auto: 'name', value: S.name }) + DS.field('bbPhone', L('Celular (tu tarjeta del club)', 'Mobile (your club card)'), { type: 'tel', auto: 'tel', mode: 'tel', ph: '300 123 4567', value: S.phone }) + '</div>' +
+        '<button class="ds-btn ds-btn--block" style="margin-top:16px" type="button" data-act="confirm"' + (ready ? '' : ' disabled') + '>' + (ready ? L('Reservar silla', 'Book the chair') : L('Elige servicio y hora', 'Pick service and time')) + '</button>' +
+        '<p class="ds-hint" style="margin-top:10px">' + L('Cancelación gratis hasta 2 horas antes.', 'Free cancellation up to 2 hours before.') + '</p>') +
+        '<div style="margin-top:22px"><h3 class="ds-step-h" style="font-size:1rem">' + L('Mis reservas', 'My bookings') + ' (' + res.length + ')</h3>' +
+        (res.length ? '<ul class="ds-list">' + res.map(function (r, i) { return '<li><span><strong>' + esc(r.when) + '</strong><br><span class="ds-muted">' + esc(r.detail) + '</span></span><button class="ds-btn ds-btn--ghost ds-btn--sm" type="button" data-act="cancel" data-v="' + i + '">' + L('Cancelar', 'Cancel') + '</button></li>'; }).join('') + '</ul>'
+                    : '<p class="ds-hint">' + L('Aquí aparecen tus reservas, guardadas en este navegador.', 'Your bookings appear here, saved in this browser.') + '</p>') + '</div>';
+    }
+    function draw() { drawMain(); drawSide(); }
+    function keepTime() { if (S.t !== null && (dur() === 0 || freeBarber(DAYS[S.d], S.t, S.b) < 0)) S.t = null; }
+
+    DS.actions(root, function (act, v) {
+      var i;
+      if (act === 'sv') { if (!SERV.some(function (x) { return x.id === v; })) return; if (S.sv[v]) delete S.sv[v]; else S.sv[v] = true; keepTime(); return draw(); }
+      if (act === 'barber') { if ((i = DS.idx(v, BARB.length)) === null) return; S.b = i; keepTime(); return draw(); }
+      if (act === 'pick') { if ((i = DS.idx(v, BARB.length)) === null) return; S.b = i; S.done = null; keepTime(); draw(); return DS.go(root, 'reservar'); }
+      if (act === 'day') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.d = i; S.t = null; return draw(); }
+      if (act === 'time') { if ((i = DS.idx(v, slots(DAYS[S.d]).length)) === null || dur() === 0 || freeBarber(DAYS[S.d], i, S.b) < 0) return; S.t = i; return draw(); }
+      if (act === 'confirm') {
+        if (S.done || S.t === null || dur() === 0 || freeBarber(DAYS[S.d], S.t, S.b) < 0) return;
+        var a = DS.ok.name(S.name), b = DS.ok.phone(S.phone);
+        DS.setErr(side, 'bbName', a ? '' : L('Escribe tu nombre.', 'Enter your name.'));
+        DS.setErr(side, 'bbPhone', b ? '' : L('Celular de 10 dígitos que empiece por 3.', '10-digit mobile starting with 3.'));
+        if (!(a && b)) { var bad = side.querySelector('[aria-invalid="true"]'); if (bad) bad.focus(); return; }
+        var who = freeBarber(DAYS[S.d], S.t, S.b), names = SERV.filter(function (x) { return S.sv[x.id]; }).map(function (x) { return x.n; }).join(' + ');
+        S.done = { code: DS.code('CN'), when: DS.dayLong(DAYS[S.d], l) + ' · ' + DS.hm(slots(DAYS[S.d])[S.t], l), detail: names + ' · ' + BARB[who].n + ' · ' + money(price()) };
+        var r = mine(); r.unshift(S.done); db.set('reservas', r.slice(0, 6)); db.set('sellos', stamps() + 1);
+        DS.toast(root, L('Silla reservada · ', 'Chair booked · ') + S.done.code);
+        draw(); drawClub(); drawTeam(); return;
+      }
+      if (act === 'again') { S.done = null; S.t = null; return draw(); }
+      if (act === 'cancel') {
+        var ls = mine(); if ((i = DS.idx(v, ls.length)) === null) return;
+        var c = ls.splice(i, 1)[0]; db.set('reservas', ls);
+        DS.toast(root, L('Reserva cancelada · ', 'Booking cancelled · ') + (c && c.code ? c.code : ''));
+        return drawSide();
+      }
+    });
+    root.addEventListener('input', function (e) {
+      if (e.target.id === 'bbName') S.name = e.target.value;
+      if (e.target.id === 'bbPhone') S.phone = e.target.value;
+      if (e.target.getAttribute('aria-invalid') === 'true') DS.setErr(side, e.target.id, '');
+    });
+
+    draw(); drawTeam(); drawClub();
+    var tick = setInterval(function () { var st = root.querySelector('[data-status]'), s = DS.status(HOURS, l); if (st) st.innerHTML = '<span class="ds-dot' + (s.open ? '' : ' ds-dot--off') + '"></span><span>' + s.text + '</span>'; }, 60000);
+    return function () { clearInterval(tick); };
+  }
+};

@@ -1,0 +1,35 @@
+---
+/* Tarjeta de sector: foto real (800 px con la grande en srcset) o su dibujo, y enlace a la demo. */
+import { T } from '../data/content';
+import { IMG, IMG_SRCSET } from '../data/images.js';
+import { type Lang, type Sector, href } from '../lib/routes';
+
+interface Props {
+  lang: Lang;
+  sector: Sector;
+}
+
+const { lang, sector: s } = Astro.props;
+const c = s[lang];
+const photos: Record<string, string> = IMG;
+const sets: Record<string, string> = IMG_SRCSET;
+const src = s.img ? photos[s.img] : undefined;
+const srcset = s.img ? sets[s.img] : undefined;
+---
+
+<article class="card" data-rv="card" data-sector={s.id} style="--y:32px">
+  <div class="shot">{
+    src ? (
+      <img src={srcset ? srcset.split(' ')[0] : src} srcset={srcset} sizes={srcset ? '(min-width: 768px) 50vw, 100vw' : undefined} alt="" decoding="async" loading="lazy" />
+    ) : (
+      <Fragment set:html={s.svg} />
+    )
+  }</div>
+  <p class="sector">{c.sector}</p>
+  <h3>{c.title}</h3>
+  <p class="card-copy">{c.copy}</p>
+  <div class="card-meta">
+    <div class="tags">{s.tags.map((g) => <span class="tag">{g}</span>)}</div>
+    <a class="link-mono" href={href(lang, 'demo', s.id)}>{T[lang].demoLink} <span class="arw" aria-hidden="true">→</span></a>
+  </div>
+</article>

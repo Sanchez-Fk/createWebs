@@ -1,2 +1,18 @@
-# Ajustes personales de Claude Code en cada máquina
+# dependencias y resultados de build
+node_modules/
+dist/
+.astro/
+.vercel/
+
+# variables de entorno locales
+.env
+.env.*
+!.env.example
+
+# sistema y editores
+.DS_Store
+Thumbs.db
+*.log
+
+# ajustes personales de Claude Code en cada máquina
 .claude/settings.local.json

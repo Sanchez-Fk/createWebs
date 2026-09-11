@@ -1,0 +1,29 @@
+---
+/* Las cuatro páginas del portafolio en los dos idiomas:
+   /es/ /es/proyectos/ /es/servicios/ /es/contacto/
+   /en/ /en/work/      /en/services/  /en/contact/ */
+import type { GetStaticPaths } from 'astro';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import Contact from '../../views/Contact.astro';
+import Home from '../../views/Home.astro';
+import Services from '../../views/Services.astro';
+import Work from '../../views/Work.astro';
+import { ROUTES } from '../../data/content';
+import { LANGS, PAGE_KEYS, type Lang, type PageKey } from '../../lib/routes';
+
+export const getStaticPaths = (() =>
+  LANGS.flatMap((lang) =>
+    PAGE_KEYS.map((page) => ({
+      params: { lang, slug: ROUTES[lang][page] || undefined },
+      props: { page },
+    })),
+  )) satisfies GetStaticPaths;
+
+const lang = Astro.params.lang as Lang;
+const page = Astro.props.page as PageKey;
+const View = { home: Home, work: Work, services: Services, contact: Contact }[page];
+---
+
+<SiteLayout lang={lang} page={page}>
+  <View lang={lang} />
+</SiteLayout>

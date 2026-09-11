@@ -1,0 +1,85 @@
+/* ===========================================================================
+   MOVIMIENTO PREMIUM — todo cuelga de .m (movimiento activo en el stage).
+   El prototipo lleva .m siempre: el movimiento está activo en todo momento.
+   Curvas propias: --ease (entradas) y --ease-slow (asentamientos largos).
+   =========================================================================== */
+
+/* barra de progreso de lectura */
+.sprog{ position:absolute; left:0; right:0; top:0; height:2px; z-index:40; transform-origin:0 50%; transform:scaleX(0); background:var(--accent); pointer-events:none; }
+.stage:not(.m) .sprog{ display:none; }
+
+/* titulares: palabra por palabra desde una máscara */
+.m .rv-words .w{ display:inline-block; overflow:hidden; vertical-align:top; padding-bottom:.14em; margin-bottom:-.14em; }
+.m .rv-words .w > span{ display:inline-block; transition:transform 1s var(--ease-slow), opacity .8s var(--ease); transition-delay:calc(var(--d, 0ms) + var(--i, 0) * 42ms); }
+.m .rv-words.is-pre .w > span{ transform:translateY(112%); opacity:0; }
+
+/* etiquetas mono: se decodifican (el texto lo anima JS) */
+.m .rv-scr{ transition:opacity .35s var(--ease); }
+.m .rv-scr.is-pre{ opacity:0; }
+
+/* bloques: suben y enfocan */
+.m .rv-soft{ transition:opacity .9s var(--ease), transform 1s var(--ease-slow), filter .9s var(--ease); transition-delay:var(--d, 0ms); }
+.m .rv-soft.is-pre{ opacity:0; transform:translate3d(0, 26px, 0); filter:blur(6px); }
+
+/* filetes que se dibujan de izquierda a derecha */
+.m .rv-line{ position:relative; border-bottom-color:transparent !important; }
+.m .rv-line::after{ content:""; position:absolute; left:0; right:0; bottom:-1px; height:1px; background:var(--line); transform-origin:0 50%; transition:transform 1.4s var(--ease-slow); }
+.m .rv-line.is-pre::after{ transform:scaleX(0); }
+
+/* tarjetas de demos: cada oficio entra con su propia coreografía, lenta y suave.
+   Primero llega el marco, luego se descubre la captura y al final el texto, línea a línea. */
+.m .rv-card{ transition:opacity 1.1s var(--ease) var(--d, 0ms), transform 1.5s var(--ease-slow) var(--d, 0ms); }
+.m .rv-card.is-pre{ opacity:0; transform:translate3d(0, 48px, 0); }
+.m .rv-card .shot,
+.m .rv-clip{ clip-path:inset(0 0 0 0); transition:clip-path 1.6s var(--ease-slow) calc(var(--d, 0ms) + 120ms), border-color .4s var(--ease); }
+.m .rv-card.is-pre .shot,
+.m .rv-clip.is-pre{ clip-path:inset(100% 0 0 0); }
+.m .rv-card > :not(.shot){ transition:opacity .9s var(--ease), transform 1.1s var(--ease-slow); transition-delay:calc(var(--d, 0ms) + 540ms + var(--k, 0) * 110ms); }
+.m .rv-card.is-pre > :not(.shot){ opacity:0; transform:translate3d(0, 20px, 0); }
+.card > .sector{ --k:0; } .card > h3{ --k:1; } .card > .card-copy{ --k:2; } .card > .card-meta{ --k:3; }
+
+/* dental · limpio: sube y la captura se descubre de abajo arriba */
+.m .rv-card[data-sector="dental"].is-pre{ opacity:0; transform:translate3d(0, 64px, 0); }
+.m .rv-card[data-sector="dental"].is-pre .shot{ clip-path:inset(100% 0 0 0); }
+/* restaurante · cortina: llega desde la derecha y la foto se abre hacia la izquierda */
+.m .rv-card[data-sector="restaurante"].is-pre{ opacity:0; transform:translate3d(72px, 0, 0); }
+.m .rv-card[data-sector="restaurante"].is-pre .shot{ clip-path:inset(0 0 0 100%); }
+/* barbería · navaja: la captura se abre desde la esquina en diagonal */
+.m .rv-card[data-sector="barberia"] .shot{ clip-path:polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+.m .rv-card[data-sector="barberia"].is-pre{ opacity:0; transform:translate3d(-40px, 40px, 0); }
+.m .rv-card[data-sector="barberia"].is-pre .shot{ clip-path:polygon(0 0, 0 0, 0 0, 0 0); }
+/* gimnasio · impulso: crece desde el centro con un asentamiento firme */
+.m .rv-card[data-sector="gimnasio"]{ transition:opacity 1s var(--ease) var(--d, 0ms), transform 1.3s cubic-bezier(.2,.9,.25,1) var(--d, 0ms); }
+.m .rv-card[data-sector="gimnasio"].is-pre{ opacity:0; transform:scale(.9); }
+.m .rv-card[data-sector="gimnasio"].is-pre .shot{ clip-path:inset(50% 50% 50% 50%); }
+
+/* parallax de fotos: translate va con el scroll (sin transición), scale con transición */
+.m .shot img{ transform:none; translate:0 var(--py, 0px); scale:var(--sc, 1.12); transition:scale 1.5s var(--ease-slow); will-change:translate; }
+/* portadas de las demos: solo el zoom de asentamiento; nada ligado al scroll que las haga saltar */
+.m .ds-hero__img img,
+.m .ds-cover__img img{ scale:var(--sc, 1); transition:scale 1.4s var(--ease-slow); }
+.m .card:hover .shot img,
+.m .card:focus-within .shot img{ transform:none; --sc:1.16; }
+.m .rv-card.is-pre .shot img,
+.m .rv-clip.is-pre img{ --sc:1.34; }
+
+/* filas de servicios y pasos: entran desde la izquierda, escalonadas */
+.m .rv-row{ transition:opacity .8s var(--ease) var(--d, 0ms), transform .95s var(--ease-slow) var(--d, 0ms); }
+.m .rv-row.is-pre{ opacity:0; transform:translate3d(-28px, 0, 0); }
+
+/* CTA final: el botón emite dos pulsos al aparecer */
+.m .rv-pulse{ position:relative; }
+.m .rv-pulse::after{ content:""; position:absolute; inset:-1px; border:1px solid var(--accent); border-radius:inherit; opacity:0; pointer-events:none; }
+.m .rv-pulse.go::after{ animation:jms-ring 1.8s var(--ease-slow) 2; }
+@keyframes jms-ring{ 0%{ opacity:.9; transform:scale(1); } 100%{ opacity:0; transform:scale(1.22, 1.9); } }
+
+/* botones magnéticos: siguen al cursor unos píxeles y vuelven con muelle */
+.m .magnet{ transition:transform .7s var(--ease-slow), background-color .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease), filter .2s var(--ease); will-change:transform; }
+.m .magnet.is-mag{ transition:transform .16s var(--ease), background-color .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease), filter .2s var(--ease); }
+
+/* cifras con contador */
+.stats{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1px; margin-top:56px; background:var(--line); border:1px solid var(--line); }
+.stat{ display:flex; flex-direction:column; gap:8px; padding:24px; background:var(--bg); }
+.stat b{ font-family:var(--sans); font-weight:700; font-size:clamp(2.2rem, 1.5rem + 2.6cqi, 3.75rem); line-height:1; letter-spacing:-.045em; color:var(--fg); font-variant-numeric:tabular-nums; }
+.stat span{ font-size:14px; line-height:1.45; color:var(--fg-2); }
+@container (min-width:768px){ .stats{ grid-template-columns:repeat(4, minmax(0, 1fr)); } .stat{ padding:32px 28px; } }

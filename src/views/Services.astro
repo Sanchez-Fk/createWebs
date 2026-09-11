@@ -1,0 +1,38 @@
+---
+import { STEPS, T } from '../data/content';
+import type { Lang } from '../lib/routes';
+import ClosingBlock from '../components/ClosingBlock.astro';
+import Footer from '../components/Footer.astro';
+import ServiceList from '../components/ServiceList.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = T[lang];
+---
+
+<section class="page-head">
+  <div class="wrap" data-rv="hero"><span class="mono">{t.pSvcLabel}</span><h1 class="h-page">{t.pSvcH}</h1><p class="lede">{t.pSvcLede}</p></div>
+</section>
+
+<section class="sec" style="padding-top:0" aria-label={t.pSvcLabel}>
+  <div class="wrap"><ServiceList lang={lang} target="contact" /></div>
+</section>
+
+<section class="sec" aria-labelledby="h-proc">
+  <div class="wrap">
+    <div class="sec-head" style="border-bottom:0;padding-bottom:0"><h2 class="mono" id="h-proc" style="margin:0">{t.processLabel}</h2><p>{t.processNote}</p></div>
+    <ol class="steps">
+      {
+        STEPS[lang].map(([name, desc], i) => (
+          <li class="step" data-rv="row"><span class="num">0{i + 1}</span><h3>{name}</h3><p>{desc}</p></li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<ClosingBlock lang={lang} />
+<Footer lang={lang} page="services" />

@@ -1,0 +1,57 @@
+---
+/* Metadatos de cada página: título, descripción, canonical, hreflang,
+   Open Graph y datos estructurados en la portada. */
+import { SITE } from '../data/site';
+import { IMG } from '../data/images.js';
+import { LANGS, type Lang, type PageKey, href, pageDescription, pageTitle, sectorById } from '../lib/routes';
+
+interface Props {
+  lang: Lang;
+  page: PageKey | 'demo';
+  sector?: string;
+}
+
+const { lang, page, sector = '' } = Astro.props;
+const base = Astro.site ?? new URL('http://localhost:4321');
+const abs = (path: string) => new URL(path, base).href;
+
+const title = pageTitle(lang, page, sector);
+const description = pageDescription(lang, page, sector);
+const canonical = abs(href(lang, page, sector));
+const photos: Record<string, string> = IMG;
+const image = page === 'demo' ? abs(photos[sectorById(sector).img] ?? '/favicon.svg') : undefined;
+
+const person =
+  page === 'home'
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: SITE.fullName,
+        jobTitle: lang === 'es' ? 'Desarrollador web' : 'Web developer',
+        url: canonical,
+        knowsLanguage: ['es', 'en'],
+        address: { '@type': 'PostalAddress', addressLocality: SITE.city, addressCountry: SITE.country },
+      }
+    : null;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{LANGS.map((l) => <link rel="alternate" hreflang={l} href={abs(href(l, page, sector))} />)}
+<link rel="alternate" hreflang="x-default" href={abs(href('es', page, sector))} />
+<meta name="theme-color" content="#0F0F0F" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="sitemap" href="/sitemap.xml" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:locale" content={lang === 'es' ? 'es_CO' : 'en_US'} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+{image && <meta property="og:image" content={image} />}
+<meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
+{person && <script is:inline type="application/ld+json" set:html={JSON.stringify(person)} />}

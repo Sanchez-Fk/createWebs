@@ -1,0 +1,23 @@
+---
+import { T } from '../data/content';
+import { LINKS, SITE } from '../data/site';
+import { type Lang, type PageKey, PAGE_KEYS, href } from '../lib/routes';
+import LangSwitch from './LangSwitch.astro';
+
+interface Props {
+  lang: Lang;
+  page: PageKey;
+}
+
+const { lang, page } = Astro.props;
+const t = T[lang];
+---
+
+<div class="menu-top"><span class="wordmark">{SITE.name}</span><button class="menu-btn" id="menuClose" type="button" style="display:block">{t.close}</button></div>
+<nav class="menu-links" aria-label={t.navLabel}>
+  {PAGE_KEYS.map((k) => <a href={href(lang, k)} aria-current={page === k ? 'page' : undefined}>{t[k]}<span>→</span></a>)}
+</nav>
+<div class="menu-foot">
+  <a class="btn btn-primary" href={LINKS.whatsapp}>{t.wa}</a>
+  <LangSwitch lang={lang} es={href('es', page)} en={href('en', page)} />
+</div>

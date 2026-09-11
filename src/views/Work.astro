@@ -1,0 +1,27 @@
+---
+import { SECTORS, T } from '../data/content';
+import type { Lang } from '../lib/routes';
+import ClosingBlock from '../components/ClosingBlock.astro';
+import Footer from '../components/Footer.astro';
+import WorkCard from '../components/WorkCard.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = T[lang];
+---
+
+<section class="page-head">
+  <div class="wrap" data-rv="hero"><span class="mono">{t.pWorkLabel}</span><h1 class="h-page">{t.pWorkH}</h1><p class="lede">{t.pWorkLede}</p></div>
+</section>
+
+<section class="sec" style="padding-top:0" aria-label={t.pWorkLabel}>
+  <div class="wrap">
+    <div class="work-grid">{SECTORS.map((s) => <WorkCard lang={lang} sector={s} />)}</div>
+  </div>
+</section>
+
+<ClosingBlock lang={lang} />
+<Footer lang={lang} page="work" />

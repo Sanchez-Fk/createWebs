@@ -1,0 +1,16 @@
+---
+/* Selector ES / EN que enlaza con la misma página en el otro idioma. */
+import type { Lang } from '../lib/routes';
+
+interface Props {
+  lang: Lang;
+  es: string;
+  en: string;
+  as?: 'div' | 'span';
+}
+
+const { lang, es, en, as = 'div' } = Astro.props;
+const Tag = as;
+---
+
+<Tag class="lang"><a href={es} aria-current={lang === 'es' ? 'true' : undefined}>ES</a><span>/</span><a href={en} aria-current={lang === 'en' ? 'true' : undefined}>EN</a></Tag>

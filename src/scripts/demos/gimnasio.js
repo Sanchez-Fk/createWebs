@@ -1,0 +1,228 @@
+import { DS } from './kit.js';
+import { IMG } from '../../data/images.js';
+
+/* ===========================================================================
+   DEMO 04 · FORJA STUDIO — horario vivo, cupos, planes y clase de prueba
+   =========================================================================== */
+export const gimnasio = {
+  mount: function (root, l) {
+    var L = DS.lang(l), money = DS.money, esc = DS.esc;
+    var db = DS.store('forja');
+
+    var TYPES = [
+      { id: 'fuerza', img: 'gymStrength', n: L('Fuerza', 'Strength'), alt: L('Mancuernas en un estante', 'Dumbbells on a rack'), min: 50 },
+      { id: 'spin', img: 'gymSpin', n: 'Spinning', alt: L('Fila de bicicletas de spinning', 'Row of spin bikes'), min: 45 },
+      { id: 'func', img: 'gymFunctional', n: L('Funcional', 'Functional'), alt: L('Saltos al cajón', 'Box jumps'), min: 50 },
+      { id: 'yoga', img: 'gymYoga', n: 'Yoga', alt: L('Clase grupal de yoga', 'Group yoga class'), min: 60 }
+    ];
+    var COACH = ['Carla R.', 'Luis M.', 'Sara P.'];
+    var LEVEL = [L('Básico', 'Beginner'), L('Intermedio', 'Intermediate'), L('Avanzado', 'Advanced')];
+    var HOURS = [['08:00', '13:00'], ['05:30', '22:00'], ['05:30', '22:00'], ['05:30', '22:00'], ['05:30', '22:00'], ['05:30', '22:00'], ['07:00', '18:00']];
+    var DAYS = DS.days(7);
+    var PLANS = [
+      { id: 'basico', n: L('Básico', 'Basic'), p: 89000, f: [L('Sala de pesas y cardio', 'Weights and cardio floor'), L('Horario completo', 'All opening hours'), L('Valoración inicial', 'Initial assessment')] },
+      { id: 'completo', n: L('Completo', 'Complete'), p: 129000, hot: true, f: [L('Todo lo del Básico', 'Everything in Basic'), L('Clases ilimitadas con reserva', 'Unlimited classes with booking'), L('Plan de entrenamiento mensual', 'Monthly training plan')] },
+      { id: 'duo', n: 'Duo', p: 219000, f: [L('Plan Completo para 2 personas', 'Complete plan for 2 people'), L('Reservas compartidas', 'Shared bookings'), L('Congelación de 15 días al año', '15-day freeze per year')] }
+    ];
+    var TERMS = [['1', L('Mensual', 'Monthly'), 1, 0], ['3', L('Trimestral', 'Quarterly'), 3, 0.1], ['12', L('Anual', 'Yearly'), 12, 0.2]];
+    var GOALS = [['peso', L('Bajar de peso', 'Lose weight')], ['fuerza', L('Ganar fuerza', 'Get stronger')], ['movilidad', L('Movilidad y postura', 'Mobility & posture')], ['volver', L('Volver a entrenar', 'Get back into training')]];
+
+    function classesFor(di) {
+      var d = DAYS[di], wd = d.getDay();
+      var times = wd === 0 ? ['08:30', '10:00', '11:30'] : wd === 6 ? ['07:30', '09:00', '10:30', '12:00'] : ['05:30', '06:30', '07:30', '12:30', '17:30', '18:30', '19:30'];
+      return times.map(function (t, i) {
+        var ty = TYPES[(i + wd) % 4], cap = ty.id === 'spin' ? 16 : ty.id === 'yoga' ? 14 : 18;
+        return { key: d.toDateString() + '|' + t, di: di, t: t, ty: ty, coach: COACH[(i + wd) % 3], lvl: LEVEL[(i * 2 + wd) % 3], cap: cap, taken: Math.min(cap, Math.floor(DS.seeded(d.getDate() + 3, i) * (cap + 4))) };
+      });
+    }
+    function when(c) { var p = c.t.split(':'), x = new Date(DAYS[c.di]); x.setHours(+p[0], +p[1], 0, 0); return x; }
+    function mine() { return DS.obj(db.get('clases', {})); }
+    function left(c) { return c.cap - c.taken - (mine()[c.key] ? 1 : 0); }
+    function nextClass() {
+      var now = Date.now();
+      for (var di = 0; di < DAYS.length; di++) { var cs = classesFor(di); for (var i = 0; i < cs.length; i++) if (when(cs[i]).getTime() > now + 60000) return cs[i]; }
+      return null;
+    }
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+    var S = { f: 'all', d: 0, term: '1', trial: { name: '', phone: '', goal: 'fuerza', type: 'func', d: 1, plan: '' }, trialDone: null };
+
+    root.className = 'dm ds ds-gym';
+    root.innerHTML =
+      DS.header({ brand: 'Forja', mark: 'F', ctaTo: 'prueba', cta: L('Clase gratis', 'Free class'), nav: [['horario', L('Horario', 'Timetable')], ['planes', L('Planes', 'Plans')], ['prueba', L('Clase de prueba', 'Trial class')], ['galeria', L('Instalaciones', 'Facilities')], ['ubicacion', L('Ubicación', 'Location')]] }) +
+
+      '<section class="ds-cover"><div class="ds-cover__img" style="position:relative">' + DS.photo('gymHero', L('Sala de entrenamiento con bancos y pesas', 'Training floor with benches and weights')) + '</div>' +
+        '<div class="ds-cover__panel"><span class="ds-eyebrow">' + L('Fuerza y funcional · Belén, Medellín', 'Strength & functional · Belén, Medellín') + '</span>' +
+        '<h1 class="ds-h1" style="margin-top:12px">' + L('Entrena a tu hora. Reserva en un toque.', 'Train on your time. Book in one tap.') + '</h1>' +
+        '<div style="margin-top:18px"><span class="ds-muted ds-small">' + L('Próxima clase en', 'Next class in') + '</span><div class="ds-count" id="fjCount" aria-hidden="true">00:00:00</div><p class="ds-small" id="fjNext" style="margin-top:6px"></p></div>' +
+        '<div class="ds-actions"><a class="ds-btn" href="#ds-horario" data-go="horario">' + L('Ver horario', 'See timetable') + '</a><a class="ds-btn ds-btn--ghost" href="#ds-prueba" data-go="prueba">' + L('Clase de prueba gratis', 'Free trial class') + '</a></div></div></section>' +
+
+      '<div style="height:clamp(24px,4cqi,56px)"></div>' +
+      DS.section('horario', L('Horario', 'Timetable'), L('Cupos en tiempo real.', 'Live spots.'), L('Reserva tu cupo y cancélalo hasta 2 horas antes. Máximo dos clases por día.', 'Book your spot and cancel up to 2 hours before. Two classes a day max.'),
+        '<div class="ds-grid ds-grid--4" id="fjTypes" style="margin-bottom:18px"></div>' +
+        '<div class="ds-book"><div class="ds-book__main"><div class="ds-tabs" role="tablist" id="fjDays"></div><ul class="ds-tt" id="fjList"></ul></div><aside class="ds-book__side" id="fjMine"></aside></div>', false) +
+
+      DS.section('planes', L('Planes', 'Plans'), L('Sin matrícula. Sin permanencia.', 'No joining fee. No lock-in.'), L('Precios por mes en pesos colombianos. Pagas con tarjeta, PSE o Nequi.', 'Monthly prices in Colombian pesos. Pay by card, PSE or Nequi.'),
+        '<div class="ds-seg" role="group" id="fjTerm" style="margin-bottom:18px"></div><div class="ds-plans" id="fjPlans"></div>', true) +
+
+      DS.section('prueba', L('Clase de prueba', 'Trial class'), L('Tu primera clase va por nuestra cuenta.', 'Your first class is on us.'), L('Te asignamos un entrenador para la valoración y te guardamos cupo en la clase que elijas.', 'We assign a coach for your assessment and hold a spot in the class you choose.'),
+        '<div class="ds-book"><div class="ds-book__main" id="fjTrial"></div><aside class="ds-book__side" id="fjTrialSide"></aside></div>', false) +
+
+      DS.section('galeria', L('Instalaciones', 'Facilities'), L('600 m² para entrenar sin filas.', '600 m² to train without queues.'), '',
+        DS.gallery([['gymHero', L('Sala principal', 'Main floor'), L('Sala principal', 'Main floor')], ['gymStrength', L('Zona de pesas', 'Weights area'), L('Mancuernas', 'Dumbbells')], ['gymSpin', 'Spinning', 'Spinning'], ['gymFunctional', L('Funcional', 'Functional'), L('Funcional', 'Functional')], ['gymYoga', 'Yoga', 'Yoga']]), true) +
+
+      DS.section('opiniones', L('Opiniones', 'Reviews'), L('Constancia, no promesas.', 'Consistency, not promises.'), L('Reseñas de ejemplo para esta demo.', 'Sample reviews for this demo.'),
+        DS.reviews([
+          [5, L('Reservo el spinning de las 5:30 desde la cama y nunca me he quedado sin bici.', 'I book the 5:30 spin class from bed and have never missed a bike.'), 'Valentina', 'Belén'],
+          [5, L('Llegué a la clase de prueba sin saber nada y Carla me armó un plan desde el primer día.', 'I came to the trial class knowing nothing and Carla built me a plan from day one.'), 'Andrés', 'La Mota'],
+          [4, L('El plan Duo con mi pareja nos salió mejor que dos mensualidades. Sin letra pequeña.', 'The Duo plan with my partner cost less than two memberships. No fine print.'), 'Natalia', 'Laureles']
+        ]), false) +
+
+      DS.section('ubicacion', L('Horario y ubicación', 'Hours & location'), L('A dos cuadras de la 80.', 'Two blocks from Carrera 80.'), '',
+        DS.visit({ hours: HOURS, address: 'Cra. 76 #32-15', area: 'Belén, Medellín', note: L('Parqueadero para motos y bicicletas. Carros en convenio a media cuadra.', 'Motorbike and bicycle parking. Partner car park half a block away.') }, l), true) +
+
+      DS.section('faq', L('Preguntas frecuentes', 'FAQ'), L('Antes de empezar.', 'Before you start.'), '',
+        DS.faq([
+          [L('¿Necesito experiencia?', 'Do I need experience?'), L('No. Cada clase indica el nivel y los entrenadores adaptan los ejercicios. La clase de prueba incluye valoración.', 'No. Each class shows its level and coaches adapt the exercises. The trial class includes an assessment.')],
+          [L('¿Puedo congelar el plan?', 'Can I freeze my plan?'), L('Sí, hasta 15 días al año en planes trimestrales y anuales, avisando por WhatsApp.', 'Yes, up to 15 days a year on quarterly and yearly plans, by WhatsApp.')],
+          [L('¿Qué llevo a la clase de prueba?', 'What do I bring to the trial?'), L('Ropa cómoda, tenis, toalla y agua. Tenemos lockers con candado.', 'Comfortable clothes, trainers, a towel and water. We have lockers.')],
+          [L('¿Qué pasa si no voy a una clase reservada?', 'What if I miss a booked class?'), L('Si cancelas con 2 horas no pasa nada. Tres ausencias sin cancelar en un mes pausan las reservas una semana.', 'Cancel 2 hours before and nothing happens. Three no-shows in a month pause bookings for a week.')]
+        ]), false) +
+
+      DS.footer({ brand: 'Forja', mark: 'F', tagline: L('Gimnasio de fuerza y funcional en Belén. Sin matrícula ni permanencia.', 'Strength and functional gym in Belén. No joining fee, no lock-in.'),
+        cols: [[L('Gimnasio', 'Gym'), [[L('Horario', 'Timetable'), 'horario'], [L('Planes', 'Plans'), 'planes'], [L('Clase de prueba', 'Trial class'), 'prueba']]],
+               [L('Contacto', 'Contact'), [['WhatsApp', null, 'wa'], ['@forjastudio', null, 'ig'], ['hola@forja.demo', null, 'mail']]],
+               [L('Legal', 'Legal'), [[L('Reglamento', 'House rules'), null], [L('Tratamiento de datos', 'Data policy'), null]]]] }, l);
+
+    DS.chrome(root, l);
+    var typesEl = root.querySelector('#fjTypes'), daysEl = root.querySelector('#fjDays'), listEl = root.querySelector('#fjList'), mineEl = root.querySelector('#fjMine'),
+        termEl = root.querySelector('#fjTerm'), plansEl = root.querySelector('#fjPlans'), trialEl = root.querySelector('#fjTrial'), trialSide = root.querySelector('#fjTrialSide'),
+        countEl = root.querySelector('#fjCount'), nextEl = root.querySelector('#fjNext');
+
+    function drawTypes() {
+      typesEl.innerHTML = [{ id: 'all', n: L('Todas', 'All') }].concat(TYPES).map(function (t) {
+        var pic = t.img && IMG[t.img] ? '<span style="display:block;height:88px;margin:-14px -16px 12px;overflow:hidden;border-radius:var(--c-rad) var(--c-rad) 0 0"><img src="' + IMG[t.img] + '" alt="' + esc(t.alt) + '" style="width:100%;height:100%;object-fit:cover"></span>' : '';
+        return '<button class="ds-choice" type="button" data-act="type" data-v="' + t.id + '" aria-pressed="' + (S.f === t.id) + '" style="flex-direction:column;align-items:stretch;overflow:hidden' + (t.id === 'all' ? ';justify-content:flex-end;min-height:132px' : '') + '">' + pic + '<strong>' + t.n + '</strong>' + (t.min ? '<small>' + t.min + ' min</small>' : '<small>' + L('Todo el horario', 'Full timetable') + '</small>') + '</button>';
+      }).join('');
+      typesEl.style.gridTemplateColumns = '';
+    }
+    function drawDays() {
+      daysEl.innerHTML = DAYS.map(function (d, i) { return '<button class="ds-tab" type="button" role="tab" data-act="day" data-v="' + i + '" aria-selected="' + (S.d === i) + '">' + (DS.isToday(d) ? L('Hoy', 'Today') : DS.dayShort(d, l) + ' ' + d.getDate()) + '</button>'; }).join('');
+    }
+    function drawList() {
+      var m = mine(), cs = classesFor(S.d).filter(function (c) { return S.f === 'all' || c.ty.id === S.f; });
+      listEl.innerHTML = cs.length ? cs.map(function (c) {
+        var booked = !!m[c.key], n = left(c), gone = when(c).getTime() < Date.now(), pct = Math.round((c.cap - n) / c.cap * 100);
+        var btn = booked ? '<button class="ds-btn ds-btn--ghost ds-btn--sm" type="button" data-act="book" data-v="' + c.key + '">' + L('Cancelar', 'Cancel') + '</button>'
+          : '<button class="ds-btn ds-btn--sm" type="button" data-act="book" data-v="' + c.key + '"' + (n <= 0 || gone ? ' disabled' : '') + '>' + (gone ? L('Terminada', 'Finished') : n <= 0 ? L('Llena', 'Full') : L('Reservar', 'Book')) + '</button>';
+        return '<li' + (gone ? ' style="opacity:.45"' : '') + '><span class="t">' + DS.hm(c.t, l).replace(' ', ' ') + '</span>' +
+          '<div><strong>' + c.ty.n + '</strong> <span class="ds-muted ds-small">· ' + c.ty.min + ' min · ' + c.coach + ' · ' + c.lvl + '</span>' + (booked ? ' <span class="ds-tag" style="color:var(--c-acc-t);border-color:var(--c-acc-t)">' + L('Reservada', 'Booked') + '</span>' : '') + '</div>' +
+          '<div class="act"><span class="ds-cap"><b><i style="width:' + pct + '%"></i></b>' + (n <= 0 ? L('Sin cupos', 'No spots') : n === 1 ? L('Queda 1 cupo', '1 spot left') : L('Quedan ', '') + n + L(' cupos', ' spots left')) + '</span>' + btn + '</div></li>';
+      }).join('') : '<li><span></span><p class="ds-hint">' + L('No hay clases de ese tipo este día.', 'No classes of that type on this day.') + '</p></li>';
+    }
+    function drawMine() {
+      var m = mine(), keys = Object.keys(m).sort();
+      mineEl.innerHTML = '<h3 class="ds-step-h" style="font-size:1rem">' + L('Mis clases', 'My classes') + ' (' + keys.length + ')</h3>' +
+        (keys.length ? '<ul class="ds-list">' + keys.map(function (k) { return '<li><span><strong>' + esc(m[k].n) + '</strong><br><span class="ds-muted">' + esc(m[k].w) + '</span></span><button class="ds-btn ds-btn--ghost ds-btn--sm" type="button" data-act="book" data-v="' + esc(k) + '">' + L('Cancelar', 'Cancel') + '</button></li>'; }).join('') + '</ul>'
+          : '<p class="ds-hint">' + L('Reserva una clase y aparecerá aquí. Se guarda en este navegador.', 'Book a class and it shows up here. Saved in this browser.') + '</p>') +
+        '<div class="ds-card" style="margin-top:18px;padding:16px"><strong class="ds-small">' + L('Reglas de reserva', 'Booking rules') + '</strong><ul class="ds-list" style="margin-top:6px"><li class="ds-small">' + L('Hasta 2 clases por día', 'Up to 2 classes a day') + '</li><li class="ds-small">' + L('Cancela hasta 2 h antes', 'Cancel up to 2 h before') + '</li><li class="ds-small">' + L('Llega 5 minutos antes', 'Arrive 5 minutes early') + '</li></ul></div>';
+    }
+    function drawPlans() {
+      var term = TERMS.filter(function (t) { return t[0] === S.term; })[0];
+      termEl.innerHTML = TERMS.map(function (t) { return '<button type="button" data-act="term" data-v="' + t[0] + '" aria-pressed="' + (S.term === t[0]) + '">' + t[1] + (t[3] ? ' −' + Math.round(t[3] * 100) + '%' : '') + '</button>'; }).join('');
+      plansEl.innerHTML = PLANS.map(function (p) {
+        var month = Math.round(p.p * (1 - term[3]) / 100) * 100, total = month * term[2];
+        return '<div class="ds-card ds-plan' + (p.hot ? ' ds-plan--hot' : '') + '">' + (p.hot ? '<span class="ds-eyebrow">' + L('El más elegido', 'Most popular') + '</span>' : '<span class="ds-eyebrow" style="visibility:hidden">·</span>') +
+          '<h3 class="ds-h3">' + p.n + '</h3><div><span class="price">' + money(month) + '</span><span class="ds-muted ds-small"> / ' + L('mes', 'month') + '</span></div>' +
+          '<p class="ds-hint">' + (term[2] > 1 ? L('Pagas ', 'Billed ') + money(total) + L(' cada ', ' every ') + term[2] + L(' meses', ' months') : L('Pagas mes a mes', 'Billed monthly')) + '</p>' +
+          '<ul>' + p.f.map(function (f) { return '<li>' + f + '</li>'; }).join('') + '</ul>' +
+          '<button class="ds-btn' + (p.hot ? '' : ' ds-btn--ghost') + ' ds-btn--block" type="button" data-act="plan" data-v="' + p.id + '">' + L('Empezar con clase gratis', 'Start with a free class') + '</button></div>';
+      }).join('');
+    }
+    function drawTrial() {
+      var T = S.trial;
+      if (S.trialDone) {
+        trialEl.innerHTML = '<div class="ds-done"><div class="ds-okmark" aria-hidden="true">✓</div><h3 class="ds-step-h">' + L('Te esperamos, ', 'See you soon, ') + esc(T.name.trim().split(/\s+/)[0]) + '</h3>' +
+          '<p><strong>' + esc(S.trialDone.when) + '</strong><br>' + esc(S.trialDone.detail) + '</p><span class="code">' + S.trialDone.code + '</span>' +
+          '<p class="ds-hint" style="margin-top:14px">' + L('Mensaje que recibes por WhatsApp:', 'Message you receive on WhatsApp:') + '</p><pre class="ds-msg">' + esc(S.trialDone.msg) + '</pre>' +
+          '<div class="ds-nav-row"><button class="ds-btn ds-btn--ghost" type="button" data-act="newtrial">' + L('Agendar otra persona', 'Book for someone else') + '</button></div></div>';
+        trialSide.innerHTML = '<p class="ds-hint">' + L('Trae ropa cómoda, tenis, toalla y agua. La valoración dura 15 minutos antes de la clase.', 'Bring comfortable clothes, trainers, a towel and water. The assessment takes 15 minutes before class.') + '</p>';
+        return;
+      }
+      var cs = classesFor(T.d).filter(function (c) { return c.ty.id === T.type && when(c).getTime() > Date.now() + 3600000; });
+      trialEl.innerHTML =
+        '<h3 class="ds-step-h">' + L('¿Qué buscas?', 'What are you after?') + '</h3><div class="ds-choices ds-choices--2">' + GOALS.map(function (g) { return '<button class="ds-choice" type="button" data-act="goal" data-v="' + g[0] + '" aria-pressed="' + (T.goal === g[0]) + '"><span class="ds-check">✓</span><span class="txt"><strong>' + g[1] + '</strong></span></button>'; }).join('') + '</div>' +
+        '<h3 class="ds-step-h" style="margin-top:24px">' + L('Clase y día', 'Class & day') + '</h3><div class="ds-tabs">' + TYPES.map(function (t) { return '<button class="ds-tab" type="button" data-act="ttype" data-v="' + t.id + '" aria-selected="' + (T.type === t.id) + '">' + t.n + '</button>'; }).join('') + '</div>' +
+        '<div style="margin-top:14px">' + DS.daysStrip(DAYS, T.d, l, 'tday') + '</div>' +
+        '<p class="ds-hint" style="margin-top:12px">' + (cs.length ? cs.length + L(' horarios disponibles: ', ' times available: ') + cs.map(function (c) { return DS.hm(c.t, l); }).join(' · ') : L('No hay esa clase ese día. Prueba otro.', 'That class isn’t on that day. Try another.')) + '</p>';
+      trialSide.innerHTML = '<div class="ds-form">' +
+        DS.field('fjName', L('Nombre', 'Name'), { auto: 'name', value: T.name }) +
+        DS.field('fjPhone', L('Celular', 'Mobile'), { type: 'tel', auto: 'tel', mode: 'tel', ph: '300 123 4567', value: T.phone }) +
+        '<div class="ds-field"><label for="fjSlot">' + L('Hora', 'Time') + '</label><select id="fjSlot"' + (cs.length ? '' : ' disabled') + '>' + cs.map(function (c) { return '<option value="' + c.key + '">' + DS.hm(c.t, l) + ' · ' + c.coach + ' · ' + L('quedan ', '') + left(c) + L(' cupos', ' spots') + '</option>'; }).join('') + '</select></div>' +
+        (T.plan ? '<p class="ds-hint">' + L('Interés: plan ', 'Interested in: ') + esc(PLANS.filter(function (p) { return p.id === T.plan; })[0].n) + '</p>' : '') +
+        '</div><button class="ds-btn ds-btn--block" style="margin-top:16px" type="button" data-act="trial"' + (cs.length ? '' : ' disabled') + '>' + L('Agendar clase gratis', 'Book free class') + '</button>';
+    }
+    function tick() {
+      var c = nextClass();
+      if (!c) { countEl.textContent = '—'; nextEl.textContent = ''; return; }
+      var s = Math.max(0, Math.floor((when(c).getTime() - Date.now()) / 1000));
+      countEl.textContent = pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60);
+      nextEl.textContent = c.ty.n + ' · ' + (c.di === 0 ? L('hoy', 'today') : DS.dayLong(DAYS[c.di], l)) + ' ' + DS.hm(c.t, l) + ' · ' + c.coach + ' · ' + left(c) + L(' cupos', ' spots');
+    }
+
+    DS.actions(root, function (act, v) {
+      var i;
+      if (act === 'type') { if (v !== 'all' && !TYPES.some(function (t) { return t.id === v; })) return; S.f = v; drawTypes(); return drawList(); }
+      if (act === 'day') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.d = i; drawDays(); return drawList(); }
+      if (act === 'book') {
+        if (typeof v !== 'string' || v.indexOf('|') === -1) return;
+        var m = mine();
+        if (DS.has(m, v)) { var nm = m[v] && m[v].n; delete m[v]; db.set('clases', m); DS.toast(root, L('Cupo liberado · ', 'Spot released · ') + (nm || '')); }
+        else {
+          var c = null;
+          for (var di = 0; di < DAYS.length && !c; di++) c = classesFor(di).filter(function (x) { return x.key === v; })[0] || null;
+          if (!c || when(c).getTime() < Date.now()) return;
+          var sameDay = Object.keys(m).filter(function (k) { return k.split('|')[0] === v.split('|')[0]; }).length;
+          if (sameDay >= 2) return DS.toast(root, L('Máximo dos clases por día.', 'Two classes a day max.'));
+          if (left(c) <= 0) return DS.toast(root, L('La clase se llenó.', 'The class just filled up.'));
+          m[v] = { n: c.ty.n + ' · ' + c.coach, w: (c.di === 0 ? L('Hoy', 'Today') : DS.dayLong(DAYS[c.di], l)) + ' · ' + DS.hm(c.t, l) };
+          db.set('clases', m); DS.toast(root, L('Cupo reservado · ', 'Spot booked · ') + c.ty.n + ' ' + DS.hm(c.t, l));
+        }
+        drawList(); drawMine(); return tick();
+      }
+      if (act === 'term') { if (!TERMS.some(function (t) { return t[0] === v; })) return; S.term = v; return drawPlans(); }
+      if (act === 'plan') { if (!PLANS.some(function (p) { return p.id === v; })) return; S.trial.plan = v; S.trialDone = null; drawTrial(); return DS.go(root, 'prueba'); }
+      if (act === 'goal') { if (!GOALS.some(function (g) { return g[0] === v; })) return; S.trial.goal = v; return drawTrial(); }
+      if (act === 'ttype') { if (!TYPES.some(function (t) { return t.id === v; })) return; S.trial.type = v; return drawTrial(); }
+      if (act === 'tday') { if ((i = DS.idx(v, DAYS.length)) === null) return; S.trial.d = i; return drawTrial(); }
+      if (act === 'trial') {
+        if (S.trialDone) return;
+        var T = S.trial, a = DS.ok.name(T.name), b = DS.ok.phone(T.phone);
+        DS.setErr(trialSide, 'fjName', a ? '' : L('Escribe tu nombre.', 'Enter your name.'));
+        DS.setErr(trialSide, 'fjPhone', b ? '' : L('Celular de 10 dígitos que empiece por 3.', '10-digit mobile starting with 3.'));
+        if (!(a && b)) { var bad = trialSide.querySelector('[aria-invalid="true"]'); if (bad) bad.focus(); return; }
+        var sel = trialSide.querySelector('#fjSlot'), key = sel ? sel.value : '';
+        var cl = classesFor(T.d).filter(function (x) { return x.key === key; })[0];
+        var g = GOALS.filter(function (x) { return x[0] === T.goal; })[0];
+        if (!cl || !g) return;
+        var w = (DS.isToday(DAYS[T.d]) ? L('Hoy', 'Today') : DS.dayLong(DAYS[T.d], l)) + ' · ' + DS.hm(cl.t, l), code = DS.code('FJ');
+        S.trialDone = { code: code, when: w, detail: cl.ty.n + ' · ' + cl.coach + ' · ' + L('objetivo: ', 'goal: ') + g[1].toLowerCase(),
+          msg: L('Hola ', 'Hi ') + T.name.trim().split(/\s+/)[0] + L(', tu clase de prueba en Forja está agendada:\n', ', your Forja trial class is booked:\n') + cl.ty.n + ' — ' + w + L('\nEntrenador: ', '\nCoach: ') + cl.coach + L('\nLlega 15 minutos antes para la valoración.\nCódigo: ', '\nArrive 15 minutes early for the assessment.\nCode: ') + code };
+        DS.toast(root, L('Clase de prueba agendada · ', 'Trial class booked · ') + code);
+        return drawTrial();
+      }
+      if (act === 'newtrial') { S.trialDone = null; S.trial.name = ''; S.trial.phone = ''; return drawTrial(); }
+    });
+    root.addEventListener('input', function (e) {
+      if (e.target.id === 'fjName') S.trial.name = e.target.value;
+      if (e.target.id === 'fjPhone') S.trial.phone = e.target.value;
+      if (e.target.getAttribute('aria-invalid') === 'true') DS.setErr(trialSide, e.target.id, '');
+    });
+
+    drawTypes(); drawDays(); drawList(); drawMine(); drawPlans(); drawTrial(); tick();
+    var st = root.querySelector('[data-status]');
+    var timer = setInterval(tick, 1000);
+    var slow = setInterval(function () { drawList(); var s = DS.status(HOURS, l), el = root.querySelector('[data-status]'); if (el) el.innerHTML = '<span class="ds-dot' + (s.open ? '' : ' ds-dot--off') + '"></span><span>' + s.text + '</span>'; }, 60000);
+    return function () { clearInterval(timer); clearInterval(slow); };
+  }
+};

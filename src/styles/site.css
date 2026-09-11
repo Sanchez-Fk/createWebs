@@ -1,0 +1,25 @@
+/* ===========================================================================
+   SITIO PUBLICADO — arranque sin parpadeo, transición entre páginas y 404
+   =========================================================================== */
+
+/* Mientras app.js prepara los revelados, el contenido espera invisible y sin
+   transiciones (así los estados previos no se animan hacia atrás). Si el script
+   no llegara a ejecutarse, todo aparece solo a los 2,5 s. */
+.stage.is-booting .page,
+.stage.is-booting .hdr{ opacity:0; animation:boot-failsafe 0s linear 2.5s forwards; }
+.stage.is-booting *,
+.stage.is-booting *::before,
+.stage.is-booting *::after{ transition:none !important; }
+@keyframes boot-failsafe{ to{ opacity:1; } }
+
+/* navegación entre páginas: fundido corto del documento, sin cortina ni loader */
+@view-transition{ navigation:auto; }
+::view-transition-old(root),
+::view-transition-new(root){ animation-duration:.22s; animation-timing-function:var(--ease); }
+
+/* ---------- 404 ---------- */
+body.nf{ overflow:auto; background:var(--bg); }
+.nf-box{ min-height:100vh; display:grid; align-content:center; gap:20px; width:100%; max-width:760px; margin-inline:auto; padding:48px 20px; }
+.nf-box .h-page{ margin:0; }
+.nf-box .lede{ margin:0; }
+.nf-links{ display:flex; flex-wrap:wrap; align-items:center; gap:16px 28px; margin:12px 0 0; }

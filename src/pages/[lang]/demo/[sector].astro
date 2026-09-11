@@ -1,0 +1,28 @@
+---
+/* Demo en vivo de cada sector: /es/demo/dental/, /en/demo/gimnasio/…
+   El HTML trae el contenedor; la demo interactiva la monta app.js en el navegador. */
+import '@fontsource/fraunces/500.css';
+import '@fontsource/fraunces/600.css';
+import '@fontsource/oswald/500.css';
+import '@fontsource/oswald/600.css';
+import '@fontsource/archivo/700.css';
+import '@fontsource/archivo/800.css';
+import type { GetStaticPaths } from 'astro';
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+import { SECTORS } from '../../../data/content';
+import { LANGS, type Lang } from '../../../lib/routes';
+
+export const getStaticPaths = (() =>
+  LANGS.flatMap((lang) => SECTORS.map((s) => ({ params: { lang, sector: s.id } })))) satisfies GetStaticPaths;
+
+const lang = Astro.params.lang as Lang;
+const sector = Astro.params.sector as string;
+---
+
+<SiteLayout lang={lang} page="demo" sector={sector}>
+  <div class="demo-page">
+    <div id="demoRoot" data-sector={sector}>
+      <noscript><p class="mono" style="padding:120px 24px;text-align:center">{lang === 'en' ? 'This interactive demo needs JavaScript.' : 'Esta demo interactiva necesita JavaScript.'}</p></noscript>
+    </div>
+  </div>
+</SiteLayout>

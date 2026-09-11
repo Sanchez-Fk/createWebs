@@ -1,0 +1,23 @@
+---
+/* Cifras de la portada; motion.js las cuenta desde cero al entrar en pantalla. */
+import type { Lang } from '../lib/routes';
+
+interface Props {
+  lang: Lang;
+}
+
+type Stat = [value: number, pad: number, suffix: string, label: string];
+
+const STATS: Record<Lang, Stat[]> = {
+  es: [[4, 2, '', 'demos de sector funcionando'], [24, 0, ' h', 'tiempo máximo de respuesta'], [2, 0, '', 'idiomas: español e inglés'], [1, 0, '', 'persona, de principio a fin']],
+  en: [[4, 2, '', 'working sector demos'], [24, 0, ' h', 'maximum response time'], [2, 0, '', 'languages: Spanish and English'], [1, 0, '', 'person, start to finish']],
+};
+---
+
+<div class="stats">
+  {
+    STATS[Astro.props.lang].map(([value, pad, suffix, label]) => (
+      <div class="stat"><b data-count={value} data-pad={pad} data-suffix={suffix}>{String(value).padStart(pad, '0') + suffix}</b><span>{label}</span></div>
+    ))
+  }
+</div>
