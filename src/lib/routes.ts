@@ -7,8 +7,10 @@ import { ROUTES, SECTORS, T } from '../data/content';
 export const LANGS = ['es', 'en'] as const;
 export type Lang = (typeof LANGS)[number];
 
+/* Páginas del menú. La de privacidad existe en los dos idiomas pero solo se enlaza desde el pie. */
 export const PAGE_KEYS = ['home', 'work', 'services', 'contact'] as const;
-export type PageKey = (typeof PAGE_KEYS)[number];
+export const ALL_PAGE_KEYS = [...PAGE_KEYS, 'privacy'] as const;
+export type PageKey = (typeof ALL_PAGE_KEYS)[number];
 
 export type Sector = (typeof SECTORS)[number];
 
@@ -32,5 +34,5 @@ export function pageTitle(lang: Lang, key: PageKey | 'demo', sub = ''): string {
 export function pageDescription(lang: Lang, key: PageKey | 'demo', sub = ''): string {
   const t = T[lang];
   if (key === 'demo') return plain(sectorById(sub)[lang].copy);
-  return plain({ home: t.heroLede, work: t.pWorkLede, services: t.pSvcLede, contact: t.cLede }[key]);
+  return plain({ home: t.heroLede, work: t.pWorkLede, services: t.pSvcLede, contact: t.cLede, privacy: t.privacyLede }[key]);
 }

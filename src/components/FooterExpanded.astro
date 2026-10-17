@@ -22,7 +22,7 @@ const t = T[lang];
       <div class="ft-col"><span class="mono">{t.ftSocial}</span><a href={LINKS.github} target="_blank" rel="noopener noreferrer me">GitHub</a><a href={LINKS.linkedin} target="_blank" rel="noopener noreferrer me">LinkedIn</a><a href={LINKS.instagram} target="_blank" rel="noopener noreferrer me">Instagram</a></div>
     </div>
     <div class="ft-row">
-      <span class="meta">{t.copy}</span>
+      <span class="meta">{t.copy} · <a href={href(lang, 'privacy')}>{t.titles.privacy}</a></span>
       <LangSwitch lang={lang} es={href('es', 'contact')} en={href('en', 'contact')} />
     </div>
   </div>

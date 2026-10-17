@@ -1,13 +1,13 @@
-/* Sitemap con las 16 páginas y sus alternativas de idioma (las URL cambian por idioma). */
+/* Sitemap con las 18 páginas y sus alternativas de idioma (las URL cambian por idioma). */
 import type { APIRoute } from 'astro';
 import { SECTORS } from '../data/content';
-import { LANGS, PAGE_KEYS, type Lang, href } from '../lib/routes';
+import { ALL_PAGE_KEYS, LANGS, type Lang, href } from '../lib/routes';
 
 export const GET: APIRoute = ({ site }) => {
   const base = site ?? new URL('http://localhost:4321');
   const abs = (path: string) => new URL(path, base).href;
   const pages: Array<(lang: Lang) => string> = [
-    ...PAGE_KEYS.map((key) => (lang: Lang) => href(lang, key)),
+    ...ALL_PAGE_KEYS.map((key) => (lang: Lang) => href(lang, key)),
     ...SECTORS.map((s) => (lang: Lang) => href(lang, 'demo', s.id)),
   ];
 

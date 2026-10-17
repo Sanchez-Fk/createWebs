@@ -3,8 +3,8 @@
    Solo lo leen las páginas de Astro al generar el HTML: no viaja al navegador.
    =========================================================================== */
 export const ROUTES = {
-  es: { home: '', work: 'proyectos', services: 'servicios', contact: 'contacto', demo: 'demo' },
-  en: { home: '', work: 'work',      services: 'services',  contact: 'contact',  demo: 'demo' }
+  es: { home: '', work: 'proyectos', services: 'servicios', contact: 'contacto', privacy: 'privacidad', demo: 'demo' },
+  en: { home: '', work: 'work',      services: 'services',  contact: 'contact',  privacy: 'privacy',    demo: 'demo' }
 };
 
 export const T = {
@@ -34,7 +34,8 @@ export const T = {
     ftTag: 'Sitios rápidos y claros para pequeños negocios. Hechos a mano, sin maquetadores.',
     ftNav: 'Navegación', ftContact: 'Contacto', ftSocial: 'Redes', copy: '© 2026 José Manuel Sánchez · Medellín',
     demoLabel: 'Demo en vivo', demoOthers: 'Otras demos',
-    titles: { home: 'Inicio', work: 'Proyectos', services: 'Servicios', contact: 'Contacto', demo: 'Demo' }
+    privacy: 'Privacidad', privacyLede: 'Qué datos se guardan cuando escribes por el chat, WhatsApp o correo, para qué se usan y cómo ejercer tus derechos.',
+    titles: { home: 'Inicio', work: 'Proyectos', services: 'Servicios', contact: 'Contacto', privacy: 'Política de tratamiento de datos', demo: 'Demo' }
   },
   en: {
     navLabel: 'Main navigation', home: 'Home', work: 'Work', services: 'Services', contact: 'Contact',
@@ -62,7 +63,8 @@ export const T = {
     ftTag: 'Fast, clear websites for small businesses. Built by hand, no page builders.',
     ftNav: 'Navigation', ftContact: 'Contact', ftSocial: 'Social', copy: '© 2026 José Manuel Sánchez · Medellín',
     demoLabel: 'Live demo', demoOthers: 'Other demos',
-    titles: { home: 'Home', work: 'Work', services: 'Services', contact: 'Contact', demo: 'Demo' }
+    privacy: 'Privacy', privacyLede: 'What data is kept when you write through the chat, WhatsApp or email, what it is used for and how to exercise your rights.',
+    titles: { home: 'Home', work: 'Work', services: 'Services', contact: 'Contact', privacy: 'Personal data policy', demo: 'Demo' }
   }
 };
 

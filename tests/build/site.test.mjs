@@ -13,6 +13,8 @@ if (!fs.existsSync(path.join(DIST, 'es', 'index.html'))) {
 
 const SECTORS = ['dental', 'restaurante', 'barberia', 'gimnasio'];
 const SLUGS = { es: ['', 'proyectos/', 'servicios/', 'contacto/'], en: ['', 'work/', 'services/', 'contact/'] };
+/* páginas fuera del menú (solo se enlazan desde el pie): la política de datos */
+const DOC_SLUGS = { es: ['privacidad/'], en: ['privacy/'] };
 const PLACEHOLDERS = ['#wa', '#mail', '#gh', '#li', '#ig'];
 
 /* cada página con su gemela en el otro idioma */
@@ -20,6 +22,7 @@ const PAGES = [];
 for (const lang of ['es', 'en']) {
   const other = lang === 'es' ? 'en' : 'es';
   SLUGS[lang].forEach((slug, i) => PAGES.push({ lang, url: '/' + lang + '/' + slug, twin: '/' + other + '/' + SLUGS[other][i] }));
+  DOC_SLUGS[lang].forEach((slug, i) => PAGES.push({ lang, url: '/' + lang + '/' + slug, twin: '/' + other + '/' + DOC_SLUGS[other][i] }));
   SECTORS.forEach((id) => PAGES.push({ lang, url: '/' + lang + '/demo/' + id + '/', twin: '/' + other + '/demo/' + id + '/', demo: id }));
 }
 
@@ -29,8 +32,8 @@ const all = (s, re) => [...s.matchAll(re)].map((m) => m[1]);
 const pathOf = (abs) => new URL(abs).pathname;
 const distFiles = (dir, ext) => fs.readdirSync(path.join(DIST, dir)).filter((f) => f.endsWith(ext)).map((f) => path.join(DIST, dir, f));
 
-test('se generan las 16 páginas, la 404, el sitemap, robots.txt y la redirección de la raíz', () => {
-  assert.equal(PAGES.length, 16);
+test('se generan las 18 páginas, la 404, el sitemap, robots.txt y la redirección de la raíz', () => {
+  assert.equal(PAGES.length, 18);
   for (const p of PAGES) assert.ok(fs.existsSync(fileOf(p.url)), 'falta ' + p.url);
   for (const f of ['404.html', 'sitemap.xml', 'robots.txt', 'favicon.svg', 'index.html']) assert.ok(fs.existsSync(path.join(DIST, f)), 'falta ' + f);
   assert.match(fs.readFileSync(path.join(DIST, 'index.html'), 'utf8'), /url=\/es\//, 'la raíz no redirige a /es/');
@@ -76,7 +79,7 @@ test('cada enlace y recurso interno existe en el build', () => {
     const h = p.url === '/404.html' ? fs.readFileSync(path.join(DIST, '404.html'), 'utf8') : html(p.url);
     const refs = [...all(h, /\s(?:href|src)="([^"]*)"/g), ...all(h, /\ssrcset="([^"]*)"/g).flatMap((s) => s.split(',').map((x) => x.trim().split(/\s+/)[0]))];
     for (const ref of refs) {
-      if (/^https?:\/\//.test(ref)) continue;                          /* canonical, hreflang, og:url */
+      if (/^(https?:\/\/|mailto:)/.test(ref)) continue;                          /* canonical, hreflang, og:url */
       if (ref.startsWith('#')) { assert.ok(PLACEHOLDERS.includes(ref), p.url + ': ancla desconocida ' + ref); continue; }
       assert.ok(ref.startsWith('/'), p.url + ': ruta relativa ' + ref);
       if (!fs.existsSync(fileOf(ref))) missing.add(p.url + ' → ' + ref);
@@ -131,11 +134,11 @@ test('vercel.json aplica cabeceras de seguridad estrictas y caché larga a los a
   assert.match(astro.headers[0].value, /immutable/);
 });
 
-test('sitemap con las 16 URL absolutas, sus alternativas y robots.txt que lo enlaza', () => {
+test('sitemap con las 18 URL absolutas, sus alternativas y robots.txt que lo enlaza', () => {
   const xml = fs.readFileSync(path.join(DIST, 'sitemap.xml'), 'utf8');
   const locs = all(xml, /<loc>([^<]+)<\/loc>/g).map(pathOf).sort();
   assert.deepEqual(locs, PAGES.map((p) => p.url).sort());
-  assert.equal((xml.match(/hreflang=/g) || []).length, 32);
+  assert.equal((xml.match(/hreflang=/g) || []).length, 36);
   assert.match(fs.readFileSync(path.join(DIST, 'robots.txt'), 'utf8'), /^Sitemap: https?:\/\/\S+\/sitemap\.xml$/m);
 });
 
@@ -199,7 +202,7 @@ test('redes: GitHub, LinkedIn e Instagram enlazan a los perfiles reales en todas
   assert.deepEqual(JSON.parse(ld[1]).sameAs, Object.values(PROFILES));
 });
 
-test('pantalla de carga: en las 8 páginas del portafolio, nunca en las demos, decidida antes de pintar', () => {
+test('pantalla de carga: en las 10 páginas del portafolio, nunca en las demos, decidida antes de pintar', () => {
   for (const p of PAGES) {
     const h = html(p.url);
     const hasIntro = h.includes('<div class="intro" id="intro" aria-hidden="true">');

@@ -1,0 +1,171 @@
+---
+/* Política de tratamiento de datos personales (Ley 1581 de 2012, Decreto 1377 de 2013, art. 13).
+   La versión que obliga es la española; la inglesa es una traducción de cortesía.
+   El chat de Flowy enlaza aquí desde su formulario de contacto. */
+import { T } from '../data/content';
+import { SITE, whatsappHref } from '../data/site';
+import type { Lang } from '../lib/routes';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = T[lang];
+
+const EMAIL = 'ingeniero.sanchez.06@gmail.com';
+const PHONE = '+57 305 262 4583';
+const ADDRESS = 'Carrera 55 # 80 Sur, Antioquia, Colombia';
+const UPDATED = { es: '17 de octubre de 2026', en: 'October 17, 2026' }[lang];
+const PROVIDERS = [
+  { name: 'Vercel', es: 'Aloja la web, el chat y su servidor', en: 'Hosts the website, the chat and its server' },
+  { name: 'Neon', es: 'Base de datos donde se guardan los mensajes', en: 'Database where messages are stored' },
+  { name: 'Upstash', es: 'Control de abusos, sin el texto de los mensajes', en: 'Abuse control, without the message text' },
+  { name: 'Groq', es: 'Inteligencia artificial que redacta las respuestas del chat (Estados Unidos)', en: 'Artificial intelligence that drafts the chat replies (United States)' },
+];
+---
+
+<section class="page-head">
+  <div class="wrap" data-rv="hero">
+    <span class="mono">{t.privacy}</span>
+    <h1 class="h-page">{t.titles.privacy}</h1>
+    <p class="lede">{t.privacyLede}</p>
+  </div>
+</section>
+
+<section class="sec legal" style="padding-top:0" aria-label={t.titles.privacy}>
+  <div class="wrap">
+    {
+      lang === 'es' ? (
+        <article>
+          <p class="meta">Última actualización: {UPDATED}</p>
+
+          <h2>1. Quién es el responsable</h2>
+          <p><strong>{SITE.fullName}</strong>, desarrollador web, con domicilio en {ADDRESS}.</p>
+          <ul>
+            <li>Correo para asuntos de datos personales: <a href={'mailto:' + EMAIL}>{EMAIL}</a></li>
+            <li>Teléfono y WhatsApp: <a href={whatsappHref('es')} target="_blank" rel="noopener noreferrer">{PHONE}</a></li>
+          </ul>
+
+          <h2>2. A quién se aplica</h2>
+          <p>A las personas que escriben a José por el chat de esta web, por WhatsApp o por correo para pedir información sobre sus servicios de desarrollo web.</p>
+
+          <h2>3. Qué datos se tratan</h2>
+          <ul>
+            <li><strong>Por el chat de la web:</strong> lo que escribes en la conversación y la página desde la que escribes. Si decides dejar tus datos para que José te contacte, también tu nombre, correo, teléfono y mensaje, y solo si marcas la casilla de autorización, que empieza sin marcar.</li>
+            <li><strong>Por WhatsApp o correo:</strong> tu nombre, tu número o tu correo y lo que escribas.</li>
+            <li><strong>Datos técnicos:</strong> el chat no guarda tu dirección IP completa, solo una huella cifrada que cambia cada 30 días, para evitar abusos.</li>
+          </ul>
+          <p><strong>No se piden datos sensibles</strong> (por ejemplo, de salud) <strong>ni datos de menores de edad.</strong> No es obligatorio darlos, y el chat pide no escribirlos.</p>
+
+          <h2>4. Para qué se usan</h2>
+          <ol>
+            <li>Responder tu consulta sobre los servicios de José.</li>
+            <li>Contactarte, si lo autorizaste, para hablar de tu proyecto y enviarte una propuesta.</li>
+            <li>Si llegas a contratar, gestionar el proyecto, la facturación y la comunicación durante el trabajo.</li>
+          </ol>
+          <p>Tus datos no se venden ni se ceden a terceros para publicidad, y no se usan para enviarte publicidad sin tu autorización.</p>
+
+          <h2>5. Quién más los procesa</h2>
+          <p>El chat de esta web funciona con <strong>Flowy</strong>, un servicio que guarda las conversaciones y los datos de contacto por encargo de José: Flowy es <strong>encargado del tratamiento</strong> y José sigue siendo el responsable. Flowy usa a su vez estos proveedores:</p>
+          <ul>{PROVIDERS.map((p) => <li><strong>{p.name}:</strong> {p.es}.</li>)}</ul>
+          <p>Por eso <strong>los mensajes del chat se procesan fuera de Colombia</strong>, y el chat lo avisa antes de que escribas. WhatsApp es un servicio de Meta, con sus propias condiciones.</p>
+
+          <h2>6. Cuánto tiempo se guardan</h2>
+          <ul>
+            <li><strong>Conversaciones del chat:</strong> se borran automáticamente a los 30 días.</li>
+            <li><strong>Datos de contacto que dejaste en el chat:</strong> hasta 12 meses después del último contacto, o antes si pides que se borren.</li>
+            <li><strong>Si contratas:</strong> durante el proyecto y el tiempo que exijan las normas contables y tributarias.</li>
+          </ul>
+
+          <h2>7. Tus derechos</h2>
+          <p>Como titular de los datos puedes, gratis: conocer, actualizar y rectificar tus datos; pedir prueba de la autorización que diste; saber qué uso se ha dado a tus datos; revocar la autorización y pedir que se supriman, salvo que haya un deber legal o contractual de conservarlos; y presentar quejas ante la <strong>Superintendencia de Industria y Comercio (SIC)</strong>, después de haber hecho tu consulta o reclamo a José.</p>
+
+          <h2>8. Cómo ejercerlos</h2>
+          <p>Escribe a <a href={'mailto:' + EMAIL}>{EMAIL}</a> o por WhatsApp al {PHONE}, con tu nombre, la forma de contactarte y lo que pides. Si lo pide otra persona en tu nombre, debe demostrar que te representa.</p>
+          <ul>
+            <li><strong>Consultas</strong> (saber qué datos hay y cómo se usan): respuesta en un máximo de 10 días hábiles, ampliable 5 días hábiles más avisándote del motivo.</li>
+            <li><strong>Reclamos</strong> (corregir, actualizar, suprimir o revocar): respuesta en un máximo de 15 días hábiles, ampliable 8 días hábiles más avisándote del motivo. Si al reclamo le falta información, se te pedirá en los 5 días siguientes; si pasan dos meses sin respuesta tuya, se entiende que desististe.</li>
+          </ul>
+
+          <h2>9. Seguridad</h2>
+          <p>Las conversaciones viajan cifradas (HTTPS) y se guardan separadas de las de otros negocios que usan Flowy. Solo José puede verlas desde su panel, protegido con contraseña y segundo factor.</p>
+
+          <h2>10. Cambios y vigencia</h2>
+          <p>Esta política rige desde el {UPDATED}. Si cambia de forma importante, se publicará aquí la nueva versión con su fecha; si el cambio afecta a las finalidades, se pedirá de nuevo tu autorización.</p>
+        </article>
+      ) : (
+        <article>
+          <p class="meta">Last updated: {UPDATED}. This is a courtesy translation; the Spanish version is the one that applies.</p>
+
+          <h2>1. Who is responsible</h2>
+          <p><strong>{SITE.fullName}</strong>, web developer, domiciled at {ADDRESS}.</p>
+          <ul>
+            <li>Email for personal data matters: <a href={'mailto:' + EMAIL}>{EMAIL}</a></li>
+            <li>Phone and WhatsApp: <a href={whatsappHref('en')} target="_blank" rel="noopener noreferrer">{PHONE}</a></li>
+          </ul>
+
+          <h2>2. Who this applies to</h2>
+          <p>People who write to José through this website's chat, WhatsApp or email to ask about his web development services.</p>
+
+          <h2>3. What data is processed</h2>
+          <ul>
+            <li><strong>Through the website chat:</strong> what you write in the conversation and the page you write from. If you choose to leave your details so José can contact you, also your name, email, phone and message, and only if you tick the consent box, which starts unticked.</li>
+            <li><strong>Through WhatsApp or email:</strong> your name, your number or email and what you write.</li>
+            <li><strong>Technical data:</strong> the chat does not store your full IP address, only an encrypted fingerprint that changes every 30 days, to prevent abuse.</li>
+          </ul>
+          <p><strong>No sensitive data</strong> (such as health data) <strong>and no data about minors is requested.</strong> You do not have to provide it, and the chat asks you not to write it.</p>
+
+          <h2>4. What it is used for</h2>
+          <ol>
+            <li>Answering your question about José's services.</li>
+            <li>Contacting you, if you authorised it, to talk about your project and send you a proposal.</li>
+            <li>If you hire him, managing the project, invoicing and communication during the work.</li>
+          </ol>
+          <p>Your data is not sold or handed over to third parties for advertising, and is not used to send you advertising without your consent.</p>
+
+          <h2>5. Who else processes it</h2>
+          <p>This website's chat runs on <strong>Flowy</strong>, a service that stores conversations and contact details on José's behalf: Flowy is the <strong>data processor</strong> and José remains the controller. Flowy in turn uses these providers:</p>
+          <ul>{PROVIDERS.map((p) => <li><strong>{p.name}:</strong> {p.en}.</li>)}</ul>
+          <p>That is why <strong>chat messages are processed outside Colombia</strong>, and the chat says so before you write. WhatsApp is a Meta service with its own terms.</p>
+
+          <h2>6. How long it is kept</h2>
+          <ul>
+            <li><strong>Chat conversations:</strong> deleted automatically after 30 days.</li>
+            <li><strong>Contact details left in the chat:</strong> up to 12 months after the last contact, or earlier if you ask for them to be deleted.</li>
+            <li><strong>If you hire him:</strong> for the project and as long as accounting and tax rules require.</li>
+          </ul>
+
+          <h2>7. Your rights</h2>
+          <p>As the data subject you can, free of charge: access, update and correct your data; ask for proof of the consent you gave; find out how your data has been used; withdraw your consent and ask for deletion, unless there is a legal or contractual duty to keep it; and file complaints with Colombia's <strong>Superintendencia de Industria y Comercio (SIC)</strong>, after first making your request to José.</p>
+
+          <h2>8. How to exercise them</h2>
+          <p>Write to <a href={'mailto:' + EMAIL}>{EMAIL}</a> or via WhatsApp at {PHONE}, with your name, how to reach you and what you are asking for. If someone asks on your behalf, they must show they represent you.</p>
+          <ul>
+            <li><strong>Queries</strong> (what data exists and how it is used): answered within 10 business days, extendable by 5 more with notice of the reason.</li>
+            <li><strong>Claims</strong> (correct, update, delete or withdraw): answered within 15 business days, extendable by 8 more with notice of the reason. If a claim is missing information, you will be asked for it within 5 days; after two months without a reply, the claim is considered withdrawn.</li>
+          </ul>
+
+          <h2>9. Security</h2>
+          <p>Conversations travel encrypted (HTTPS) and are stored separately from those of other businesses using Flowy. Only José can see them from his dashboard, protected by password and two-factor authentication.</p>
+
+          <h2>10. Changes and validity</h2>
+          <p>This policy applies from {UPDATED}. If it changes significantly, the new version will be published here with its date; if the change affects the purposes, your consent will be requested again.</p>
+        </article>
+      )
+    }
+  </div>
+</section>
+
+<Footer lang={lang} page="privacy" />
+
+<style>
+  .legal article { max-width: 72ch; }
+  .legal h2 { margin: 2.4em 0 0.6em; font-size: 1.15rem; font-weight: 600; }
+  .legal p, .legal li { line-height: 1.7; color: var(--fg-2); }
+  .legal ul, .legal ol { padding-left: 1.3em; }
+  .legal li + li { margin-top: 0.5em; }
+  .legal strong { color: var(--fg); }
+  .legal a { text-decoration: underline; text-underline-offset: 3px; }
+</style>
