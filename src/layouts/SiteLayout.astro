@@ -59,5 +59,18 @@ const { lang, page, sector = '' } = Astro.props;
       import { boot } from '../scripts/app.js';
       boot();
     </script>
+    {/* Chat de Flowy, solo en el portafolio (las demos son de otros negocios). La CSP de
+        vercel.json abre script-src al panel y connect-src a la API para el. */}
+    {
+      page !== 'demo' && (
+        <script
+          is:inline
+          async
+          src="https://flowy-panel.vercel.app/widget/v1/loader.js"
+          data-site-key="site_3ekqt9t4mqp36ddf"
+          data-api="https://flowy-api.vercel.app"
+        />
+      )
+    }
   </body>
 </html>

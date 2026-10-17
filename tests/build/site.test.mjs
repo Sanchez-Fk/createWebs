@@ -92,15 +92,20 @@ test('cada enlace y recurso interno existe en el build', () => {
   assert.deepEqual([...missing], []);
 });
 
+// El chat de Flowy es el único recurso de terceros permitido, y solo con esta etiqueta exacta.
+const FLOWY_PANEL = 'https://flowy-panel.vercel.app';
+const FLOWY_API = 'https://flowy-api.vercel.app';
+const FLOWY_TAG = '<script async src="' + FLOWY_PANEL + '/widget/v1/loader.js" data-site-key="site_3ekqt9t4mqp36ddf" data-api="' + FLOWY_API + '">';
+
 test('compatible con la CSP: sin scripts en línea, manejadores ni recursos de terceros', () => {
   for (const p of PAGES) {
     const h = html(p.url);
     for (const tag of all(h, /(<script\b[^>]*>)/g)) {
-      const allowed = /^<script type="module" src="\/_astro\/[^"]+\.js">$/.test(tag) || tag === '<script type="application/ld+json">' || tag === '<script src="/scripts/early.js">';
+      const allowed = /^<script type="module" src="\/_astro\/[^"]+\.js">$/.test(tag) || tag === '<script type="application/ld+json">' || tag === '<script src="/scripts/early.js">' || tag === FLOWY_TAG;
       assert.ok(allowed, p.url + ': script no permitido ' + tag);
     }
     assert.doesNotMatch(h, /\son[a-z]+\s*=\s*["']/i, p.url + ': manejador de eventos en línea');
-    assert.doesNotMatch(h, /<(?:script|img|iframe)\b[^>]*\ssrc="https?:/i, p.url + ': recurso de otro dominio');
+    assert.doesNotMatch(h.replaceAll(FLOWY_TAG, ''), /<(?:script|img|iframe)\b[^>]*\ssrc="https?:/i, p.url + ': recurso de otro dominio');
     assert.doesNotMatch(h, /<link\b[^>]*rel="(?:stylesheet|preload|modulepreload)"[^>]*href="https?:/i, p.url + ': hoja o precarga de otro dominio');
   }
 });
@@ -113,7 +118,9 @@ test('vercel.json aplica cabeceras de seguridad estrictas y caché larga a los a
   const get = (k) => (global.find((h) => h.key === k) || {}).value || '';
   const csp = get('Content-Security-Policy');
   const scriptSrc = (csp.match(/script-src ([^;]+)/) || [])[1] || '';
-  assert.equal(scriptSrc.trim(), "'self'", 'script-src debe ser solo el propio dominio');
+  assert.equal(scriptSrc.trim(), "'self' " + FLOWY_PANEL, 'script-src: el propio dominio y el widget de Flowy, nada más');
+  const connectSrc = (csp.match(/connect-src ([^;]+)/) || [])[1] || '';
+  assert.equal(connectSrc.trim(), "'self' " + FLOWY_API, 'connect-src: el propio dominio y la API de Flowy, nada más');
   assert.match(csp, /default-src 'self'/);
   assert.match(csp, /object-src 'none'/);
   assert.match(csp, /frame-ancestors 'none'/);
